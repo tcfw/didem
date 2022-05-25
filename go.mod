@@ -8,6 +8,8 @@ require (
 	github.com/ipfs/interface-go-ipfs-core v0.7.0
 	github.com/libp2p/go-libp2p v0.19.1
 	github.com/libp2p/go-libp2p-core v0.15.1
+	github.com/libp2p/go-libp2p-peerstore v0.6.0
+	github.com/libp2p/go-libp2p-pubsub v0.6.1
 	github.com/multiformats/go-multiaddr v0.5.0
 	github.com/multiformats/go-multihash v0.1.0
 	github.com/pkg/errors v0.9.1
@@ -136,9 +138,7 @@ require (
 	github.com/libp2p/go-libp2p-mplex v0.7.0 // indirect
 	github.com/libp2p/go-libp2p-nat v0.1.0 // indirect
 	github.com/libp2p/go-libp2p-noise v0.4.0 // indirect
-	github.com/libp2p/go-libp2p-peerstore v0.6.0 // indirect
 	github.com/libp2p/go-libp2p-pnet v0.2.0 // indirect
-	github.com/libp2p/go-libp2p-pubsub v0.6.1 // indirect
 	github.com/libp2p/go-libp2p-pubsub-router v0.5.0 // indirect
 	github.com/libp2p/go-libp2p-quic-transport v0.17.0 // indirect
 	github.com/libp2p/go-libp2p-record v0.1.3 // indirect

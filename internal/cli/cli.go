@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/tcfw/didem/internal/node"
 )
 
@@ -19,6 +20,9 @@ var (
 )
 
 func Execute() error {
+	rootCmd.Flags().BoolP("verbose", "v", false, "increase verbosity")
+	viper.BindPFlag("verbose", rootCmd.Flags().Lookup("verbose"))
+
 	return rootCmd.Execute()
 }
 

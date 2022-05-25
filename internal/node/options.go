@@ -27,7 +27,7 @@ func WithLogger(l *logrus.Logger) NodeOption {
 
 func WithDefaultOptions(ctx context.Context) NodeOption {
 	return func(n *Node) error {
-		n.logger = logrus.New()
+		n.logger = logrus.StandardLogger()
 
 		ipfs, err := storage.NewIPFSStorage(ctx)
 		if err != nil {

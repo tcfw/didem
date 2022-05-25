@@ -7,6 +7,8 @@ import (
 	connmgriFace "github.com/libp2p/go-libp2p-core/connmgr"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peerstore"
+	discovery "github.com/libp2p/go-libp2p-discovery"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p-peerstore/pstoremem"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
@@ -17,10 +19,13 @@ import (
 )
 
 type p2pHost struct {
-	host      host.Host
+	host host.Host
+
 	peerStore peerstore.Peerstore
 	connMgr   connmgriFace.ConnManager
 	pubsub    *pubsub.PubSub
+	dht       *dht.IpfsDHT
+	discovery *discovery.RoutingDiscovery
 }
 
 func newP2PHost(ctx context.Context, cfg *config.Config) (*p2pHost, error) {
@@ -50,7 +55,7 @@ func newP2PHost(ctx context.Context, cfg *config.Config) (*p2pHost, error) {
 		return nil, err
 	}
 
-	h.host, err = libp2p.NewWithoutDefaults(
+	opts := []libp2p.Option{
 		id,
 		listeningAddrs,
 		libp2p.DefaultTransports,
@@ -59,13 +64,30 @@ func newP2PHost(ctx context.Context, cfg *config.Config) (*p2pHost, error) {
 		libp2p.DefaultSecurity,
 		libp2p.ConnectionManager(h.connMgr),
 		libp2p.Peerstore(h.peerStore),
+		libp2p.NATPortMap(),
 		libp2p.EnableNATService(),
-	)
+	}
+
+	if cfg.P2P().Relay {
+		opts = append(opts, libp2p.EnableRelay(), libp2p.EnableAutoRelay())
+	}
+
+	h.host, err = libp2p.NewWithoutDefaults(opts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating libp2p host")
 	}
 
-	h.pubsub, err = newGossipSub(ctx, cfg, h.host)
+	h.dht, err = dht.New(ctx, h.host)
+	if err != nil {
+		return nil, errors.Wrap(err, "initing DHT")
+	}
+	if err := h.dht.Bootstrap(ctx); err != nil {
+		return nil, errors.Wrap(err, "bootstrapping DHT")
+	}
+
+	h.discovery = discovery.NewRoutingDiscovery(h.dht)
+
+	h.pubsub, err = newGossipSub(ctx, cfg, h)
 	if err != nil {
 		return nil, err
 	}
@@ -73,10 +95,11 @@ func newP2PHost(ctx context.Context, cfg *config.Config) (*p2pHost, error) {
 	return h, nil
 }
 
-func newGossipSub(ctx context.Context, cfg *config.Config, h host.Host) (*pubsub.PubSub, error) {
-	p, err := pubsub.NewGossipSub(ctx, h,
+func newGossipSub(ctx context.Context, cfg *config.Config, h *p2pHost) (*pubsub.PubSub, error) {
+	p, err := pubsub.NewGossipSub(ctx, h.host,
 		pubsub.WithPeerExchange(true),
 		pubsub.WithStrictSignatureVerification(true),
+		pubsub.WithDiscovery(h.discovery),
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating gossipsub router")
