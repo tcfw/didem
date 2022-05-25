@@ -2,16 +2,13 @@ package cli
 
 import (
 	"context"
-	"encoding/hex"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/tcfw/didem/internal/node"
-	"github.com/tcfw/didem/pkg/tx"
 )
 
 var (
@@ -29,7 +26,7 @@ func run(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	node, err := node.NewNode(
+	node, err := node.NewNode(ctx,
 		node.WithDefaultOptions(ctx),
 	)
 	if err != nil {
@@ -43,13 +40,6 @@ func run(cmd *cobra.Command, args []string) error {
 			errCh <- err
 		}
 	}()
-
-	id, err := node.Storage().PutTx(ctx, &tx.Tx{})
-	if err != nil {
-		return err
-	}
-
-	logrus.New().WithField("id", hex.EncodeToString(id)).Infof("stored TX")
 
 	select {
 	case err := <-errCh:
