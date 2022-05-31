@@ -3,10 +3,14 @@ package node
 import (
 	"context"
 
+	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p"
 	connmgriFace "github.com/libp2p/go-libp2p-core/connmgr"
 	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/peerstore"
+	"github.com/libp2p/go-libp2p-core/protocol"
 	discovery "github.com/libp2p/go-libp2p-discovery"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p-peerstore/pstoremem"
@@ -17,16 +21,6 @@ import (
 
 	"github.com/tcfw/didem/internal/config"
 )
-
-type p2pHost struct {
-	host host.Host
-
-	peerStore peerstore.Peerstore
-	connMgr   connmgriFace.ConnManager
-	pubsub    *pubsub.PubSub
-	dht       *dht.IpfsDHT
-	discovery *discovery.RoutingDiscovery
-}
 
 func newP2PHost(ctx context.Context, cfg *config.Config) (*p2pHost, error) {
 	var err error
@@ -120,4 +114,26 @@ func buildListeningAddrs(ctx context.Context, cfg *config.Config) (libp2p.Option
 	}
 
 	return libp2p.ListenAddrs(maAddrs...), nil
+}
+
+type p2pHost struct {
+	host host.Host
+
+	peerStore peerstore.Peerstore
+	connMgr   connmgriFace.ConnManager
+	pubsub    *pubsub.PubSub
+	dht       *dht.IpfsDHT
+	discovery *discovery.RoutingDiscovery
+}
+
+func (p *p2pHost) Connect(ctx context.Context, info peer.AddrInfo) error {
+	return p.host.Connect(ctx, info)
+}
+
+func (p *p2pHost) Open(ctx context.Context, peer peer.ID, protocol protocol.ID) (network.Stream, error) {
+	return p.host.NewStream(ctx, peer, protocol)
+}
+
+func (p *p2pHost) FindProvider(ctx context.Context, c cid.Cid) ([]peer.AddrInfo, error) {
+	return p.dht.FindProviders(ctx, c)
 }

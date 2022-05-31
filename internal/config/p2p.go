@@ -31,7 +31,7 @@ var (
 			"/ip4/0.0.0.0/udp/8712/quic",
 			"/ip6/::0/udp/8712/quic",
 		},
-		Cfg_p2p_enableRelay: true,
+		Cfg_p2p_enableRelay: false,
 	}
 )
 

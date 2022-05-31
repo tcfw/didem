@@ -6,25 +6,40 @@ import (
 
 	"github.com/libp2p/go-libp2p-core/event"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p-core/protocol"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/tcfw/didem/internal/config"
+	"github.com/tcfw/didem/internal/did"
+	"github.com/tcfw/didem/internal/em"
 	"github.com/tcfw/didem/pkg/storage"
+
+	nodeIface "github.com/tcfw/didem/pkg/node"
 )
 
 type Node struct {
 	p2p     *p2pHost
 	storage storage.Storage
 	logger  *logrus.Logger
+
+	handlers map[protocol.ID]interface{}
 }
 
 func (n *Node) Storage() storage.Storage {
 	return n.storage
 }
 
-func (n *Node) P2P() *p2pHost {
+func (n *Node) P2P() nodeIface.P2P {
 	return n.p2p
+}
+
+func (n *Node) Did() *did.Handler {
+	return n.handlers[did.ProtocolID].(*did.Handler)
+}
+
+func (n *Node) Em() *em.Handler {
+	return n.handlers[em.ProtocolID].(*em.Handler)
 }
 
 func NewNode(ctx context.Context, opts ...NodeOption) (*Node, error) {
