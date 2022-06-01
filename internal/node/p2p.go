@@ -22,11 +22,11 @@ import (
 	"github.com/tcfw/didem/internal/config"
 )
 
-func newP2PHost(ctx context.Context, cfg *config.Config) (*p2pHost, error) {
+func newP2PHost(ctx context.Context, n *Node, cfg *config.Config) (*p2pHost, error) {
 	var err error
 	h := &p2pHost{}
 
-	id, err := getIdentity(ctx, cfg)
+	id, err := getIdentity(ctx, cfg, n.logger)
 	if err != nil {
 		return nil, err
 	}

@@ -48,17 +48,19 @@ func NewNode(ctx context.Context, opts ...NodeOption) (*Node, error) {
 		return nil, err
 	}
 
-	n := &Node{}
-
-	n.p2p, err = newP2PHost(ctx, cfg)
-	if err != nil {
-		return nil, err
+	n := &Node{
+		handlers: make(map[protocol.ID]interface{}),
 	}
 
 	for _, opt := range opts {
 		if err := opt(n); err != nil {
 			return nil, err
 		}
+	}
+
+	n.p2p, err = newP2PHost(ctx, n, cfg)
+	if err != nil {
+		return nil, err
 	}
 
 	go n.watchEvents()
@@ -127,7 +129,7 @@ func (n *Node) bootstrap(ctx context.Context, cfg *config.Config) error {
 	for _, peerAddr := range peers {
 		ma, err := multiaddr.NewMultiaddr(peerAddr)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "parsing bootstrap multiaddr")
 		}
 
 		peerinfo, _ := peer.AddrInfoFromP2pAddr(ma)
@@ -136,9 +138,9 @@ func (n *Node) bootstrap(ctx context.Context, cfg *config.Config) error {
 			defer wg.Done()
 
 			if err := n.p2p.host.Connect(ctx, *peerinfo); err != nil {
-				n.logger.Warning(err)
+				n.logger.WithField("peer", peerinfo.String()).WithError(err).Warning("failed to connect to bootstrap peer")
 			} else {
-				n.logger.Debug("Connection established with bootstrap node:", *peerinfo)
+				n.logger.Debug("Connection established with bootstrap peer:", *peerinfo)
 			}
 		}()
 	}
