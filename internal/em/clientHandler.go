@@ -2,6 +2,9 @@ package em
 
 import (
 	"context"
+	"io"
+	"io/ioutil"
+	"time"
 
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p-core/network"
@@ -11,22 +14,173 @@ import (
 	"github.com/tcfw/didem/pkg/did"
 	"github.com/tcfw/didem/pkg/em"
 	"github.com/tcfw/didem/pkg/node"
+	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/sha3"
 )
 
 type ClientHandler struct {
-	n         node.Node
-	email     *em.Email
-	recipient *did.PublicIdentity
-	stream    network.Stream
+	n           node.Node
+	email       *em.Email
+	identity    did.PrivateIdentity
+	recipient   *did.PublicIdentity
+	stream      network.Stream
+	serverHello *em.Email
 }
 
 func (c *ClientHandler) handle(ctx context.Context) error {
+	c.email.Time = time.Now().Unix()
+
 	stream, err := c.connectEndProvider(ctx)
 	if err != nil {
 		return err
 	}
 	c.stream = stream
+
+	if err := c.handshake(); err != nil {
+		c.stream.Close()
+		return errors.Wrap(err, "client handshake")
+	}
+
+	return c.send()
+}
+
+func (c *ClientHandler) handshake() error {
+	if err := c.sendHello(); err != nil {
+		return err
+	}
+
+	if err := c.readServerHello(); err != nil {
+		return err
+	}
+
+	if err := c.validateServerHello(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *ClientHandler) sendHello() error {
+	hello := c.makeHello()
+	if err := c.sign(hello); err != nil {
+		return errors.Wrap(err, "signing client hello")
+	}
+
+	b, err := msgpack.Marshal(hello)
+	if err != nil {
+		return errors.Wrap(err, "mashalling client hello")
+	}
+
+	if _, err = c.stream.Write(b); err != nil {
+		return errors.Wrap(err, "transmitting email")
+	}
+
+	return nil
+}
+
+func (c *ClientHandler) readServerHello() error {
+	b, err := ioutil.ReadAll(io.LimitReader(c.stream, helloLimit))
+	if err != nil {
+		return errors.Wrap(err, "reading server hello")
+	}
+
+	serverHello := &em.Email{}
+	if err := msgpack.Unmarshal(b, serverHello); err != nil {
+		return errors.Wrap(err, "unmarshalling server hello")
+	}
+	c.serverHello = serverHello
+
+	return nil
+}
+
+func (c *ClientHandler) validateServerHello() error {
+	h := c.serverHello
+
+	//Check time window
+	helloTime := time.Unix(h.Time, 0)
+	if helloTime.Before(time.Now().Add(-helloTimeWindow)) || helloTime.After(time.Now().Add(helloTimeWindow)) {
+		return errors.New("hello too old")
+	}
+
+	//Check nonce
+	nsum := 0
+	for _, np := range h.Nonce {
+		nsum += int(np)
+	}
+	if nsum == 0 {
+		return errors.New("empty nonce")
+	}
+
+	//Check recipient identity
+	if h.To.ID == "" || len(h.To.PublicKeys) == 0 {
+		return errors.New("no identity provided")
+	}
+	if h.To.ID != c.recipient.ID {
+		return errors.New("unexpected recipient ID")
+	}
+	//TODO(tcfw) deep compare recipients pubkeys
+
+	//Check sender identity
+	if h.From.ID != c.email.From.ID {
+		return errors.New("unexpected change in sender ID")
+	}
+	//TODO(tcfw) deep compare sender pubkeys
+
+	//Check signature
+	hd := h
+	hd.Signature = nil
+	b, err := msgpack.Marshal(hd)
+	if err != nil {
+		return errors.Wrap(err, "rebuilding signature data")
+	}
+	var hasMatchingSignature bool
+	for _, pk := range h.To.PublicKeys {
+		if err := verify(pk.Key, b); err == nil {
+			hasMatchingSignature = true
+			break
+		}
+	}
+
+	if !hasMatchingSignature {
+		return errors.New("no matching singature found")
+	}
+
+	return nil
+}
+
+func (c *ClientHandler) sign(e *em.Email) error {
+	b, err := msgpack.Marshal(e)
+	if err != nil {
+		return errors.Wrap(err, "mashalling client hello")
+	}
+
+	s, err := sign(c.identity.PrivateKey(), b)
+	if err != nil {
+		return err
+	}
+	e.Signature = s
+
+	return nil
+}
+
+func (c *ClientHandler) makeHello() *em.Email {
+	return &em.Email{
+		Time:  c.email.Time,
+		From:  c.email.From,
+		To:    c.email.To,
+		Nonce: c.email.Nonce,
+	}
+}
+
+func (c *ClientHandler) send() error {
+	b, err := msgpack.Marshal(c.email)
+	if err != nil {
+		return errors.Wrap(err, "marshaling email")
+	}
+
+	if _, err = c.stream.Write(b); err != nil {
+		return errors.Wrap(err, "transmitting email")
+	}
 
 	return nil
 }

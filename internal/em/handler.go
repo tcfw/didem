@@ -12,7 +12,9 @@ import (
 )
 
 const (
-	ProtocolID = protocol.ID("em")
+	ProtocolID      = protocol.ID("em")
+	helloLimit      = 1 << 10
+	helloTimeWindow = 5 * time.Second
 )
 
 type Handler struct {
