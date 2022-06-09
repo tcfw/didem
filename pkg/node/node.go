@@ -7,10 +7,13 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/protocol"
+	"github.com/tcfw/didem/pkg/did"
 )
 
 type Node interface {
 	P2P() P2P
+	Resolver() did.Resolver
+	ID() did.IdentityStore
 }
 
 type P2P interface {

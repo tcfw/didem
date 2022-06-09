@@ -25,9 +25,18 @@ type ClientHandler struct {
 	recipient   *did.PublicIdentity
 	stream      network.Stream
 	serverHello *em.Email
+	resolver    did.Resolver
 }
 
 func (c *ClientHandler) handle(ctx context.Context) error {
+	if c.resolver == nil {
+		return errors.New("no identity store set to validate recipients")
+	}
+
+	if c.identity == nil {
+		return errors.New("no sender identity set")
+	}
+
 	c.email.Time = time.Now().Unix()
 
 	stream, err := c.connectEndProvider(ctx)
@@ -126,6 +135,12 @@ func (c *ClientHandler) validateServerHello() error {
 	}
 	//TODO(tcfw) deep compare sender pubkeys
 
+	//Check public identity
+	knownId, err := c.resolver.Find(h.From.ID)
+	if err != nil {
+		return errors.New("validating publickly known identity of recipient")
+	}
+
 	//Check signature
 	hd := h
 	hd.Signature = nil
@@ -134,7 +149,7 @@ func (c *ClientHandler) validateServerHello() error {
 		return errors.Wrap(err, "rebuilding signature data")
 	}
 	var hasMatchingSignature bool
-	for _, pk := range h.To.PublicKeys {
+	for _, pk := range knownId.PublicKeys {
 		if err := verify(pk.Key, b); err == nil {
 			hasMatchingSignature = true
 			break
