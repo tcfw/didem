@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/tcfw/didem/internal/storage"
+	"github.com/tcfw/didem/pkg/did"
 	storageIface "github.com/tcfw/didem/pkg/storage"
 )
 
@@ -35,6 +36,13 @@ func WithDefaultOptions(ctx context.Context) NodeOption {
 		}
 		n.storage = ipfs
 
+		return nil
+	}
+}
+
+func WithIdentityStore(store did.IdentityStore) NodeOption {
+	return func(n *Node) error {
+		n.idStore = store
 		return nil
 	}
 }

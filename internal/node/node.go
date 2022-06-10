@@ -13,17 +13,21 @@ import (
 	"github.com/tcfw/didem/internal/config"
 	"github.com/tcfw/didem/internal/did"
 	"github.com/tcfw/didem/internal/em"
+	didIface "github.com/tcfw/didem/pkg/did"
 	"github.com/tcfw/didem/pkg/storage"
 
 	nodeIface "github.com/tcfw/didem/pkg/node"
 )
 
 type Node struct {
-	p2p     *p2pHost
-	storage storage.Storage
-	logger  *logrus.Logger
+	p2p              *p2pHost
+	storage          storage.Storage
+	identityResolver didIface.Resolver
+	idStore          didIface.IdentityStore
 
 	handlers map[protocol.ID]interface{}
+
+	logger *logrus.Logger
 }
 
 func (n *Node) Storage() storage.Storage {
@@ -32,6 +36,14 @@ func (n *Node) Storage() storage.Storage {
 
 func (n *Node) P2P() nodeIface.P2P {
 	return n.p2p
+}
+
+func (n *Node) ID() didIface.IdentityStore {
+	return n.idStore
+}
+
+func (n *Node) Resolver() didIface.Resolver {
+	return n.identityResolver
 }
 
 func (n *Node) Did() *did.Handler {

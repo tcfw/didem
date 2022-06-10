@@ -28,10 +28,11 @@ type ServerHandler struct {
 	received    *em.Email
 }
 
-func NewServerHandler(stream network.Stream, store em.Store) *ServerHandler {
+func NewServerHandler(stream network.Stream, store em.Store, idStore did.IdentityStore) *ServerHandler {
 	s := &ServerHandler{
 		stream:  stream,
 		emStore: store,
+		idStore: idStore,
 		rw:      NewStreamRW(stream),
 	}
 
@@ -39,6 +40,14 @@ func NewServerHandler(stream network.Stream, store em.Store) *ServerHandler {
 }
 
 func (s *ServerHandler) handle(ctx context.Context) error {
+	if s.resolver == nil {
+		return errors.New("no identity resolver set to validate recipients")
+	}
+
+	if s.idStore == nil {
+		return errors.New("no identity store set to receive mail")
+	}
+
 	defer s.stream.Close()
 
 	if err := s.readClientHello(); err != nil {

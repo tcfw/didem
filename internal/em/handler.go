@@ -28,7 +28,7 @@ func NewHandler(n node.Node) *Handler {
 }
 
 func (h *Handler) Handle(stream network.Stream) {
-	srv := NewServerHandler(stream, h.store)
+	srv := NewServerHandler(stream, h.store, h.n.ID())
 
 	ctx, cancel := context.WithTimeout(context.Background(), h.receiveTimeout)
 	defer cancel()
@@ -70,6 +70,7 @@ func (h *Handler) send(ctx context.Context, email *em.Email, cfg *em.SendConfig)
 		n:         h.n,
 		email:     email,
 		recipient: rDID,
+		resolver:  h.n.Resolver(),
 	}
 
 	return client.handle(ctx)
