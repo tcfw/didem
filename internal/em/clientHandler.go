@@ -2,8 +2,7 @@ package em
 
 import (
 	"context"
-	"io"
-	"io/ioutil"
+	"crypto/rand"
 	"time"
 
 	"github.com/ipfs/go-cid"
@@ -19,25 +18,34 @@ import (
 )
 
 type ClientHandler struct {
-	n           node.Node
-	email       *em.Email
-	identity    did.PrivateIdentity
-	recipient   *did.PublicIdentity
-	stream      network.Stream
+	n node.Node
+
+	//send info
+	email     *em.Email
+	identity  did.PrivateIdentity
+	recipient *did.PublicIdentity
+
+	//stream
+	stream network.Stream
+	rw     *streamRW
+
+	//state
 	serverHello *em.Email
 }
 
 func (c *ClientHandler) handle(ctx context.Context) error {
-	c.email.Time = time.Now().Unix()
-
-	stream, err := c.connectEndProvider(ctx)
+	s, err := c.connectEndProvider(ctx)
 	if err != nil {
 		return err
 	}
-	c.stream = stream
+	c.stream = s
+	c.rw = NewStreamRW(s)
+	defer c.stream.Close()
+
+	c.email.Time = time.Now().Unix()
+	rand.Read(c.email.Nonce[:])
 
 	if err := c.handshake(); err != nil {
-		c.stream.Close()
 		return errors.Wrap(err, "client handshake")
 	}
 
@@ -71,15 +79,11 @@ func (c *ClientHandler) sendHello() error {
 		return errors.Wrap(err, "mashalling client hello")
 	}
 
-	if _, err = c.stream.Write(b); err != nil {
-		return errors.Wrap(err, "transmitting email")
-	}
-
-	return nil
+	return c.rw.Write(b)
 }
 
 func (c *ClientHandler) readServerHello() error {
-	b, err := ioutil.ReadAll(io.LimitReader(c.stream, helloLimit))
+	b, err := c.rw.Read()
 	if err != nil {
 		return errors.Wrap(err, "reading server hello")
 	}
@@ -115,13 +119,16 @@ func (c *ClientHandler) validateServerHello() error {
 	if h.To.ID == "" || len(h.To.PublicKeys) == 0 {
 		return errors.New("no identity provided")
 	}
-	if h.To.ID != c.recipient.ID {
+	if h.From.ID != c.recipient.ID {
 		return errors.New("unexpected recipient ID")
 	}
-	//TODO(tcfw) deep compare recipients pubkeys
+
+	if !c.recipient.Matches(h.From) {
+		return errors.New("public identity mismatch")
+	}
 
 	//Check sender identity
-	if h.From.ID != c.email.From.ID {
+	if h.To.ID != c.email.From.ID {
 		return errors.New("unexpected change in sender ID")
 	}
 	//TODO(tcfw) deep compare sender pubkeys
@@ -135,7 +142,7 @@ func (c *ClientHandler) validateServerHello() error {
 	}
 	var hasMatchingSignature bool
 	for _, pk := range h.To.PublicKeys {
-		if err := verify(pk.Key, b); err == nil {
+		if err := verify(pk.Key, b, hd.Signature); err == nil {
 			hasMatchingSignature = true
 			break
 		}
@@ -164,12 +171,16 @@ func (c *ClientHandler) sign(e *em.Email) error {
 }
 
 func (c *ClientHandler) makeHello() *em.Email {
-	return &em.Email{
+	e := &em.Email{
 		Time:  c.email.Time,
 		From:  c.email.From,
 		To:    c.email.To,
 		Nonce: c.email.Nonce,
 	}
+
+	rand.Read(e.Nonce[:])
+
+	return e
 }
 
 func (c *ClientHandler) send() error {

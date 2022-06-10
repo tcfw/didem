@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	ProtocolID      = protocol.ID("em")
+	ProtocolID      = protocol.ID("em/0.0.1")
 	helloLimit      = 1 << 10
 	helloTimeWindow = 5 * time.Second
 )
@@ -20,6 +20,7 @@ const (
 type Handler struct {
 	n              node.Node
 	receiveTimeout time.Duration
+	store          em.Store
 }
 
 func NewHandler(n node.Node) *Handler {
@@ -27,9 +28,7 @@ func NewHandler(n node.Node) *Handler {
 }
 
 func (h *Handler) Handle(stream network.Stream) {
-	srv := &ServerHandler{
-		stream: stream,
-	}
+	srv := NewServerHandler(stream, h.store)
 
 	ctx, cancel := context.WithTimeout(context.Background(), h.receiveTimeout)
 	defer cancel()

@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	ProtocolID = protocol.ID("did")
+	ProtocolID = protocol.ID("did/0.0.1")
 )
 
 type Handler struct {
