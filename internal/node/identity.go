@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"io/ioutil"
 	"os"
+	"path"
 
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
@@ -49,6 +50,10 @@ func generateIdentity(ctx context.Context, cfg *config.Config, l *logrus.Logger)
 	b, err := crypto.MarshalPrivateKey(priv)
 	if err != nil {
 		return errors.Wrap(err, "marshaling new private key")
+	}
+
+	if err := os.MkdirAll(path.Dir(cfg.P2P().IdentityFile), 0600); err != nil {
+		return errors.Wrap(err, "making identity config path")
 	}
 
 	return ioutil.WriteFile(cfg.P2P().IdentityFile, b, 0600)

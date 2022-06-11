@@ -57,6 +57,7 @@ func buildP2PConfig() (*P2P, error) {
 	c.Connections.PeersCountHigh = viper.GetInt(Cfg_p2p_connections_peerCountHigh)
 	c.BootstrapPeers = viper.GetStringSlice(Cfg_p2p_bootstartPeers)
 	c.ListenAddrs = viper.GetStringSlice(Cfg_p2p_listeningAddrs)
+	c.Relay = viper.GetBool(Cfg_p2p_enableRelay)
 	c.IdentityFile = expandPath(viper.GetString(Cfg_p2p_identityFile))
 
 	return c, nil

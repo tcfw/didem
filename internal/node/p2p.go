@@ -63,6 +63,7 @@ func newP2PHost(ctx context.Context, n *Node, cfg *config.Config) (*p2pHost, err
 	}
 
 	if cfg.P2P().Relay {
+		n.logger.Warn("p2p relay enabled")
 		opts = append(opts, libp2p.EnableRelay(), libp2p.EnableAutoRelay())
 	}
 
