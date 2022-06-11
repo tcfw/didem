@@ -3,9 +3,11 @@ DOCKERBIN:=docker
 GOFLAGS:=-ldflags="-w -s" -trimpath
 BUILD_DST:=./build
 BIN:=didem
+
+IMGREPO:=ghcr.io/tcfw/
 IMG:=didem
 IMGVER:=latest
-IMGTAG:=$(IMG):$(IMGVER)
+IMGTAG:=$(IMGREPO)$(IMG):$(IMGVER)
 
 .PHONY: build
 build:
@@ -19,3 +21,7 @@ compress:
 .PHONY: docker
 docker:
 	$(DOCKERBIN) build -t $(IMGTAG) .
+
+.PHONY: docker-push
+docker-push:
+	$(DOCKERBIN) push $(IMGTAG)
