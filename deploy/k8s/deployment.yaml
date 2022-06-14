@@ -17,6 +17,7 @@ spec:
       containers:
         - name: didem
           image: ghcr.io/tcfw/didem:main
+          imagePullPolicy: always
           ports:
             - containerPort: 8712
           volumeMounts:

@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	ProtocolID = protocol.ID("/did/0.0.1")
+	ProtocolID = protocol.ID("/tcfw/did/0.0.1")
 )
 
 type Handler struct {
