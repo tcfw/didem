@@ -8,7 +8,8 @@ import (
 
 var (
 	defaults = map[string]interface{}{
-		"verbose": false,
+		"verbose":       false,
+		"identityStore": "~/.didem/identities.yaml",
 	}
 )
 
@@ -48,11 +49,14 @@ func GetConfig() (*Config, error) {
 		logrus.WithField("level", "debug").Debug("setting log level")
 	}
 
+	c.IdentityStore = expandPath(viper.GetString("identityStore"))
+
 	return c, nil
 }
 
 type Config struct {
-	p2p *P2P
+	p2p           *P2P
+	IdentityStore string
 }
 
 func (c *Config) P2P() *P2P {

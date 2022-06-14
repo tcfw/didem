@@ -2,6 +2,8 @@ package node
 
 import (
 	"context"
+	"sync"
+	"time"
 
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p"
@@ -17,14 +19,18 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
 	"github.com/multiformats/go-multiaddr"
+	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
 
 	"github.com/tcfw/didem/internal/config"
+	"github.com/tcfw/didem/pkg/did"
 )
 
 func newP2PHost(ctx context.Context, n *Node, cfg *config.Config) (*p2pHost, error) {
 	var err error
-	h := &p2pHost{}
+	h := &p2pHost{
+		n: n,
+	}
 
 	id, err := getIdentity(ctx, cfg, n.logger)
 	if err != nil {
@@ -87,6 +93,13 @@ func newP2PHost(ctx context.Context, n *Node, cfg *config.Config) (*p2pHost, err
 		return nil, err
 	}
 
+	h.advertiseTimer = *time.NewTicker(3 * time.Minute)
+	go h.watchAdvertise(ctx)
+	go func() {
+		time.Sleep(3 * time.Second)
+		h.doAdvertise(ctx)
+	}()
+
 	return h, nil
 }
 
@@ -120,11 +133,14 @@ func buildListeningAddrs(ctx context.Context, cfg *config.Config) (libp2p.Option
 type p2pHost struct {
 	host host.Host
 
+	n         *Node
 	peerStore peerstore.Peerstore
 	connMgr   connmgriFace.ConnManager
 	pubsub    *pubsub.PubSub
 	dht       *dht.IpfsDHT
 	discovery *discovery.RoutingDiscovery
+
+	advertiseTimer time.Ticker
 }
 
 func (p *p2pHost) Connect(ctx context.Context, info peer.AddrInfo) error {
@@ -137,4 +153,60 @@ func (p *p2pHost) Open(ctx context.Context, peer peer.ID, protocol protocol.ID) 
 
 func (p *p2pHost) FindProvider(ctx context.Context, c cid.Cid) ([]peer.AddrInfo, error) {
 	return p.dht.FindProviders(ctx, c)
+}
+
+func (p *p2pHost) watchAdvertise(ctx context.Context) {
+	for range p.advertiseTimer.C {
+		go p.doAdvertise(ctx)
+	}
+}
+
+func (p *p2pHost) doAdvertise(ctx context.Context) {
+	p.n.logger.Debug("advertising identities started")
+
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	ids, err := p.n.advertisableIdentities(ctx)
+	if err != nil {
+		p.n.logger.WithError(err).Error("getting ids to advertise")
+		return
+	}
+
+	var wg sync.WaitGroup
+
+	for _, id := range ids {
+		wg.Add(1)
+
+		go func(id did.PrivateIdentity) {
+			defer wg.Done()
+
+			if err := p.provideIdentity(ctx, id); err != nil {
+				p.n.logger.WithError(err).Error("failed to advertise identity")
+			}
+		}(id)
+	}
+
+	wg.Wait()
+
+	p.n.logger.Debug("advertisement finished")
+}
+
+func (p *p2pHost) provideIdentity(ctx context.Context, id did.PrivateIdentity) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	pid, err := id.PublicIdentity()
+	if err != nil {
+		return err
+	}
+
+	mh, err := multihash.FromB58String(pid.ID)
+	if err != nil {
+		return err
+	}
+
+	p.n.logger.WithField("id", pid.ID).Debug("advertising identity")
+
+	return p.dht.Provide(ctx, cid.NewCidV1(cid.Raw, mh), true)
 }

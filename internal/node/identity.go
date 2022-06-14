@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/tcfw/didem/internal/config"
+	"github.com/tcfw/didem/pkg/did"
 )
 
 func getIdentity(ctx context.Context, cfg *config.Config, l *logrus.Logger) (libp2p.Option, error) {
@@ -57,4 +58,13 @@ func generateIdentity(ctx context.Context, cfg *config.Config, l *logrus.Logger)
 	}
 
 	return ioutil.WriteFile(cfg.P2P().IdentityFile, b, 0600)
+}
+
+func (n *Node) advertisableIdentities(ctx context.Context) ([]did.PrivateIdentity, error) {
+	l, err := n.idStore.List()
+	if err != nil {
+		return nil, errors.Wrap(err, "getting id list")
+	}
+
+	return l, nil
 }

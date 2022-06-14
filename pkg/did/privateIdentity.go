@@ -17,7 +17,11 @@ type Ed25519Identity struct {
 	sk ed25519.PrivateKey
 }
 
-func NewEd25519Identity(rand io.Reader) (PrivateIdentity, error) {
+func NewEd25519Identity(sk []byte) *Ed25519Identity {
+	return &Ed25519Identity{sk: ed25519.PrivateKey(sk)}
+}
+
+func GenerateEd25519Identity(rand io.Reader) (PrivateIdentity, error) {
 	_, sk, err := ed25519.GenerateKey(rand)
 	if err != nil {
 		return nil, err

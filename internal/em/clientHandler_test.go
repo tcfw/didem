@@ -50,7 +50,7 @@ func TestSendClientHello(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	toId, err := did.NewEd25519Identity(rand.Reader)
+	toId, err := did.GenerateEd25519Identity(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +59,7 @@ func TestSendClientHello(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fromId, err := did.NewEd25519Identity(rand.Reader)
+	fromId, err := did.GenerateEd25519Identity(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}

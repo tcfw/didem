@@ -64,6 +64,13 @@ func NewNode(ctx context.Context, opts ...NodeOption) (*Node, error) {
 		handlers: make(map[protocol.ID]interface{}),
 	}
 
+	if cfg.IdentityStore != "" {
+		n.idStore, err = did.NewFileStore(cfg.IdentityStore)
+		if err != nil {
+			return nil, errors.Wrap(err, "loading identity store")
+		}
+	}
+
 	for _, opt := range opts {
 		if err := opt(n); err != nil {
 			return nil, err
@@ -161,6 +168,8 @@ func (n *Node) bootstrap(ctx context.Context, cfg *config.Config) error {
 		}(*peerinfo)
 	}
 	wg.Wait()
+
+	n.p2p.dht.RefreshRoutingTable()
 
 	return nil
 }
