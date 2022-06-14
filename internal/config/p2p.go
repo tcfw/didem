@@ -33,7 +33,7 @@ var (
 		Cfg_p2p_connections_peerCountLow:  162,
 		Cfg_p2p_connections_peerCountHigh: 192,
 		Cfg_p2p_bootstartPeers: []string{
-			"/dnsaddr/bootstrap.didem.tcfw.com.au/p2p/12D3KooWELsfwz56wmQMh6BeRfZBWAcL5oyHznTNof4S5TGFW4KY",
+			"/dnsaddr/bootstrap.didem.tcfw.com.au/p2p/12D3KooWBaKMRyqvN4VKKggSW9up159ugtEYYSTry1wtZKEzyHcX",
 		},
 		Cfg_p2p_listeningAddrs: []string{
 			"/ip4/0.0.0.0/udp/8712/quic",

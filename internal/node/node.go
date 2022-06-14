@@ -144,17 +144,21 @@ func (n *Node) bootstrap(ctx context.Context, cfg *config.Config) error {
 			return errors.Wrap(err, "parsing bootstrap multiaddr")
 		}
 
-		peerinfo, _ := peer.AddrInfoFromP2pAddr(ma)
+		peerinfo, err := peer.AddrInfoFromP2pAddr(ma)
+		if err != nil {
+			return errors.Wrap(err, "constructing bootstrap peer addr info")
+		}
+
 		wg.Add(1)
-		go func() {
+		go func(peerInfo peer.AddrInfo) {
 			defer wg.Done()
 
-			if err := n.p2p.host.Connect(ctx, *peerinfo); err != nil {
+			if err := n.p2p.host.Connect(ctx, peerInfo); err != nil {
 				n.logger.WithField("peer", peerinfo.String()).WithError(err).Warning("failed to connect to bootstrap peer")
 			} else {
 				n.logger.Debug("Connection established with bootstrap peer:", *peerinfo)
 			}
-		}()
+		}(*peerinfo)
 	}
 	wg.Wait()
 

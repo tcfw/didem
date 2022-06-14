@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: didem-bootstrap
+  labels:
+    app: didem
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: didem
+  template:
+    metadata:
+      labels:
+        app: didem
+    spec:
+      containers:
+        - name: didem
+          image: ghcr.io/tcfw/didem:main
+          ports:
+            - containerPort: 8712
+          volumeMounts:
+            - name: config
+              mountPath: /root/.didem
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: didem-config

@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	ProtocolID      = protocol.ID("em/0.0.1")
+	ProtocolID      = protocol.ID("/em/0.0.1")
 	helloLimit      = 1 << 10
 	helloTimeWindow = 5 * time.Second
 )
