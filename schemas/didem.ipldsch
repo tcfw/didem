@@ -1,0 +1,52 @@
+type KeyType enum {
+	| ECDSA ("0")
+	| Ed25519 ("1")
+} representation int
+
+type DID struct {
+
+}
+
+type Part Bytes
+
+type Msg struct {
+	from &DID
+	to &DID
+	subject String
+	keyType KeyType
+	ephemeralKey Bytes
+	parent &Msg
+	headers optional {String:Bytes}
+	parts [&Part]
+}
+
+type RelayStamp struct {
+	relay &DID
+	signature Signature
+	gateway Bool
+}
+
+type DateTime Int
+
+type ID Bytes
+
+type Signature Bytes
+
+type Signal struct {
+	id ID
+	relays [RelayStamp]
+	sender &DID
+	signature Signature
+	time DateTime
+	received nullable DateTime
+	msg &Msg
+}
+
+type SignalList [&Signal]
+
+type MBox struct {
+	inbox SignalList
+	sent SignalList
+	labels {String:&SignalList}
+	trash SignalList
+}
