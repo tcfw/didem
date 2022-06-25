@@ -20,4 +20,5 @@ type P2P interface {
 	Connect(context.Context, peer.AddrInfo) error
 	Open(context.Context, peer.ID, protocol.ID) (network.Stream, error)
 	FindProvider(context.Context, cid.Cid) ([]peer.AddrInfo, error)
+	Peers() []peer.ID
 }

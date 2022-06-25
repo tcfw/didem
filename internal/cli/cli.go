@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -9,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tcfw/didem/internal/api"
 	"github.com/tcfw/didem/internal/node"
 )
 
@@ -41,6 +43,15 @@ func run(cmd *cobra.Command, args []string) error {
 
 	go func() {
 		if err := node.ListenAndServe(); err != nil {
+			errCh <- err
+		}
+	}()
+
+	api := api.NewAPI(node)
+	defer api.Shutdown(ctx)
+
+	go func() {
+		if err := api.ListenAndServe(&net.TCPAddr{Port: 8080}); err != nil {
 			errCh <- err
 		}
 	}()

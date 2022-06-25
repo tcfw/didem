@@ -66,6 +66,7 @@ func newP2PHost(ctx context.Context, n *Node, cfg *config.Config) (*p2pHost, err
 		libp2p.Peerstore(h.peerStore),
 		libp2p.NATPortMap(),
 		libp2p.EnableNATService(),
+		libp2p.ForceReachabilityPublic(),
 	}
 
 	if cfg.P2P().Relay {
@@ -82,9 +83,13 @@ func newP2PHost(ctx context.Context, n *Node, cfg *config.Config) (*p2pHost, err
 	if err != nil {
 		return nil, errors.Wrap(err, "initing DHT")
 	}
-	if err := h.dht.Bootstrap(ctx); err != nil {
-		return nil, errors.Wrap(err, "bootstrapping DHT")
-	}
+
+	go func() {
+		time.Sleep(2 * time.Second)
+		if err := h.dht.Bootstrap(context.Background()); err != nil {
+			n.logger.WithError(err).Error("bootstrapping DHT")
+		}
+	}()
 
 	h.discovery = discovery.NewRoutingDiscovery(h.dht)
 
@@ -93,7 +98,7 @@ func newP2PHost(ctx context.Context, n *Node, cfg *config.Config) (*p2pHost, err
 		return nil, err
 	}
 
-	h.advertiseTimer = *time.NewTicker(3 * time.Minute)
+	h.advertiseTimer = *time.NewTicker(1 * time.Minute)
 	go h.watchAdvertise(ctx)
 	go func() {
 		time.Sleep(3 * time.Second)
@@ -209,4 +214,8 @@ func (p *p2pHost) provideIdentity(ctx context.Context, id did.PrivateIdentity) e
 	p.n.logger.WithField("id", pid.ID).Debug("advertising identity")
 
 	return p.dht.Provide(ctx, cid.NewCidV1(cid.Raw, mh), true)
+}
+
+func (p *p2pHost) Peers() []peer.ID {
+	return p.host.Network().Peers()
 }
