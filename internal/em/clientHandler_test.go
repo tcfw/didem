@@ -79,14 +79,18 @@ func TestSendClientHello(t *testing.T) {
 	}
 
 	handle := &ClientHandler{
-		stream:    s,
-		rw:        NewStreamRW(s),
 		email:     email,
 		identity:  fromId,
 		recipient: toIdPub,
 	}
 
-	if err := handle.sendHello(); err != nil {
+	stream := &ClientStream{
+		ch:     handle,
+		stream: s,
+		rw:     NewStreamRW(s),
+	}
+
+	if err := stream.sendHello(); err != nil {
 		t.Fatal(err)
 	}
 

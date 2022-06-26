@@ -3,53 +3,59 @@ package api
 import (
 	"context"
 	"net"
-	"net/http"
-	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/tcfw/didem/internal/node"
+	"google.golang.org/grpc"
 )
 
 type APIHandler interface {
-	Setup(*Api, *mux.Router) error
+	Setup(*Api) error
+	Desc() *grpc.ServiceDesc
 }
 
 var (
 	reg = []APIHandler{}
 )
 
-type Api struct {
-	n *node.Node
-	s *http.Server
+type BaseHandler struct {
+	a *Api
 }
 
-func NewAPI(n *node.Node) *Api {
-	return &Api{n: n}
+func (b *BaseHandler) Setup(a *Api) error {
+	b.a = a
+	return nil
+}
+
+type Api struct {
+	n *node.Node
+	g *grpc.Server
+}
+
+func NewAPI(n *node.Node) (*Api, error) {
+	g := grpc.NewServer()
+
+	for _, s := range reg {
+		g.RegisterService(s.Desc(), s)
+	}
+
+	a := &Api{
+		n: n,
+		g: g,
+	}
+
+	return a, nil
 }
 
 func (a *Api) ListenAndServe(l net.Addr) error {
-	a.s = &http.Server{
-		Addr:         l.String(),
-		Handler:      a.router(),
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  1 * time.Minute,
+	lis, err := net.Listen("tcp", l.String())
+	if err != nil {
+		return err
 	}
-	return a.s.ListenAndServe()
+
+	return a.g.Serve(lis)
 }
 
 func (a *Api) Shutdown(ctx context.Context) error {
-	return a.s.Shutdown(ctx)
-}
-
-func (a *Api) router() http.Handler {
-	r := mux.NewRouter()
-
-	for _, h := range reg {
-		if err := h.Setup(a, r); err != nil {
-			panic(err)
-		}
-	}
-
-	return r
+	a.g.GracefulStop()
+	return nil
 }

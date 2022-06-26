@@ -25,3 +25,7 @@ docker:
 .PHONY: docker-push
 docker-push:
 	$(DOCKERBIN) push $(IMGTAG)
+
+.PHONY: gen-api
+gen-api:
+	@./scripts/genproto.sh

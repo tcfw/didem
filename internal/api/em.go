@@ -6,14 +6,14 @@ import (
 )
 
 func init() {
-	reg = append(reg, &p2pApi{})
+	reg = append(reg, &emApi{})
 }
 
-type p2pApi struct {
+type emApi struct {
 	apipb.UnimplementedEmServiceServer
 	BaseHandler
 }
 
-func (p *p2pApi) Desc() *grpc.ServiceDesc {
-	return &apipb.P2PService_ServiceDesc
+func (em *emApi) Desc() *grpc.ServiceDesc {
+	return &apipb.EmService_ServiceDesc
 }

@@ -3,6 +3,7 @@ package em
 import (
 	"context"
 	"crypto/rand"
+	"sync"
 	"time"
 
 	"github.com/ipfs/go-cid"
@@ -24,6 +25,11 @@ type ClientHandler struct {
 	email     *em.Email
 	identity  did.PrivateIdentity
 	recipient *did.PublicIdentity
+	resolver  did.Resolver
+}
+
+type ClientStream struct {
+	ch *ClientHandler
 
 	//stream
 	stream network.Stream
@@ -31,7 +37,6 @@ type ClientHandler struct {
 
 	//state
 	serverHello *em.Email
-	resolver    did.Resolver
 }
 
 func (c *ClientHandler) handle(ctx context.Context) error {
@@ -44,44 +49,69 @@ func (c *ClientHandler) handle(ctx context.Context) error {
 	}
 
 	c.email.Time = time.Now().Unix()
+	rand.Read(c.email.Nonce[:])
 
-	s, err := c.connectEndProvider(ctx)
+	ss, err := c.connectEndProviders(ctx)
 	if err != nil {
 		return err
 	}
-	c.stream = s
-	c.rw = NewStreamRW(s)
-	defer c.stream.Close()
 
-	c.email.Time = time.Now().Unix()
-	rand.Read(c.email.Nonce[:])
+	var wg sync.WaitGroup
+	errs := make(chan error, 1)
+	done := make(chan struct{})
 
-	if err := c.handshake(); err != nil {
-		return errors.Wrap(err, "client handshake")
+	for _, s := range ss {
+		wg.Add(1)
+
+		go func(stream network.Stream) {
+			defer wg.Done()
+			defer stream.Close()
+
+			cs := ClientStream{ch: c, stream: stream, rw: NewStreamRW(stream)}
+
+			if err := cs.handshake(); err != nil {
+				errs <- errors.Wrap(err, "client handshake")
+				return
+			}
+
+			if err := cs.send(); err != nil {
+				errs <- err
+			}
+		}(s)
 	}
 
-	return c.send()
+	go func() {
+		wg.Wait()
+		done <- struct{}{}
+	}()
+
+	select {
+	case err := <-errs:
+		return err
+	case <-done:
+		return nil
+	}
 }
 
-func (c *ClientHandler) handshake() error {
-	if err := c.sendHello(); err != nil {
+func (cs *ClientStream) handshake() error {
+	if err := cs.sendHello(); err != nil {
 		return err
 	}
 
-	if err := c.readServerHello(); err != nil {
+	if err := cs.readServerHello(); err != nil {
 		return err
 	}
 
-	if err := c.validateServerHello(); err != nil {
+	if err := cs.validateServerHello(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *ClientHandler) sendHello() error {
-	hello := c.makeHello()
-	if err := c.sign(hello); err != nil {
+func (cs *ClientStream) sendHello() error {
+	hello := cs.makeHello()
+	if err := cs.sign(hello); err != nil {
 		return errors.Wrap(err, "signing client hello")
 	}
 
@@ -90,11 +120,11 @@ func (c *ClientHandler) sendHello() error {
 		return errors.Wrap(err, "mashalling client hello")
 	}
 
-	return c.rw.Write(b)
+	return cs.rw.Write(b)
 }
 
-func (c *ClientHandler) readServerHello() error {
-	b, err := c.rw.Read()
+func (cs *ClientStream) readServerHello() error {
+	b, err := cs.rw.Read()
 	if err != nil {
 		return errors.Wrap(err, "reading server hello")
 	}
@@ -103,13 +133,13 @@ func (c *ClientHandler) readServerHello() error {
 	if err := msgpack.Unmarshal(b, serverHello); err != nil {
 		return errors.Wrap(err, "unmarshalling server hello")
 	}
-	c.serverHello = serverHello
+	cs.serverHello = serverHello
 
 	return nil
 }
 
-func (c *ClientHandler) validateServerHello() error {
-	h := c.serverHello
+func (cs *ClientStream) validateServerHello() error {
+	h := cs.serverHello
 
 	//Check time window
 	helloTime := time.Unix(h.Time, 0)
@@ -130,22 +160,22 @@ func (c *ClientHandler) validateServerHello() error {
 	if h.To.ID == "" || len(h.To.PublicKeys) == 0 {
 		return errors.New("no identity provided")
 	}
-	if h.From.ID != c.recipient.ID {
+	if h.From.ID != cs.ch.recipient.ID {
 		return errors.New("unexpected recipient ID")
 	}
 
-	if !c.recipient.Matches(h.From) {
+	if !cs.ch.recipient.Matches(h.From) {
 		return errors.New("public identity mismatch")
 	}
 
 	//Check sender identity
-	if h.To.ID != c.email.From.ID {
+	if h.To.ID != cs.ch.email.From.ID {
 		return errors.New("unexpected change in sender ID")
 	}
 	//TODO(tcfw) deep compare sender pubkeys
 
 	//Check public identity
-	knownId, err := c.resolver.Find(h.From.ID)
+	knownId, err := cs.ch.resolver.Find(h.From.ID)
 	if err != nil {
 		return errors.New("validating publickly known identity of recipient")
 	}
@@ -172,13 +202,13 @@ func (c *ClientHandler) validateServerHello() error {
 	return nil
 }
 
-func (c *ClientHandler) sign(e *em.Email) error {
+func (cs *ClientStream) sign(e *em.Email) error {
 	b, err := msgpack.Marshal(e)
 	if err != nil {
 		return errors.Wrap(err, "mashalling client hello")
 	}
 
-	s, err := sign(c.identity.PrivateKey(), b)
+	s, err := sign(cs.ch.identity.PrivateKey(), b)
 	if err != nil {
 		return err
 	}
@@ -187,12 +217,12 @@ func (c *ClientHandler) sign(e *em.Email) error {
 	return nil
 }
 
-func (c *ClientHandler) makeHello() *em.Email {
+func (cs *ClientStream) makeHello() *em.Email {
 	e := &em.Email{
-		Time:  c.email.Time,
-		From:  c.email.From,
-		To:    c.email.To,
-		Nonce: c.email.Nonce,
+		Time:  cs.ch.email.Time,
+		From:  cs.ch.email.From,
+		To:    cs.ch.email.To,
+		Nonce: cs.ch.email.Nonce,
 	}
 
 	rand.Read(e.Nonce[:])
@@ -200,20 +230,20 @@ func (c *ClientHandler) makeHello() *em.Email {
 	return e
 }
 
-func (c *ClientHandler) send() error {
-	b, err := msgpack.Marshal(c.email)
+func (cs *ClientStream) send() error {
+	b, err := msgpack.Marshal(cs.ch.email)
 	if err != nil {
 		return errors.Wrap(err, "marshaling email")
 	}
 
-	if _, err = c.stream.Write(b); err != nil {
+	if _, err = cs.stream.Write(b); err != nil {
 		return errors.Wrap(err, "transmitting email")
 	}
 
 	return nil
 }
 
-func (c *ClientHandler) connectEndProvider(ctx context.Context) (network.Stream, error) {
+func (c *ClientHandler) findProviders(ctx context.Context) ([]peer.AddrInfo, error) {
 	s := sha3.Sum384([]byte(c.recipient.ID))
 	mh, err := multihash.Encode(s[:], multihash.SHA3_384)
 	if err != nil {
@@ -226,26 +256,61 @@ func (c *ClientHandler) connectEndProvider(ctx context.Context) (network.Stream,
 		return nil, errors.Wrap(err, "finding recipient provider")
 	}
 
-	var connected bool
-	var connectedAddr peer.AddrInfo
+	return addrs, nil
+}
+
+func (c *ClientHandler) connectEndProviders(ctx context.Context) ([]network.Stream, error) {
+	addrs, err := c.findProviders(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "finding recipient provider")
+	}
+
+	if len(addrs) == 0 {
+		return nil, errors.New("no recipient providers")
+	}
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	connectedAddrs := []peer.AddrInfo{}
 
 	//try each recipient
 	for _, addr := range addrs {
-		if err := c.n.P2P().Connect(ctx, addr); err == nil {
-			connected = true
-			connectedAddr = addr
-			break
-		}
+		wg.Add(1)
+		go func(addr peer.AddrInfo) {
+			defer wg.Done()
+			if err := c.n.P2P().Connect(ctx, addr); err == nil {
+				mu.Lock()
+				connectedAddrs = append(connectedAddrs, addr)
+				mu.Unlock()
+			}
+		}(addr)
 	}
 
-	if !connected {
-		return nil, errors.New("recipient provider located")
+	wg.Wait()
+
+	if len(connectedAddrs) == 0 {
+		return nil, errors.New("no recipient provider connected")
 	}
 
-	stream, err := c.n.P2P().Open(ctx, connectedAddr.ID, ProtocolID)
-	if err != nil {
-		return nil, errors.Wrap(err, "opening stream to recipient")
+	streams := make([]network.Stream, 0, len(connectedAddrs))
+
+	for _, a := range connectedAddrs {
+		wg.Add(1)
+		go func(connAddr peer.AddrInfo) {
+			defer wg.Done()
+			stream, err := c.n.P2P().Open(ctx, connAddr.ID, ProtocolID)
+			if err != nil {
+				//TODO(tcfw) monitor for failed opens, this might be a bad actor
+				return
+			}
+			mu.Lock()
+			streams = append(streams, stream)
+			mu.Unlock()
+		}(a)
 	}
 
-	return stream, nil
+	wg.Wait()
+
+	return streams, nil
 }

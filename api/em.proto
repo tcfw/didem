@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package em;
+
+option go_package = "github.com/tcfw/didem/api/";
+
+message EmSendRequest {}
+message EmSendResponse {}
+
+service EmService { rpc Send(EmSendRequest) returns (EmSendResponse); }

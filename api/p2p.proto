@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package p2p;
+
+option go_package = "github.com/tcfw/didem/api/";
+
+message PeersRequest {}
+message PeersResponse {}
+
+service P2PService { rpc Peers(PeersRequest) returns (PeersResponse); }
