@@ -14,9 +14,11 @@ var (
 
 func Execute() error {
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "increase verbosity")
+	rootCmd.PersistentFlags().String("addr", "127.0.0.1:8080", "address of daemon")
 	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
+	viper.BindPFlag("daemon_addr", rootCmd.PersistentFlags().Lookup("addr"))
 
-	rootCmd.AddCommand(daemonCmd)
+	regCommands()
 
 	return rootCmd.Execute()
 }

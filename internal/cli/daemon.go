@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"os"
 	"os/signal"
@@ -53,7 +54,8 @@ func runDaemon(cmd *cobra.Command, args []string) error {
 	defer api.Shutdown(ctx)
 
 	go func() {
-		if err := api.ListenAndServe(&net.TCPAddr{Port: viper.GetInt("api-port")}); err != nil {
+		fmt.Printf("Starting CLI API on %d", viper.GetInt("api_port"))
+		if err := api.ListenAndServe(&net.TCPAddr{Port: viper.GetInt("api_port")}); err != nil {
 			errCh <- err
 		}
 	}()

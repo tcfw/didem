@@ -32,15 +32,14 @@ type Api struct {
 }
 
 func NewAPI(n *node.Node) (*Api, error) {
-	g := grpc.NewServer()
-
-	for _, s := range reg {
-		g.RegisterService(s.Desc(), s)
-	}
-
 	a := &Api{
 		n: n,
-		g: g,
+		g: grpc.NewServer(),
+	}
+
+	for _, s := range reg {
+		a.g.RegisterService(s.Desc(), s)
+		s.Setup(a)
 	}
 
 	return a, nil
