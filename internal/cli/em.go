@@ -139,9 +139,13 @@ func runEmSend(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	_, err = api.Em().Send(ctx, req)
+	resp, err := api.Em().Send(ctx, req)
 	if err != nil {
 		logging.WithError(err).Error("failed to send")
+	}
+
+	for _, err := range resp.Errors {
+		logging.Entry().Error(err)
 	}
 
 	return

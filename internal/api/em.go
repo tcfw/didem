@@ -2,11 +2,13 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/pkg/errors"
 	apipb "github.com/tcfw/didem/api"
+	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/tcfw/didem/pkg/em"
 	"google.golang.org/grpc"
 )
@@ -56,6 +58,13 @@ func (ema *emApi) Send(ctx context.Context, req *apipb.EmSendRequest) (*apipb.Em
 	for _, to := range req.To {
 		wg.Add(1)
 		go func(to string, tmpl *em.Email) {
+			defer func() {
+				if r := recover(); r != nil {
+					logging.Entry().WithField("err", fmt.Sprintf("%s", r)).Error("recovered from panic")
+					errs = append(errs, errors.New("internal error sending to "+to))
+				}
+			}()
+
 			defer wg.Done()
 			em := tmpl.Copy()
 
