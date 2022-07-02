@@ -16,3 +16,25 @@ type EmailPart struct {
 	Mime string `msgpack:"m"`
 	Data []byte `msgpack:"d"`
 }
+
+func (e *Email) Copy() *Email {
+	ne := &Email{
+		Time:    e.Time,
+		From:    e.From,
+		To:      e.To,
+		Headers: make(map[string]string, len(e.Headers)),
+		Parts:   make([]EmailPart, len(e.Parts)),
+	}
+
+	for k, v := range e.Headers {
+		ne.Headers[k] = v
+	}
+
+	for i, p := range e.Parts {
+		ne.Parts[i].Mime = p.Mime
+		ne.Parts[i].Data = make([]byte, len(p.Data))
+		copy(ne.Parts[i].Data, p.Data)
+	}
+
+	return ne
+}

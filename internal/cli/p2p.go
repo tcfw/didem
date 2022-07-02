@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	apipb "github.com/tcfw/didem/api"
 	"github.com/tcfw/didem/internal/api"
+	"github.com/tcfw/didem/internal/utils/logging"
 )
 
 var (
@@ -30,13 +31,13 @@ func runP2PPeers(cmd *cobra.Command, args []string) {
 
 	api, err := api.NewClient()
 	if err != nil {
-		fmt.Printf("ERR: %s", err.Error())
+		logging.WithError(err).Error("constructing client")
 		return
 	}
 
 	res, err := api.P2P().Peers(ctx, &apipb.PeersRequest{})
 	if err != nil {
-		fmt.Printf("ERR: %s", err.Error())
+		logging.WithError(err).Error("fetching peers")
 		return
 	}
 

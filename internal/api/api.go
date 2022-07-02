@@ -34,7 +34,7 @@ type Api struct {
 func NewAPI(n *node.Node) (*Api, error) {
 	a := &Api{
 		n: n,
-		g: grpc.NewServer(),
+		g: newGRPCServer(),
 	}
 
 	for _, s := range reg {

@@ -4,7 +4,18 @@ package em;
 
 option go_package = "github.com/tcfw/didem/api/";
 
-message EmSendRequest {}
-message EmSendResponse {}
-
 service EmService { rpc Send(EmSendRequest) returns (EmSendResponse); }
+
+message EmSendRequest {
+  string from = 1;
+  repeated string to = 2;
+  map<string, string> headers = 3;
+  repeated EmSendPart parts = 4;
+}
+
+message EmSendPart {
+  string mime = 1;
+  bytes data = 2;
+}
+
+message EmSendResponse { repeated string errors = 1; }

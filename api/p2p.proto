@@ -4,7 +4,7 @@ package p2p;
 
 option go_package = "github.com/tcfw/didem/api/";
 
+service P2PService { rpc Peers(PeersRequest) returns (PeersResponse); }
+
 message PeersRequest {}
 message PeersResponse { repeated string Peers = 1; }
-
-service P2PService { rpc Peers(PeersRequest) returns (PeersResponse); }
