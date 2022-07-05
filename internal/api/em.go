@@ -68,7 +68,7 @@ func (ema *emApi) Send(ctx context.Context, req *apipb.EmSendRequest) (*apipb.Em
 			defer wg.Done()
 			em := tmpl.Copy()
 
-			id, err := ema.a.n.Resolver().Find(to)
+			id, err := ema.a.n.Resolver().ResolvePI(to)
 			if err != nil {
 				mu.Lock()
 				defer mu.Unlock()

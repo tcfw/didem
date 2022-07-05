@@ -175,7 +175,7 @@ func (cs *ClientStream) validateServerHello() error {
 	//TODO(tcfw) deep compare sender pubkeys
 
 	//Check public identity
-	knownId, err := cs.ch.resolver.Find(h.From.ID)
+	knownId, err := cs.ch.resolver.ResolvePI(h.From.ID)
 	if err != nil {
 		return errors.New("validating publickly known identity of recipient")
 	}

@@ -99,7 +99,7 @@ func (s *ServerHandler) validateClientHello() error {
 
 	s.identity = pi
 
-	pk, err := s.resolver.Find(s.clientHello.From.ID)
+	pk, err := s.resolver.ResolvePI(s.clientHello.From.ID)
 	if err != nil {
 		return errors.Wrap(err, "finding sender identity")
 	}
