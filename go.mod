@@ -3,7 +3,8 @@ module github.com/tcfw/didem
 go 1.17
 
 require (
-	github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4
+	github.com/drand/drand v1.3.2
+	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
 	github.com/ipfs/go-cid v0.1.0
 	github.com/ipfs/go-ipfs v0.12.3-0.20220504184349-34aac1ee4316
 	github.com/ipfs/interface-go-ipfs-core v0.7.0
@@ -51,7 +52,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/davidlazar/go-crypto v0.0.0-20200604182044-b73af7476f6c // indirect
 	github.com/dgraph-io/badger v1.6.2 // indirect
-	github.com/dgraph-io/ristretto v0.0.2 // indirect
+	github.com/dgraph-io/ristretto v0.0.3-0.20200630154024-f66de99634de // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/elastic/gosigar v0.14.2 // indirect
