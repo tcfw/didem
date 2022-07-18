@@ -92,7 +92,7 @@ func (s *ServerHandler) validateClientHello() error {
 		return errors.New("unexpected attachments in client hello")
 	}
 
-	pi, err := s.idStore.Find(s.clientHello.To.ID)
+	pi, err := s.idStore.Find(s.clientHello.To[0].ID)
 	if err != nil {
 		return errors.Wrap(err, "finding matching identity")
 	}
@@ -115,7 +115,7 @@ func (s *ServerHandler) validateClientHello() error {
 		return errors.Wrap(err, "rebuilding signature data")
 	}
 	var hasMatchingSignature bool
-	for _, pk := range s.clientHello.To.PublicKeys {
+	for _, pk := range s.clientHello.To[0].PublicKeys {
 		if err := verify(pk.Key, b, hd.Signature); err == nil {
 			hasMatchingSignature = true
 			break
@@ -146,10 +146,10 @@ func (s *ServerHandler) sendHello() error {
 func (c *ServerHandler) makeHello() *comm.Message {
 	//swap from/to
 	e := &comm.Message{
-		Time:  c.clientHello.Time,
-		From:  c.clientHello.To,
-		To:    c.clientHello.From,
-		Nonce: c.clientHello.Nonce,
+		CreatedTime: c.clientHello.CreatedTime,
+		From:        c.clientHello.To[0],
+		To:          []*did.PublicIdentity{c.clientHello.From},
+		Nonce:       c.clientHello.Nonce,
 	}
 
 	rand.Read(e.Nonce[:])
@@ -176,7 +176,7 @@ func (s *ServerHandler) validateEmail() error {
 		return errors.New("received sender does not match client hello")
 	}
 
-	if !s.clientHello.To.Matches(s.received.To) {
+	if !s.clientHello.To[0].Matches(s.received.To[0]) {
 		return errors.New("received sender does not match client hello")
 	}
 
@@ -187,7 +187,7 @@ func (s *ServerHandler) validateEmail() error {
 		return errors.Wrap(err, "rebuilding signature data")
 	}
 	var hasMatchingSignature bool
-	for _, pk := range s.clientHello.To.PublicKeys {
+	for _, pk := range s.clientHello.To[0].PublicKeys {
 		if err := verify(pk.Key, b, hd.Signature); err == nil {
 			hasMatchingSignature = true
 			break

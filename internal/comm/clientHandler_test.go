@@ -69,12 +69,12 @@ func TestSendClientHello(t *testing.T) {
 	}
 
 	email := &commPkg.Message{
-		Time: 1,
-		To:   toIdPub,
-		From: fromIdPub,
-		Body: map[string]string{"subject": "test"},
+		CreatedTime: 1,
+		To:          []*did.PublicIdentity{toIdPub},
+		From:        fromIdPub,
+		Body:        map[string]string{"subject": "test"},
 		Attachments: []comm.MessageAttachment{
-			{Mime: "text/plain", Data: []byte("test")},
+			{MediaType: "text/plain", Data: []byte("test")},
 		},
 	}
 

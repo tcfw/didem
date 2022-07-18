@@ -61,7 +61,7 @@ func (h *Handler) send(ctx context.Context, email *comm.Message, cfg *comm.SendC
 		return errors.New("no resolver configure")
 	}
 
-	rDID, err := cfg.PublicResolver.ResolvePI(email.To.ID)
+	rDID, err := cfg.PublicResolver.ResolvePI(email.To[0].ID)
 	if err != nil {
 		return errors.Wrap(err, "resolving recipient")
 	}

@@ -10,6 +10,7 @@ import (
 	apipb "github.com/tcfw/didem/api"
 	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/tcfw/didem/pkg/comm"
+	"github.com/tcfw/didem/pkg/did"
 	"google.golang.org/grpc"
 )
 
@@ -39,15 +40,15 @@ func (ema *commApi) Send(ctx context.Context, req *apipb.EmSendRequest) (*apipb.
 
 	tmpl := &comm.Message{
 		From:        from,
-		Time:        time.Now().Unix(),
+		CreatedTime: time.Now().Unix(),
 		Body:        req.Headers,
 		Attachments: make([]comm.MessageAttachment, 0, len(req.Parts)),
 	}
 
 	for _, p := range req.Parts {
 		tmpl.Attachments = append(tmpl.Attachments, comm.MessageAttachment{
-			Mime: p.Mime,
-			Data: p.Data,
+			MediaType: p.Mime,
+			Data:      p.Data,
 		})
 	}
 
@@ -76,7 +77,7 @@ func (ema *commApi) Send(ctx context.Context, req *apipb.EmSendRequest) (*apipb.
 				return
 			}
 
-			em.To = id
+			em.To = []*did.PublicIdentity{id}
 
 			if err = ema.sendSingle(ctx, em); err != nil {
 				mu.Lock()

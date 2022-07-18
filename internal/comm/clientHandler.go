@@ -48,7 +48,7 @@ func (c *ClientHandler) handle(ctx context.Context) error {
 		return errors.New("no sender identity set")
 	}
 
-	c.email.Time = time.Now().Unix()
+	c.email.CreatedTime = time.Now().Unix()
 	rand.Read(c.email.Nonce[:])
 
 	ss, err := c.connectEndProviders(ctx)
@@ -142,7 +142,7 @@ func (cs *ClientStream) validateServerHello() error {
 	h := cs.serverHello
 
 	//Check time window
-	helloTime := time.Unix(h.Time, 0)
+	helloTime := time.Unix(h.CreatedTime, 0)
 	if helloTime.Before(time.Now().Add(-helloTimeWindow)) || helloTime.After(time.Now().Add(helloTimeWindow)) {
 		return errors.New("hello too old")
 	}
@@ -157,7 +157,7 @@ func (cs *ClientStream) validateServerHello() error {
 	}
 
 	//Check recipient identity
-	if h.To.ID == "" || len(h.To.PublicKeys) == 0 {
+	if h.To[0].ID == "" || len(h.To[0].PublicKeys) == 0 {
 		return errors.New("no identity provided")
 	}
 	if h.From.ID != cs.ch.recipient.ID {
@@ -169,7 +169,7 @@ func (cs *ClientStream) validateServerHello() error {
 	}
 
 	//Check sender identity
-	if h.To.ID != cs.ch.email.From.ID {
+	if h.To[0].ID != cs.ch.email.From.ID {
 		return errors.New("unexpected change in sender ID")
 	}
 	//TODO(tcfw) deep compare sender pubkeys
@@ -219,10 +219,10 @@ func (cs *ClientStream) sign(e *comm.Message) error {
 
 func (cs *ClientStream) makeHello() *comm.Message {
 	e := &comm.Message{
-		Time:  cs.ch.email.Time,
-		From:  cs.ch.email.From,
-		To:    cs.ch.email.To,
-		Nonce: cs.ch.email.Nonce,
+		CreatedTime: cs.ch.email.CreatedTime,
+		From:        cs.ch.email.From,
+		To:          cs.ch.email.To,
+		Nonce:       cs.ch.email.Nonce,
 	}
 
 	rand.Read(e.Nonce[:])
