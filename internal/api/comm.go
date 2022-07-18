@@ -9,24 +9,24 @@ import (
 	"github.com/pkg/errors"
 	apipb "github.com/tcfw/didem/api"
 	"github.com/tcfw/didem/internal/utils/logging"
-	"github.com/tcfw/didem/pkg/em"
+	"github.com/tcfw/didem/pkg/comm"
 	"google.golang.org/grpc"
 )
 
 func init() {
-	reg = append(reg, &emApi{})
+	reg = append(reg, &commApi{})
 }
 
-type emApi struct {
+type commApi struct {
 	apipb.UnimplementedEmServiceServer
 	BaseHandler
 }
 
-func (ema *emApi) Desc() *grpc.ServiceDesc {
+func (ema *commApi) Desc() *grpc.ServiceDesc {
 	return &apipb.EmService_ServiceDesc
 }
 
-func (ema *emApi) Send(ctx context.Context, req *apipb.EmSendRequest) (*apipb.EmSendResponse, error) {
+func (ema *commApi) Send(ctx context.Context, req *apipb.EmSendRequest) (*apipb.EmSendResponse, error) {
 	fromsk, err := ema.a.n.ID().Find(req.From)
 	if err != nil {
 		return nil, errors.Wrap(err, "finding identity for sender")
@@ -37,15 +37,15 @@ func (ema *emApi) Send(ctx context.Context, req *apipb.EmSendRequest) (*apipb.Em
 		return nil, errors.Wrap(err, "building public from sender identity")
 	}
 
-	tmpl := &em.Email{
-		From:    from,
-		Time:    time.Now().Unix(),
-		Headers: req.Headers,
-		Parts:   make([]em.EmailPart, 0, len(req.Parts)),
+	tmpl := &comm.Message{
+		From:        from,
+		Time:        time.Now().Unix(),
+		Body:        req.Headers,
+		Attachments: make([]comm.MessageAttachment, 0, len(req.Parts)),
 	}
 
 	for _, p := range req.Parts {
-		tmpl.Parts = append(tmpl.Parts, em.EmailPart{
+		tmpl.Attachments = append(tmpl.Attachments, comm.MessageAttachment{
 			Mime: p.Mime,
 			Data: p.Data,
 		})
@@ -57,7 +57,7 @@ func (ema *emApi) Send(ctx context.Context, req *apipb.EmSendRequest) (*apipb.Em
 
 	for _, to := range req.To {
 		wg.Add(1)
-		go func(to string, tmpl *em.Email) {
+		go func(to string, tmpl *comm.Message) {
 			defer func() {
 				if r := recover(); r != nil {
 					logging.Entry().WithField("err", fmt.Sprintf("%s", r)).Error("recovered from panic")
@@ -100,6 +100,6 @@ func (ema *emApi) Send(ctx context.Context, req *apipb.EmSendRequest) (*apipb.Em
 	return r, nil
 }
 
-func (ema *emApi) sendSingle(ctx context.Context, em *em.Email) error {
-	return ema.a.n.Em().Send(ctx, em)
+func (ema *commApi) sendSingle(ctx context.Context, em *comm.Message) error {
+	return ema.a.n.Comm().Send(ctx, em)
 }

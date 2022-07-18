@@ -1,4 +1,4 @@
-package em
+package comm
 
 import (
 	"context"
@@ -11,8 +11,8 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
+	"github.com/tcfw/didem/pkg/comm"
 	"github.com/tcfw/didem/pkg/did"
-	"github.com/tcfw/didem/pkg/em"
 	"github.com/tcfw/didem/pkg/node"
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/sha3"
@@ -22,7 +22,7 @@ type ClientHandler struct {
 	n node.Node
 
 	//send info
-	email     *em.Email
+	email     *comm.Message
 	identity  did.PrivateIdentity
 	recipient *did.PublicIdentity
 	resolver  did.Resolver
@@ -36,7 +36,7 @@ type ClientStream struct {
 	rw     *streamRW
 
 	//state
-	serverHello *em.Email
+	serverHello *comm.Message
 }
 
 func (c *ClientHandler) handle(ctx context.Context) error {
@@ -129,7 +129,7 @@ func (cs *ClientStream) readServerHello() error {
 		return errors.Wrap(err, "reading server hello")
 	}
 
-	serverHello := &em.Email{}
+	serverHello := &comm.Message{}
 	if err := msgpack.Unmarshal(b, serverHello); err != nil {
 		return errors.Wrap(err, "unmarshalling server hello")
 	}
@@ -202,7 +202,7 @@ func (cs *ClientStream) validateServerHello() error {
 	return nil
 }
 
-func (cs *ClientStream) sign(e *em.Email) error {
+func (cs *ClientStream) sign(e *comm.Message) error {
 	b, err := msgpack.Marshal(e)
 	if err != nil {
 		return errors.Wrap(err, "mashalling client hello")
@@ -217,8 +217,8 @@ func (cs *ClientStream) sign(e *em.Email) error {
 	return nil
 }
 
-func (cs *ClientStream) makeHello() *em.Email {
-	e := &em.Email{
+func (cs *ClientStream) makeHello() *comm.Message {
+	e := &comm.Message{
 		Time:  cs.ch.email.Time,
 		From:  cs.ch.email.From,
 		To:    cs.ch.email.To,

@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/tcfw/didem/internal/config"
 	"github.com/tcfw/didem/internal/did"
-	"github.com/tcfw/didem/internal/em"
+	"github.com/tcfw/didem/internal/comm"
 	didIface "github.com/tcfw/didem/pkg/did"
 	"github.com/tcfw/didem/pkg/storage"
 
@@ -50,8 +50,8 @@ func (n *Node) Did() *did.Handler {
 	return n.handlers[did.ProtocolID].(*did.Handler)
 }
 
-func (n *Node) Em() *em.Handler {
-	return n.handlers[em.ProtocolID].(*em.Handler)
+func (n *Node) Comm() *comm.Handler {
+	return n.handlers[comm.ProtocolID].(*comm.Handler)
 }
 
 func NewNode(ctx context.Context, opts ...NodeOption) (*Node, error) {

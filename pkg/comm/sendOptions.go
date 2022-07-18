@@ -1,4 +1,4 @@
-package em
+package comm
 
 import "github.com/tcfw/didem/pkg/did"
 

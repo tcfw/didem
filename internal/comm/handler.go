@@ -1,4 +1,4 @@
-package em
+package comm
 
 import (
 	"context"
@@ -7,12 +7,12 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/protocol"
 	"github.com/pkg/errors"
-	"github.com/tcfw/didem/pkg/em"
+	"github.com/tcfw/didem/pkg/comm"
 	"github.com/tcfw/didem/pkg/node"
 )
 
 const (
-	ProtocolID      = protocol.ID("/tcfw/em/0.0.1")
+	ProtocolID      = protocol.ID("/did/comm/0.0.1")
 	helloLimit      = 1 << 10
 	helloTimeWindow = 5 * time.Second
 )
@@ -20,7 +20,7 @@ const (
 type Handler struct {
 	n              node.Node
 	receiveTimeout time.Duration
-	store          em.Store
+	store          comm.Store
 }
 
 func NewHandler(n node.Node) *Handler {
@@ -36,8 +36,8 @@ func (h *Handler) Handle(stream network.Stream) {
 	srv.handle(ctx)
 }
 
-func (h *Handler) Send(ctx context.Context, email *em.Email, opts ...em.SendOption) error {
-	cfg := em.NewDefaultSendConfig()
+func (h *Handler) Send(ctx context.Context, email *comm.Message, opts ...comm.SendOption) error {
+	cfg := comm.NewDefaultSendConfig()
 
 	for _, opt := range opts {
 		if err := opt(cfg); err != nil {
@@ -48,7 +48,7 @@ func (h *Handler) Send(ctx context.Context, email *em.Email, opts ...em.SendOpti
 	return h.send(ctx, email, cfg)
 }
 
-func (h *Handler) send(ctx context.Context, email *em.Email, cfg *em.SendConfig) error {
+func (h *Handler) send(ctx context.Context, email *comm.Message, cfg *comm.SendConfig) error {
 	if cfg.Id == nil {
 		return errors.New("sender identity missing")
 	}

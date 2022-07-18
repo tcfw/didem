@@ -1,4 +1,4 @@
-package em
+package comm
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/pkg/errors"
+	"github.com/tcfw/didem/pkg/comm"
 	"github.com/tcfw/didem/pkg/did"
-	"github.com/tcfw/didem/pkg/em"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
@@ -16,19 +16,19 @@ type ServerHandler struct {
 
 	//stores
 	idStore did.IdentityStore
-	emStore em.Store
+	emStore comm.Store
 
 	//stream
 	stream network.Stream
 	rw     *streamRW
 
 	//handshake state
-	clientHello *em.Email
+	clientHello *comm.Message
 	identity    did.PrivateIdentity
-	received    *em.Email
+	received    *comm.Message
 }
 
-func NewServerHandler(stream network.Stream, store em.Store, idStore did.IdentityStore) *ServerHandler {
+func NewServerHandler(stream network.Stream, store comm.Store, idStore did.IdentityStore) *ServerHandler {
 	s := &ServerHandler{
 		stream:  stream,
 		emStore: store,
@@ -75,7 +75,7 @@ func (s *ServerHandler) readClientHello() error {
 		return errors.Wrap(err, "reading client hello")
 	}
 
-	s.clientHello = &em.Email{}
+	s.clientHello = &comm.Message{}
 	if err := msgpack.Unmarshal(b, s.clientHello); err != nil {
 		return errors.Wrap(err, "parsing client hello")
 	}
@@ -84,12 +84,12 @@ func (s *ServerHandler) readClientHello() error {
 }
 
 func (s *ServerHandler) validateClientHello() error {
-	if len(s.clientHello.Headers) != 0 {
-		return errors.New("unexpected headers in client hello")
+	if len(s.clientHello.Body) != 0 {
+		return errors.New("unexpected body in client hello")
 	}
 
-	if len(s.clientHello.Parts) != 0 {
-		return errors.New("unexpected parts in client hello")
+	if len(s.clientHello.Attachments) != 0 {
+		return errors.New("unexpected attachments in client hello")
 	}
 
 	pi, err := s.idStore.Find(s.clientHello.To.ID)
@@ -143,9 +143,9 @@ func (s *ServerHandler) sendHello() error {
 	return s.rw.Write(b)
 }
 
-func (c *ServerHandler) makeHello() *em.Email {
+func (c *ServerHandler) makeHello() *comm.Message {
 	//swap from/to
-	e := &em.Email{
+	e := &comm.Message{
 		Time:  c.clientHello.Time,
 		From:  c.clientHello.To,
 		To:    c.clientHello.From,
@@ -163,7 +163,7 @@ func (s *ServerHandler) readEmail() error {
 		return err
 	}
 
-	s.received = &em.Email{}
+	s.received = &comm.Message{}
 	if err := msgpack.Unmarshal(b, s.received); err != nil {
 		return errors.Wrap(err, "parsing email")
 	}
@@ -201,7 +201,7 @@ func (s *ServerHandler) validateEmail() error {
 	return nil
 }
 
-func (c *ServerHandler) sign(e *em.Email) error {
+func (c *ServerHandler) sign(e *comm.Message) error {
 	b, err := msgpack.Marshal(e)
 	if err != nil {
 		return errors.Wrap(err, "mashalling client hello")

@@ -1,4 +1,4 @@
-package em
+package comm
 
 import (
 	"context"
@@ -9,9 +9,9 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/stretchr/testify/assert"
+	"github.com/tcfw/didem/pkg/comm"
+	commPkg "github.com/tcfw/didem/pkg/comm"
 	"github.com/tcfw/didem/pkg/did"
-	"github.com/tcfw/didem/pkg/em"
-	emPkg "github.com/tcfw/didem/pkg/em"
 )
 
 func TestSendClientHello(t *testing.T) {
@@ -25,7 +25,7 @@ func TestSendClientHello(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var received *em.Email
+	var received *comm.Message
 	done := make(chan struct{}, 1)
 
 	h1.SetStreamHandler(ProtocolID, func(s network.Stream) {
@@ -68,12 +68,12 @@ func TestSendClientHello(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	email := &emPkg.Email{
-		Time:    1,
-		To:      toIdPub,
-		From:    fromIdPub,
-		Headers: map[string]string{"subject": "test"},
-		Parts: []em.EmailPart{
+	email := &commPkg.Message{
+		Time: 1,
+		To:   toIdPub,
+		From: fromIdPub,
+		Body: map[string]string{"subject": "test"},
+		Attachments: []comm.MessageAttachment{
 			{Mime: "text/plain", Data: []byte("test")},
 		},
 	}

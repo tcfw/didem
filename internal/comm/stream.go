@@ -1,4 +1,4 @@
-package em
+package comm
 
 import (
 	"bufio"

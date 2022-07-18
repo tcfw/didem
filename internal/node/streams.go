@@ -3,16 +3,16 @@ package node
 import (
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/protocol"
+	"github.com/tcfw/didem/internal/comm"
 	"github.com/tcfw/didem/internal/did"
-	"github.com/tcfw/didem/internal/em"
 )
 
 type handlerSetup func(n *Node) (network.StreamHandler, interface{}, error)
 
 var (
 	streamHandlers = map[protocol.ID]handlerSetup{
-		did.ProtocolID: newDidStreamHandler,
-		em.ProtocolID:  newEmStreamHandler,
+		did.ProtocolID:  newDidStreamHandler,
+		comm.ProtocolID: newCommStreamHandler,
 	}
 )
 
@@ -38,8 +38,8 @@ func newDidStreamHandler(n *Node) (network.StreamHandler, interface{}, error) {
 	return did.Handle, did, nil
 }
 
-func newEmStreamHandler(n *Node) (network.StreamHandler, interface{}, error) {
-	em := em.NewHandler(n)
+func newCommStreamHandler(n *Node) (network.StreamHandler, interface{}, error) {
+	comm := comm.NewHandler(n)
 
-	return em.Handle, em, nil
+	return comm.Handle, comm, nil
 }

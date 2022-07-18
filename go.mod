@@ -3,7 +3,6 @@ module github.com/tcfw/didem
 go 1.17
 
 require (
-	github.com/drand/drand v1.3.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
 	github.com/ipfs/go-cid v0.1.0
 	github.com/ipfs/go-ipfs v0.12.3-0.20220504184349-34aac1ee4316
@@ -139,6 +138,7 @@ require (
 	github.com/libp2p/go-flow-metrics v0.0.3 // indirect
 	github.com/libp2p/go-libp2p-asn-util v0.2.0 // indirect
 	github.com/libp2p/go-libp2p-blankhost v0.3.0 // indirect
+	github.com/libp2p/go-libp2p-connmgr v0.3.0 // indirect
 	github.com/libp2p/go-libp2p-kbucket v0.4.7 // indirect
 	github.com/libp2p/go-libp2p-loggables v0.1.0 // indirect
 	github.com/libp2p/go-libp2p-mplex v0.7.0 // indirect
