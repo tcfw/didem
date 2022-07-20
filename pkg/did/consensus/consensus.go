@@ -8,9 +8,9 @@ import (
 )
 
 type Consensus struct {
-	beacon <-chan []byte
+	beacon <-chan int64
 
-	db     *Db
+	db     Db
 	logger logrus.Logger
 }
 
@@ -26,7 +26,7 @@ func (c *Consensus) Proposer() <-chan peer.ID {
 			}
 
 			m := big.NewInt(0)
-			m.SetBytes(b)
+			m.SetInt64(b)
 			mn := m.Mod(m, big.NewInt(int64(len(nodes)))).Int64()
 
 			p := nodes[mn]

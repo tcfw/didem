@@ -3,7 +3,7 @@ package did
 import "crypto"
 
 type PublicIdentity struct {
-	ID         string      `msgpack:"i"`
+	ID         string      `msgpack:"i" json:"."`
 	PublicKeys []PublicKey `msgpack:"p"`
 }
 

@@ -1,3 +1,5 @@
+//go:generate go run github.com/vektra/mockery/v2 --name Db
+
 package consensus
 
 import (
@@ -5,8 +7,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Db struct{}
+type Db interface {
+	Nodes() ([]peer.ID, error)
+}
 
-func (db *Db) Nodes() ([]peer.ID, error) {
+type dbImpl struct{}
+
+func (db *dbImpl) Nodes() ([]peer.ID, error) {
 	return nil, errors.New("not impl")
 }
