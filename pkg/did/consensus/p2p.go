@@ -56,6 +56,8 @@ func (p *p2p) Msgs(channel string) (<-chan *Msg, error) {
 				p.logger.WithError(err).WithField("from", m.From).Error("unmarshalling msg")
 				continue
 			}
+			msg.Signature = m.Signature
+			msg.Key = m.Key
 
 			msgCh <- msg
 		}

@@ -3,6 +3,8 @@ package consensus
 import (
 	"time"
 
+	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/tcfw/didem/pkg/tx"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
@@ -20,23 +22,37 @@ const (
 	ConsensusMsgTypeNewRound ConsensusMsgType = iota + 1
 	ConsensusMsgTypeProposal
 	ConsensusMsgTypeVote
-	ConsensusMsgTypePreCommit
 	ConsensusMsgTypeBlock
 )
 
 type Msg struct {
 	Type      MsgType       `msgpack:"t"`
+	From      peer.ID       `msgpack:"p"`
 	Tx        *TxMsg        `msgpack:"tx,omitempty"`
 	Block     *BlockMsg     `msgpack:"bl,omitempty"`
 	Consensus *ConsensusMsg `msgpack:"cn,omitempty"`
+	Timestamp time.Time     `msgpack:"ts"`
+	Signature []byte        `msgpack:"s"`
+	Key       []byte        `msgpack:"k,omptempty"`
 }
 
 func (m *Msg) Marshal() ([]byte, error) {
 	return msgpack.Marshal(m)
 }
 
-type TxMsg struct{}
-type BlockMsg struct{}
+type TxMsg struct {
+	Tx *tx.Tx `msgpack:"t"`
+}
+
+type BlockMsg struct {
+	Version   uint32    `msgpack:"v"`
+	ParentID  string    `msgpack:"i"`
+	Timestamp time.Time `msgpack:"t"`
+	Proposer  string    `msgpack:"p"`
+	None      []byte    `msgpack:"n"`
+	Signature []byte    `msgpack:"s"`
+	Tx        []*tx.Tx  `msgpack:"x"`
+}
 
 type ConsensusMsg struct {
 	Type     ConsensusMsgType      `msgpack:"t"`
@@ -47,10 +63,12 @@ type ConsensusMsg struct {
 }
 
 type ConsensusMsgNewRound struct {
-	Height                int64 `msgpack:"h"`
-	Round                 int32 `msgpack:"r"`
-	SecondsSinceStartTime int64 `msgpack:"s"`
-	LastCommitRound       int32 `msgpack:"l"`
+	Height                uint64    `msgpack:"h"`
+	Round                 uint32    `msgpack:"r"`
+	SecondsSinceStartTime uint64    `msgpack:"t"`
+	LastCommitRound       uint32    `msgpack:"l"`
+	Timestamp             time.Time `msgpack:"ts"`
+	Signature             []byte    `msgpack:"s"`
 }
 
 type ConsensusMsgProposal struct {
@@ -70,18 +88,18 @@ const (
 )
 
 type ConsensusMsgVote struct {
-	Type             VoteType  `msgpack:"t"`
-	Height           uint64    `msgpack:"h,omitempty"`
-	Round            uint32    `msgpack:"r,omitempty"`
-	BlockID          string    `msgpack:"id"`
-	Timestamp        time.Time `msgpack:"ts"`
-	ValidatorAddress []byte    `msgpack:"v_a,omitempty"`
-	ValidatorIndex   int32     `msgpack:"v_i,omitempty"`
-	Signature        []byte    `msgpack:"s,omitempty"`
+	Type      VoteType  `msgpack:"t"`
+	Height    uint64    `msgpack:"h,omitempty"`
+	Round     uint32    `msgpack:"r,omitempty"`
+	BlockID   string    `msgpack:"id"`
+	Timestamp time.Time `msgpack:"ts"`
+	Validator string    `msgpack:"v,omitempty"`
+	Signature []byte    `msgpack:"s,omitempty"`
 }
 
 type ConsensusMsgBlock struct {
-	Height uint64 `msgpack:"h"`
-	Round  uint32 `msgpack:"r"`
-	CID    string `msgpack:"c"`
+	Height    uint64 `msgpack:"h"`
+	Round     uint32 `msgpack:"r"`
+	CID       string `msgpack:"c"`
+	Signature []byte `msgpack:"s,omitempty"`
 }
