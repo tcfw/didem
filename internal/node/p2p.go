@@ -113,6 +113,7 @@ func newGossipSub(ctx context.Context, cfg *config.Config, h *p2pHost) (*pubsub.
 		pubsub.WithPeerExchange(true),
 		pubsub.WithStrictSignatureVerification(true),
 		pubsub.WithDiscovery(h.discovery),
+		pubsub.WithMaxMessageSize(pubsub.DefaultMaxMessageSize*2),
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating gossipsub router")

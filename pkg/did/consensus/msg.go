@@ -45,13 +45,7 @@ type TxMsg struct {
 }
 
 type BlockMsg struct {
-	Version   uint32    `msgpack:"v"`
-	ParentID  string    `msgpack:"i"`
-	Timestamp time.Time `msgpack:"t"`
-	Proposer  string    `msgpack:"p"`
-	None      []byte    `msgpack:"n"`
-	Signature []byte    `msgpack:"s"`
-	Tx        []*tx.Tx  `msgpack:"x"`
+	Block *Block `msgpack:"b"`
 }
 
 type ConsensusMsg struct {
