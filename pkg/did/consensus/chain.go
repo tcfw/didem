@@ -23,3 +23,7 @@ type TxTrie struct {
 }
 
 type Tx struct{}
+
+func (b *Block) IsValid(bs BlockStore) error {
+	return nil
+}

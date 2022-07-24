@@ -20,8 +20,9 @@ type Consensus struct {
 	id     peer.ID
 	logger logrus.Logger
 
-	db      Db
-	memPool MemPool
+	db         Db
+	memPool    MemPool
+	blockStore BlockStore
 
 	beacon <-chan int64
 	p2p    *p2p
@@ -233,10 +234,24 @@ func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
 		return
 	}
 
-	//download block
+	cid, err := cid.Parse(msg.BlockID)
+	if err != nil {
+		c.logger.WithError(err).Error("unable to parse CID")
+		return
+	}
 
-	valid := true
-	//TODO(tcfw): validate prop
+	block, err := c.blockStore.getBlock(cid)
+	if err != nil {
+		c.logger.WithError(err).Error("getting block")
+		return
+	}
+
+	valid := false
+	if err := block.IsValid(c.blockStore); err != nil {
+		c.logger.WithError(err).Error("invalid block")
+	} else {
+		valid = true
+	}
 
 	if !valid {
 		if err := c.sendVote(VoteTypePreVote, ""); err != nil {
