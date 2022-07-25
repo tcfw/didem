@@ -16,3 +16,6 @@ vendor/
 
 # Build directories
 build/
+
+# Testground
+tests/data

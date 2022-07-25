@@ -18,7 +18,7 @@ const (
 
 type Consensus struct {
 	id     peer.ID
-	logger logrus.Logger
+	logger *logrus.Entry
 
 	db         Db
 	memPool    MemPool
@@ -109,12 +109,12 @@ func (c *Consensus) watchProposer() {
 
 func (c *Consensus) StartRound() error {
 	c.propsalState.AmProposer = true
-	c.propsalState.lockedRound = -1
-	c.propsalState.lockedValue = cid.Cid{}
+	c.propsalState.lockedRound = 0
+	c.propsalState.lockedValue = nil
 	c.propsalState.Step = propose
-	c.propsalState.Height = c.state.Height
-	c.propsalState.Round = 0
-	c.propsalState.Block = cid.Cid{}
+	c.propsalState.Height = c.state.Height + 1
+	c.propsalState.Round = 1
+	c.propsalState.Block = nil
 	c.propsalState.PreVotes = make(map[peer.ID]*ConsensusMsgVote)
 	c.propsalState.PreCommits = make(map[peer.ID]*ConsensusMsgVote)
 
@@ -124,10 +124,20 @@ func (c *Consensus) StartRound() error {
 	}
 	c.propsalState.f = (uint64(len(n))/3)*2 + 1
 
+	if err := c.sendNewRound(); err != nil {
+		return errors.Wrap(err, "sending new round")
+	}
+
 	//build block
 	//upload block
+
+	c.propsalState.Block = &cid.Cid{}
+
 	//broadcast proposal
-	//wait for updates
+	if err := c.sendProposal(); err != nil {
+		return errors.Wrap(err, "sending proposal")
+	}
+
 	//append timeout
 
 	return nil
@@ -211,13 +221,13 @@ func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
 		return
 	}
 
-	c.propsalState.lockedRound = -1
-	c.propsalState.lockedValue = cid.Cid{}
+	c.propsalState.lockedRound = 0
+	c.propsalState.lockedValue = nil
 	c.propsalState.AmProposer = false
 	c.propsalState.Step = propose
 	c.propsalState.Height = msg.Height
 	c.propsalState.Round = msg.Round
-	c.propsalState.Block = cid.Cid{}
+	c.propsalState.Block = nil
 	c.propsalState.PreVotes = make(map[peer.ID]*ConsensusMsgVote)
 	c.propsalState.PreCommits = make(map[peer.ID]*ConsensusMsgVote)
 
@@ -239,6 +249,8 @@ func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
 		c.logger.WithError(err).Error("unable to parse CID")
 		return
 	}
+
+	c.propsalState.Block = &cid
 
 	block, err := c.blockStore.getBlock(cid)
 	if err != nil {
@@ -284,6 +296,8 @@ func (c *Consensus) onPreVote(msg *ConsensusMsgVote, from peer.ID) {
 			return
 		}
 		c.propsalState.Step = precommit
+		c.propsalState.lockedValue = c.propsalState.Block
+		c.propsalState.lockedRound = c.propsalState.Round
 	}
 }
 
@@ -294,13 +308,22 @@ func (c *Consensus) OnPreCommit(msg *ConsensusMsgVote, from peer.ID) {
 
 	c.propsalState.PreCommits[from] = msg
 
-	if c.propsalState.AmProposer && uint64(len(c.propsalState.PreCommits)) > c.propsalState.f {
-		//send block msg
+	if uint64(len(c.propsalState.PreCommits)) > c.propsalState.f {
+		if c.propsalState.AmProposer {
+			//send block msg
+		} else {
+			//expect block msg
+		}
 	}
 }
 
 func (c *Consensus) sendNewRound() error {
-	msg := &ConsensusMsgNewRound{}
+	msg := &ConsensusMsgNewRound{
+		Height:          c.propsalState.Height,
+		Round:           c.propsalState.Round,
+		LastCommitRound: c.state.Round,
+		Timestamp:       time.Now(),
+	}
 
 	return c.sendMsg(msg)
 }
@@ -318,11 +341,11 @@ func (c *Consensus) sendVote(t VoteType, value string) error {
 	return c.sendMsg(msg)
 }
 
-func (c *Consensus) sendProposal(cid string) error {
+func (c *Consensus) sendProposal() error {
 	msg := &ConsensusMsgProposal{
 		Height:    c.propsalState.Height,
 		Round:     c.propsalState.Round,
-		BlockID:   cid,
+		BlockID:   c.propsalState.Block.String(),
 		Timestamp: time.Now(),
 	}
 
@@ -361,11 +384,11 @@ func (c *Consensus) onBlock(msg *ConsensusMsgBlock, from peer.ID) {
 	if from != c.currentProposer ||
 		c.propsalState.Step != precommit ||
 		msg.CID != c.propsalState.lockedValue.String() ||
-		c.propsalState.lockedRound != int32(msg.Round) {
+		c.propsalState.lockedRound != msg.Round {
 		return
 	}
 
-	c.state.Height = msg.Height
-	c.state.ParentBlock = c.state.Block
-	c.state.Block, _ = cid.Parse(msg.CID)
+	c.state.Height = c.propsalState.Height
+	c.state.ParentBlock = *c.state.Block
+	c.state.Block = c.propsalState.lockedValue
 }

@@ -18,7 +18,7 @@ type State struct {
 	Height      uint64
 	Round       uint32
 	Step        Step
-	Block       cid.Cid
+	Block       *cid.Cid
 	ParentBlock cid.Cid
 
 	f uint64
@@ -26,6 +26,6 @@ type State struct {
 	PreVotes   map[peer.ID]*ConsensusMsgVote
 	PreCommits map[peer.ID]*ConsensusMsgVote
 
-	lockedValue cid.Cid
-	lockedRound int32
+	lockedValue *cid.Cid
+	lockedRound uint32
 }

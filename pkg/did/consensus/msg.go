@@ -57,12 +57,10 @@ type ConsensusMsg struct {
 }
 
 type ConsensusMsgNewRound struct {
-	Height                uint64    `msgpack:"h"`
-	Round                 uint32    `msgpack:"r"`
-	SecondsSinceStartTime uint64    `msgpack:"t"`
-	LastCommitRound       uint32    `msgpack:"l"`
-	Timestamp             time.Time `msgpack:"ts"`
-	Signature             []byte    `msgpack:"s"`
+	Height          uint64    `msgpack:"h"`
+	Round           uint32    `msgpack:"r"`
+	LastCommitRound uint32    `msgpack:"l"`
+	Timestamp       time.Time `msgpack:"ts"`
 }
 
 type ConsensusMsgProposal struct {

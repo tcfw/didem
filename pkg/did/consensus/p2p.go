@@ -17,7 +17,7 @@ const (
 
 type p2p struct {
 	router *pubsub.PubSub
-	logger logrus.Logger
+	logger *logrus.Entry
 
 	topics map[string]*pubsub.Topic
 }
@@ -77,5 +77,5 @@ func (p *p2p) PublishContext(ctx context.Context, channel string, m *Msg) error 
 		return errors.Wrap(err, "")
 	}
 
-	return t.Publish(ctx, b)
+	return t.Publish(ctx, b, pubsub.WithReadiness(pubsub.MinTopicSize(1)))
 }
