@@ -33,7 +33,7 @@ type TxTrie struct {
 }
 
 type Validator struct {
-	s Storage
+	s Store
 }
 
 func (b *Block) IsValid() error {
@@ -43,21 +43,21 @@ func (b *Block) IsValid() error {
 func (v *Validator) AllTx(ctx context.Context, b *Block) ([]*tx.Tx, error) {
 	txSeen := map[string]*tx.Tx{}
 	visited := map[cid.Cid]struct{}{}
-	trieQ := []cid.Cid{b.TxRoot}
+	queue := []cid.Cid{b.TxRoot}
 
-	for len(trieQ) != 0 {
+	for len(queue) != 0 {
 		//pop
-		el := trieQ[0]
-		trieQ = trieQ[1:]
+		trieCid := queue[0]
+		queue = queue[1:]
 
 		//just incase we encounter a loop (bad proposer?)
-		if _, ok := visited[el]; ok {
+		if _, ok := visited[trieCid]; ok {
 			continue
 		} else {
-			visited[el] = struct{}{}
+			visited[trieCid] = struct{}{}
 		}
 
-		trie, err := v.s.GetTrie(ctx, el)
+		trie, err := v.s.GetTrie(ctx, trieCid)
 		if err != nil {
 			return nil, errors.Wrap(err, "getting root trie")
 		}
@@ -69,6 +69,8 @@ func (v *Validator) AllTx(ctx context.Context, b *Block) ([]*tx.Tx, error) {
 			}
 
 			txSeen[trie.Tx.KeyString()] = tx
+
+			//max check
 			if len(txSeen) > maxBlockTxCount {
 				return nil, errors.New("block containers too many tx")
 			}
@@ -76,12 +78,11 @@ func (v *Validator) AllTx(ctx context.Context, b *Block) ([]*tx.Tx, error) {
 
 		//push
 		if len(trie.Children) > 0 {
-			trieQ = append(trieQ, trie.Children...)
+			queue = append(queue, trie.Children...)
 		}
 	}
 
 	txList := make([]*tx.Tx, 0, len(txSeen))
-
 	for _, tx := range txSeen {
 		txList = append(txList, tx)
 	}

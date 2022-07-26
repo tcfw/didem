@@ -7,7 +7,7 @@ import (
 	"github.com/tcfw/didem/pkg/tx"
 )
 
-type Storage interface {
+type Store interface {
 	PutTx(context.Context, *tx.Tx) (cid.Cid, error)
 	GetTx(context.Context, cid.Cid) (*tx.Tx, error)
 
