@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ipfs/go-cid"
+	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -14,10 +15,15 @@ import (
 const (
 	pubsubMsgsChanName = "/did/msgs"
 	pubsubTxChanName   = "/did/tx"
+
+	timeoutPropose   = 1 * time.Minute
+	timeoutPrevote   = 1 * time.Minute
+	timeoutPrecommit = 1 * time.Minute
 )
 
 type Consensus struct {
 	id     peer.ID
+	priv   crypto.PrivKey
 	logger *logrus.Entry
 
 	db         Db
@@ -27,9 +33,12 @@ type Consensus struct {
 	beacon <-chan int64
 	p2p    *p2p
 
-	state           State
-	currentProposer peer.ID
-	propsalState    State
+	state        State
+	propsalState State
+
+	timerPropose   *time.Timer
+	timerPrevote   *time.Timer
+	timerPrecommit *time.Timer
 }
 
 func (c *Consensus) proposer() <-chan peer.ID {
@@ -56,13 +65,40 @@ func (c *Consensus) proposer() <-chan peer.ID {
 }
 
 func (c *Consensus) Start() error {
+	c.timerPropose = time.NewTimer(1 * time.Minute)
+	if !c.timerPropose.Stop() {
+		<-c.timerPropose.C //clear timer
+	}
+	c.timerPrevote = time.NewTimer(1 * time.Minute)
+	if !c.timerPrevote.Stop() {
+		<-c.timerPrevote.C //clear timer
+	}
+	c.timerPrecommit = time.NewTimer(1 * time.Minute)
+	if !c.timerPrecommit.Stop() {
+		<-c.timerPrecommit.C //clear timer
+	}
+
 	go c.watchProposer()
+	go c.watchTimeouts()
 
 	if err := c.subscribeMsgs(); err != nil {
 		return errors.Wrap(err, "watching msgs")
 	}
 
 	return c.subscribeTx()
+}
+
+func (c *Consensus) watchTimeouts() {
+	for {
+		select {
+		case <-c.timerPropose.C:
+			c.onTimeoutProposal()
+		case <-c.timerPrevote.C:
+			c.onTimeoutPrevote()
+		case <-c.timerPrecommit.C:
+			c.onTimeoutPrecommit()
+		}
+	}
 }
 
 func (c *Consensus) subscribeMsgs() error {
@@ -98,26 +134,23 @@ func (c *Consensus) subscribeTx() error {
 func (c *Consensus) watchProposer() {
 	for id := range c.proposer() {
 		c.propsalState.Step = propose
+		c.propsalState.Proposer = id
 
-		if id == c.id {
-			go c.StartRound(false)
-		} else {
-			//TODO(tcfw) start propose timeout
-		}
+		c.StartRound(false)
 	}
 }
 
 func (c *Consensus) StartRound(inc bool) error {
-	c.propsalState.AmProposer = true
+	c.propsalState.AmProposer = c.propsalState.Proposer == c.id
 	c.propsalState.lockedRound = 0
-	c.propsalState.lockedValue = nil
+	c.propsalState.lockedValue = cid.Undef
 	c.propsalState.Step = propose
 	c.propsalState.Height = c.state.Height + 1
 	if inc {
 		c.propsalState.Round++
 	} else {
 		c.propsalState.Round = 1
-		c.propsalState.Block = nil
+		c.propsalState.Block = cid.Undef
 	}
 	c.propsalState.PreVotes = make(map[peer.ID]*ConsensusMsgVote)
 	c.propsalState.PreCommits = make(map[peer.ID]*ConsensusMsgVote)
@@ -128,6 +161,11 @@ func (c *Consensus) StartRound(inc bool) error {
 	}
 	c.propsalState.f = (uint64(len(n))/3)*2 + 1
 
+	if !c.propsalState.AmProposer {
+		c.timerPropose.Reset(timeoutPropose)
+		return nil
+	}
+
 	if err := c.sendNewRound(); err != nil {
 		return errors.Wrap(err, "sending new round")
 	}
@@ -135,7 +173,7 @@ func (c *Consensus) StartRound(inc bool) error {
 	//build block
 	//upload block
 
-	c.propsalState.Block = &cid.Cid{}
+	c.propsalState.Block = cid.Undef
 
 	//broadcast proposal
 	if err := c.sendProposal(); err != nil {
@@ -158,7 +196,7 @@ func (c *Consensus) OnMsg(msg *Msg) {
 		return
 	}
 
-	signInfo, err := signatureData(msg)
+	signData, err := signatureData(msg)
 	if err != nil {
 		c.logger.WithError(err).Error("making msg signature data")
 		return
@@ -166,7 +204,7 @@ func (c *Consensus) OnMsg(msg *Msg) {
 
 	hasValidSignature := false
 	for _, k := range node.Keys {
-		if err := Verify(signInfo, msg.Signature, k); err == nil {
+		if err := Verify(signData, msg.Signature, k); err == nil {
 			hasValidSignature = true
 			break
 		}
@@ -205,7 +243,7 @@ func (c *Consensus) onTx(msg *TxMsg, from peer.ID) {
 }
 
 func (c *Consensus) onVote(msg *ConsensusMsgVote, from peer.ID) {
-	if from == c.currentProposer ||
+	if from == c.propsalState.Proposer ||
 		msg.Height != c.propsalState.Height ||
 		msg.BlockID != c.propsalState.Block.String() ||
 		msg.Round != c.propsalState.Round {
@@ -221,17 +259,17 @@ func (c *Consensus) onVote(msg *ConsensusMsgVote, from peer.ID) {
 }
 
 func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
-	if from != c.currentProposer {
+	if from != c.propsalState.Proposer {
 		return
 	}
 
 	c.propsalState.lockedRound = 0
-	c.propsalState.lockedValue = nil
+	c.propsalState.lockedValue = cid.Undef
 	c.propsalState.AmProposer = false
 	c.propsalState.Step = propose
 	c.propsalState.Height = msg.Height
 	c.propsalState.Round = msg.Round
-	c.propsalState.Block = nil
+	c.propsalState.Block = cid.Undef
 	c.propsalState.PreVotes = make(map[peer.ID]*ConsensusMsgVote)
 	c.propsalState.PreCommits = make(map[peer.ID]*ConsensusMsgVote)
 
@@ -240,23 +278,24 @@ func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
 		c.logger.WithError(err).Error("getting nodes")
 		return
 	}
+
 	c.propsalState.f = (uint64(len(n))/3)*2 + 1
 }
 
 func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
-	if from != c.currentProposer || c.propsalState.Step != propose {
+	if from != c.propsalState.Proposer || c.propsalState.Step != propose {
 		return
 	}
 
-	cid, err := cid.Parse(msg.BlockID)
+	bc, err := cid.Parse(msg.BlockID)
 	if err != nil {
 		c.logger.WithError(err).Error("unable to parse CID")
 		return
 	}
 
-	c.propsalState.Block = &cid
+	c.propsalState.Block = bc
 
-	block, err := c.blockStore.getBlock(cid)
+	block, err := c.blockStore.getBlock(bc)
 	if err != nil {
 		c.logger.WithError(err).Error("getting block")
 		return
@@ -282,8 +321,6 @@ func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
 	}
 
 	c.propsalState.Step = prevote
-
-	//start timeouts
 }
 
 func (c *Consensus) onPreVote(msg *ConsensusMsgVote, from peer.ID) {
@@ -302,6 +339,8 @@ func (c *Consensus) onPreVote(msg *ConsensusMsgVote, from peer.ID) {
 		c.propsalState.Step = precommit
 		c.propsalState.lockedValue = c.propsalState.Block
 		c.propsalState.lockedRound = c.propsalState.Round
+
+		c.timerPrevote.Reset(timeoutPrevote)
 	}
 }
 
@@ -317,8 +356,33 @@ func (c *Consensus) OnPreCommit(msg *ConsensusMsgVote, from peer.ID) {
 			//send block msg
 		} else {
 			//expect block msg
+			c.timerPrecommit.Reset(timeoutPrecommit)
 		}
 	}
+}
+
+func (c *Consensus) onTimeoutProposal() {
+	if c.propsalState.Height != c.state.Height &&
+		c.propsalState.Step != propose {
+		return
+	}
+
+	c.propsalState.Step = prevote
+	c.sendVote(VoteTypePreVote, "")
+}
+
+func (c *Consensus) onTimeoutPrevote() {
+	if c.propsalState.Height != c.state.Height &&
+		c.propsalState.Step != prevote {
+		return
+	}
+
+	c.propsalState.Step = precommit
+	c.sendVote(VoteTypePreCommit, "")
+}
+
+func (c *Consensus) onTimeoutPrecommit() {
+	c.StartRound(true)
 }
 
 func (c *Consensus) sendNewRound() error {
@@ -381,11 +445,22 @@ func (c *Consensus) sendMsg(msg interface{}) error {
 		Timestamp: time.Now(),
 	}
 
+	signData, err := signatureData(hl)
+	if err != nil {
+		return errors.Wrap(err, "unable to create sign data")
+	}
+
+	sig, err := c.priv.Sign(signData)
+	if err != nil {
+		return errors.Wrap(err, "unable to sign")
+	}
+	hl.Signature = sig
+
 	return c.p2p.PublishContext(context.Background(), pubsubMsgsChanName, hl)
 }
 
 func (c *Consensus) onBlock(msg *ConsensusMsgBlock, from peer.ID) {
-	if from != c.currentProposer ||
+	if from != c.propsalState.Proposer ||
 		c.propsalState.Step != precommit ||
 		msg.CID != c.propsalState.lockedValue.String() ||
 		c.propsalState.lockedRound != msg.Round {

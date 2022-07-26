@@ -1,8 +1,10 @@
 package consensus
 
 import (
+	"bytes"
 	"context"
 
+	"github.com/libp2p/go-libp2p-core/peer"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -17,6 +19,7 @@ const (
 
 type p2p struct {
 	router *pubsub.PubSub
+	self   peer.ID
 	logger *logrus.Entry
 
 	topics map[string]*pubsub.Topic
@@ -43,6 +46,7 @@ func (p *p2p) Msgs(channel string) (<-chan *Msg, error) {
 	msgCh := make(chan *Msg, pubsubBuf)
 
 	go func() {
+		selfBytes, _ := p.self.Marshal()
 		for {
 			m, err := sub.Next(context.Background())
 			if err != nil {
@@ -51,12 +55,15 @@ func (p *p2p) Msgs(channel string) (<-chan *Msg, error) {
 				return
 			}
 
+			if bytes.Compare(selfBytes, m.From) == 0 {
+				continue
+			}
+
 			msg := &Msg{}
 			if err := msgpack.Unmarshal(m.Data, msg); err != nil {
 				p.logger.WithError(err).WithField("from", m.From).Error("unmarshalling msg")
 				continue
 			}
-			msg.Signature = m.Signature
 			msg.Key = m.Key
 
 			msgCh <- msg

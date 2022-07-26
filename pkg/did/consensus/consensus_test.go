@@ -61,6 +61,8 @@ func TestReceiveNewRound(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	setProposer(t, instances, instances[0].id)
+
 	go func() {
 		instances[0].Start()
 		if err := instances[0].StartRound(false); err != nil {
@@ -83,5 +85,34 @@ func TestReceiveNewRound(t *testing.T) {
 	assert.Equal(t, uint32(1), msg.Consensus.Proposal.Round)
 	assert.NotEmpty(t, msg.Consensus.Proposal.BlockID)
 	assert.NotEmpty(t, msg.Consensus.Proposal.Timestamp)
+}
 
+func TestReceivePrevote(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	_, instances := newConsensusPubSubNet(t, ctx, 3)
+
+	sub, err := instances[0].p2p.Msgs(pubsubMsgsChanName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	setProposer(t, instances, instances[0].id)
+
+	startAll(t, instances[1:])
+
+	for _, instance := range instances {
+		if err := instance.StartRound(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	msg := <-sub
+	assert.Equal(t, MsgTypeConsensus, msg.Type)
+	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+
+	msg = <-sub
+	assert.Equal(t, MsgTypeConsensus, msg.Type)
+	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
 }

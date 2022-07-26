@@ -50,8 +50,9 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 		peers = append(peers, h.ID())
 		instances = append(instances, &Consensus{
 			id:     h.ID(),
+			priv:   h.Peerstore().PrivKey(h.ID()),
 			db:     db,
-			p2p:    &p2p{router: psubs[i], logger: logger, topics: make(map[string]*pubsub.Topic)},
+			p2p:    &p2p{self: h.ID(), router: psubs[i], logger: logger, topics: make(map[string]*pubsub.Topic)},
 			logger: logger,
 		})
 	}
@@ -137,6 +138,20 @@ func connectAll(t *testing.T, hosts []host.Host) {
 			}
 
 			connect(t, a, b)
+		}
+	}
+}
+
+func setProposer(t *testing.T, instances []*Consensus, id peer.ID) {
+	for _, instance := range instances {
+		instance.propsalState.Proposer = id
+	}
+}
+
+func startAll(t *testing.T, instances []*Consensus) {
+	for _, instance := range instances {
+		if err := instance.Start(); err != nil {
+			t.Fatal(err)
 		}
 	}
 }

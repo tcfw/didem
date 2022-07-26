@@ -15,10 +15,11 @@ const (
 
 type State struct {
 	AmProposer  bool
+	Proposer    peer.ID
 	Height      uint64
 	Round       uint32
 	Step        Step
-	Block       *cid.Cid
+	Block       cid.Cid
 	ParentBlock cid.Cid
 
 	f uint64
@@ -26,6 +27,6 @@ type State struct {
 	PreVotes   map[peer.ID]*ConsensusMsgVote
 	PreCommits map[peer.ID]*ConsensusMsgVote
 
-	lockedValue *cid.Cid
+	lockedValue cid.Cid
 	lockedRound uint32
 }

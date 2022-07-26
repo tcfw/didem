@@ -3,7 +3,6 @@ package consensus
 import (
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/pkg/errors"
-	"github.com/vmihailenco/msgpack/v5"
 )
 
 func Verify(msg, signature []byte, key crypto.PubKey) error {
@@ -19,5 +18,13 @@ func Verify(msg, signature []byte, key crypto.PubKey) error {
 }
 
 func signatureData(msg *Msg) ([]byte, error) {
-	return msgpack.Marshal(msg)
+	sig := msg.Signature
+	msg.Signature = nil
+	d, err := msg.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	msg.Signature = sig
+	return d, nil
 }
