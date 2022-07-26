@@ -100,21 +100,25 @@ func (c *Consensus) watchProposer() {
 		c.propsalState.Step = propose
 
 		if id == c.id {
-			go c.StartRound()
+			go c.StartRound(false)
 		} else {
 			//TODO(tcfw) start propose timeout
 		}
 	}
 }
 
-func (c *Consensus) StartRound() error {
+func (c *Consensus) StartRound(inc bool) error {
 	c.propsalState.AmProposer = true
 	c.propsalState.lockedRound = 0
 	c.propsalState.lockedValue = nil
 	c.propsalState.Step = propose
 	c.propsalState.Height = c.state.Height + 1
-	c.propsalState.Round = 1
-	c.propsalState.Block = nil
+	if inc {
+		c.propsalState.Round++
+	} else {
+		c.propsalState.Round = 1
+		c.propsalState.Block = nil
+	}
 	c.propsalState.PreVotes = make(map[peer.ID]*ConsensusMsgVote)
 	c.propsalState.PreCommits = make(map[peer.ID]*ConsensusMsgVote)
 
@@ -355,19 +359,19 @@ func (c *Consensus) sendProposal() error {
 func (c *Consensus) sendMsg(msg interface{}) error {
 	wrapper := &ConsensusMsg{}
 
-	switch msg.(type) {
+	switch msg := msg.(type) {
 	case *ConsensusMsgNewRound:
 		wrapper.Type = ConsensusMsgTypeNewRound
-		wrapper.NewRound = msg.(*ConsensusMsgNewRound)
+		wrapper.NewRound = msg
 	case *ConsensusMsgProposal:
 		wrapper.Type = ConsensusMsgTypeProposal
-		wrapper.Proposal = msg.(*ConsensusMsgProposal)
+		wrapper.Proposal = msg
 	case *ConsensusMsgVote:
 		wrapper.Type = ConsensusMsgTypeVote
-		wrapper.Vote = msg.(*ConsensusMsgVote)
+		wrapper.Vote = msg
 	case *ConsensusMsgBlock:
 		wrapper.Type = ConsensusMsgTypeBlock
-		wrapper.Block = msg.(*ConsensusMsgBlock)
+		wrapper.Block = msg
 	}
 
 	hl := &Msg{

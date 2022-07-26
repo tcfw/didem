@@ -63,14 +63,25 @@ func TestReceiveNewRound(t *testing.T) {
 
 	go func() {
 		instances[0].Start()
-		if err := instances[0].StartRound(); err != nil {
+		if err := instances[0].StartRound(false); err != nil {
 			panic(err)
 		}
 	}()
 
+	//New round
 	msg := <-sub
-
 	assert.Equal(t, MsgTypeConsensus, msg.Type)
+	assert.Equal(t, ConsensusMsgTypeNewRound, msg.Consensus.Type)
 	assert.Equal(t, uint64(1), msg.Consensus.NewRound.Height)
 	assert.Equal(t, uint32(1), msg.Consensus.NewRound.Round)
+
+	//Propsal
+	msg = <-sub
+	assert.Equal(t, MsgTypeConsensus, msg.Type)
+	assert.Equal(t, ConsensusMsgTypeProposal, msg.Consensus.Type)
+	assert.Equal(t, uint64(1), msg.Consensus.Proposal.Height)
+	assert.Equal(t, uint32(1), msg.Consensus.Proposal.Round)
+	assert.NotEmpty(t, msg.Consensus.Proposal.BlockID)
+	assert.NotEmpty(t, msg.Consensus.Proposal.Timestamp)
+
 }

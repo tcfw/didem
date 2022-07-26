@@ -68,7 +68,6 @@ type ConsensusMsgProposal struct {
 	Round     uint32    `msgpack:"r"`
 	BlockID   string    `msgpack:"id"`
 	Timestamp time.Time `msgpack:"ts"`
-	Signature []byte    `msgpack:"s"`
 }
 
 type VoteType uint8
