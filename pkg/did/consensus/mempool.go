@@ -52,8 +52,8 @@ func NewTxMemPool() *TxMemPool {
 
 func (m *TxMemPool) GetTx() *tx.Tx {
 	if m.plist.Len() > 0 {
-		tx := heap.Pop(&m.plist)
-		return tx.(*tx.Tx)
+		t := heap.Pop(&m.plist)
+		return t.(*tx.Tx)
 	}
 
 	return nil
