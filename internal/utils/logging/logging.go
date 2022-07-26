@@ -19,3 +19,7 @@ func WithError(e error) *logrus.Entry {
 func Entry() *logrus.Entry {
 	return logger
 }
+
+func Error(args ...interface{}) {
+	logger.Error(args...)
+}

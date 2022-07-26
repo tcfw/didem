@@ -10,9 +10,9 @@ import (
 	"github.com/multiformats/go-multiaddr"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/tcfw/didem/internal/comm"
 	"github.com/tcfw/didem/internal/config"
 	"github.com/tcfw/didem/internal/did"
-	"github.com/tcfw/didem/internal/comm"
 	didIface "github.com/tcfw/didem/pkg/did"
 	"github.com/tcfw/didem/pkg/storage"
 
@@ -21,7 +21,7 @@ import (
 
 type Node struct {
 	p2p              *p2pHost
-	storage          storage.Storage
+	storage          storage.Store
 	identityResolver didIface.Resolver
 	idStore          didIface.IdentityStore
 
@@ -30,7 +30,7 @@ type Node struct {
 	logger *logrus.Logger
 }
 
-func (n *Node) Storage() storage.Storage {
+func (n *Node) Storage() storage.Store {
 	return n.storage
 }
 

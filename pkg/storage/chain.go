@@ -32,15 +32,19 @@ type TxTrie struct {
 	Tx       *cid.Cid  `msgpack:"t,omitempty"`
 }
 
-type Validator struct {
+type Validator interface {
+	IsValid(b *Block) error
+}
+
+type TxValidator struct {
 	s Store
 }
 
-func (b *Block) IsValid() error {
+func (v *TxValidator) IsValid(b *Block) error {
 	return nil
 }
 
-func (v *Validator) AllTx(ctx context.Context, b *Block) ([]*tx.Tx, error) {
+func (v *TxValidator) AllTx(ctx context.Context, b *Block) ([]*tx.Tx, error) {
 	txSeen := map[string]*tx.Tx{}
 	visited := map[cid.Cid]struct{}{}
 	queue := []cid.Cid{b.TxRoot}

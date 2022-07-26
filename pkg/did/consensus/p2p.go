@@ -7,7 +7,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
+	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
@@ -17,10 +17,17 @@ const (
 	pubsubBuf = 10
 )
 
+func newP2P(id peer.ID, router *pubsub.PubSub) *p2p {
+	return &p2p{
+		router: router,
+		self:   id,
+		topics: make(map[string]*pubsub.Topic),
+	}
+}
+
 type p2p struct {
 	router *pubsub.PubSub
 	self   peer.ID
-	logger *logrus.Entry
 
 	topics map[string]*pubsub.Topic
 }
@@ -50,7 +57,7 @@ func (p *p2p) Msgs(channel string) (<-chan *Msg, error) {
 		for {
 			m, err := sub.Next(context.Background())
 			if err != nil {
-				p.logger.WithError(err).Errorf("sub %s closed", channel)
+				logging.WithError(err).Errorf("sub %s closed", channel)
 				close(msgCh)
 				return
 			}
@@ -62,7 +69,7 @@ func (p *p2p) Msgs(channel string) (<-chan *Msg, error) {
 
 			msg := &Msg{}
 			if err := msgpack.Unmarshal(m.Data, msg); err != nil {
-				p.logger.WithError(err).WithField("from", m.From).Error("unmarshalling msg")
+				logging.WithError(err).WithField("from", m.From).Error("unmarshalling msg")
 				continue
 			}
 			msg.Key = m.Key

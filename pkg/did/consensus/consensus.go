@@ -7,9 +7,11 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
+	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/tcfw/didem/pkg/storage"
 )
 
@@ -20,16 +22,17 @@ const (
 	timeoutPropose   = 1 * time.Minute
 	timeoutPrevote   = 1 * time.Minute
 	timeoutPrecommit = 1 * time.Minute
+	timeoutBlock     = 1 * time.Minute
 )
 
 type Consensus struct {
-	id     peer.ID
-	priv   crypto.PrivKey
-	logger *logrus.Entry
+	id   peer.ID
+	priv crypto.PrivKey
 
 	db         Db
 	memPool    MemPool
-	blockStore storage.Storage
+	blockStore storage.Store
+	validator  storage.Validator
 
 	beacon <-chan int64
 	p2p    *p2p
@@ -40,6 +43,41 @@ type Consensus struct {
 	timerPropose   *time.Timer
 	timerPrevote   *time.Timer
 	timerPrecommit *time.Timer
+	timerBlock     *time.Timer
+}
+
+func NewConsensus(h host.Host, opts ...Option) (*Consensus, error) {
+	pubsub, err := pubsub.NewGossipSub(context.Background(), h)
+	if err != nil {
+		return nil, errors.Wrap(err, "constructing pubsub router")
+	}
+
+	c := &Consensus{
+		id:      h.ID(),
+		p2p:     newP2P(h.ID(), pubsub),
+		memPool: NewTxMemPool(),
+	}
+
+	for _, opt := range opts {
+		if err := opt(c); err != nil {
+			return nil, err
+		}
+	}
+
+	return c, nil
+}
+
+func (c *Consensus) Start() error {
+	c.setupTimers()
+
+	go c.watchProposer()
+	go c.watchTimeouts()
+
+	if err := c.subscribeMsgs(); err != nil {
+		return errors.Wrap(err, "watching msgs")
+	}
+
+	return c.subscribeTx()
 }
 
 func (c *Consensus) proposer() <-chan peer.ID {
@@ -49,7 +87,7 @@ func (c *Consensus) proposer() <-chan peer.ID {
 		for b := range c.beacon {
 			nodes, err := c.db.Nodes()
 			if err != nil {
-				c.logger.WithError(err).Error("getting node list")
+				logging.WithError(err).Error("getting node list")
 				continue
 			}
 
@@ -65,28 +103,20 @@ func (c *Consensus) proposer() <-chan peer.ID {
 	return bCh
 }
 
-func (c *Consensus) Start() error {
-	c.timerPropose = time.NewTimer(1 * time.Minute)
-	if !c.timerPropose.Stop() {
-		<-c.timerPropose.C //clear timer
-	}
-	c.timerPrevote = time.NewTimer(1 * time.Minute)
-	if !c.timerPrevote.Stop() {
-		<-c.timerPrevote.C //clear timer
-	}
-	c.timerPrecommit = time.NewTimer(1 * time.Minute)
-	if !c.timerPrecommit.Stop() {
-		<-c.timerPrecommit.C //clear timer
+func (c *Consensus) setupTimers() {
+	timers := []*time.Timer{
+		c.timerPropose,
+		c.timerPrevote,
+		c.timerPrecommit,
+		c.timerBlock,
 	}
 
-	go c.watchProposer()
-	go c.watchTimeouts()
-
-	if err := c.subscribeMsgs(); err != nil {
-		return errors.Wrap(err, "watching msgs")
+	for _, t := range timers {
+		t = time.NewTimer(1 * time.Minute)
+		if !t.Stop() {
+			<-t.C
+		}
 	}
-
-	return c.subscribeTx()
 }
 
 func (c *Consensus) watchTimeouts() {
@@ -98,6 +128,8 @@ func (c *Consensus) watchTimeouts() {
 			c.onTimeoutPrevote()
 		case <-c.timerPrecommit.C:
 			c.onTimeoutPrecommit()
+		case <-c.timerBlock.C:
+			c.onTimeoutBlock()
 		}
 	}
 }
@@ -171,17 +203,15 @@ func (c *Consensus) StartRound(inc bool) error {
 		return errors.Wrap(err, "sending new round")
 	}
 
-	//build block
-	//upload block
-
+	//build & upload block
 	c.propsalState.Block = cid.Undef
 
-	//broadcast proposal
 	if err := c.sendProposal(); err != nil {
 		return errors.Wrap(err, "sending proposal")
 	}
 
-	//append timeout
+	//if we don't receive enough votes, try another round
+	c.timerPrecommit.Reset(timeoutPropose)
 
 	return nil
 }
@@ -189,17 +219,17 @@ func (c *Consensus) StartRound(inc bool) error {
 func (c *Consensus) OnMsg(msg *Msg) {
 	node, err := c.db.Node(msg.From)
 	if err != nil {
-		c.logger.WithError(err).Error("fetching node")
+		logging.WithError(err).Error("fetching node")
 		return
 	}
 	if node == nil {
-		c.logger.Error("unable to find node")
+		logging.Error("unable to find node")
 		return
 	}
 
 	signData, err := signatureData(msg)
 	if err != nil {
-		c.logger.WithError(err).Error("making msg signature data")
+		logging.WithError(err).Error("making msg signature data")
 		return
 	}
 
@@ -211,7 +241,7 @@ func (c *Consensus) OnMsg(msg *Msg) {
 		}
 	}
 	if !hasValidSignature {
-		c.logger.Error("no valid signature for msg from peer")
+		logging.Error("no valid signature for msg from peer")
 		return
 	}
 
@@ -238,8 +268,8 @@ func (c *Consensus) onConsensusMsg(msg *ConsensusMsg, from peer.ID) {
 }
 
 func (c *Consensus) onTx(msg *TxMsg, from peer.ID) {
-	if err := c.memPool.AddTx(msg.Tx); err != nil {
-		c.logger.WithError(err).Error("adding tx to mempool")
+	if err := c.memPool.AddTx(msg.Tx, msg.TTL); err != nil {
+		logging.WithError(err).Error("adding tx to mempool")
 	}
 }
 
@@ -276,7 +306,7 @@ func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
 
 	n, err := c.db.Nodes()
 	if err != nil {
-		c.logger.WithError(err).Error("getting nodes")
+		logging.WithError(err).Error("getting nodes")
 		return
 	}
 
@@ -290,7 +320,7 @@ func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
 
 	bc, err := cid.Parse(msg.BlockID)
 	if err != nil {
-		c.logger.WithError(err).Error("unable to parse CID")
+		logging.WithError(err).Error("unable to parse CID")
 		return
 	}
 
@@ -298,29 +328,34 @@ func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
 
 	block, err := c.blockStore.GetBlock(context.Background(), bc)
 	if err != nil {
-		c.logger.WithError(err).Error("getting block")
+		logging.WithError(err).Error("getting block")
 		return
 	}
 
 	valid := false
-	if err := block.IsValid(c.blockStore); err != nil {
-		c.logger.WithError(err).Error("invalid block")
+	if err := c.validator.IsValid(block); err != nil {
+		logging.WithError(err).Error("invalid block")
 	} else {
 		valid = true
 	}
 
+	if !c.timerPropose.Stop() {
+		<-c.timerPropose.C
+	}
+
 	if !valid {
 		if err := c.sendVote(VoteTypePreVote, ""); err != nil {
-			c.logger.WithError(err).Error("sending nil prevote")
+			logging.WithError(err).Error("sending nil prevote")
 			return
 		}
 	} else {
 		if err := c.sendVote(VoteTypePreVote, msg.BlockID); err != nil {
-			c.logger.WithError(err).Error("sending prevote")
+			logging.WithError(err).Error("sending prevote")
 			return
 		}
 	}
 
+	c.timerPrevote.Reset(timeoutPrevote)
 	c.propsalState.Step = prevote
 }
 
@@ -329,19 +364,27 @@ func (c *Consensus) onPreVote(msg *ConsensusMsgVote, from peer.ID) {
 		return
 	}
 
+	if c.propsalState.AmProposer {
+		c.timerPrecommit.Reset(timeoutPrecommit)
+	}
+
 	c.propsalState.PreVotes[from] = msg
 
 	if uint64(len(c.propsalState.PreVotes)) > c.propsalState.f {
+		if !c.timerPrevote.Stop() {
+			<-c.timerPrevote.C
+		}
+
 		id := c.propsalState.Block.String()
 		if err := c.sendVote(VoteTypePreCommit, id); err != nil {
-			c.logger.WithError(err).Error("sending precommit")
+			logging.WithError(err).Error("sending precommit")
 			return
 		}
 		c.propsalState.Step = precommit
 		c.propsalState.lockedValue = c.propsalState.Block
 		c.propsalState.lockedRound = c.propsalState.Round
 
-		c.timerPrevote.Reset(timeoutPrevote)
+		c.timerPrecommit.Reset(timeoutPrecommit)
 	}
 }
 
@@ -350,16 +393,45 @@ func (c *Consensus) OnPreCommit(msg *ConsensusMsgVote, from peer.ID) {
 		return
 	}
 
+	if c.propsalState.AmProposer {
+		c.timerPrecommit.Reset(timeoutPrecommit)
+	}
+
 	c.propsalState.PreCommits[from] = msg
 
 	if uint64(len(c.propsalState.PreCommits)) > c.propsalState.f {
+		if !c.timerPrecommit.Stop() {
+			<-c.timerPrecommit.C
+		}
+
 		if c.propsalState.AmProposer {
-			//send block msg
+			msg, err := c.sendBlock()
+			if err != nil {
+				logging.WithError(err).Error("failed to send blockmsg")
+			}
+
+			c.onBlock(msg, c.id)
 		} else {
-			//expect block msg
-			c.timerPrecommit.Reset(timeoutPrecommit)
+			c.timerBlock.Reset(timeoutBlock)
 		}
 	}
+}
+
+func (c *Consensus) onBlock(msg *ConsensusMsgBlock, from peer.ID) {
+	if from != c.propsalState.Proposer ||
+		c.propsalState.Step != precommit ||
+		msg.CID != c.propsalState.lockedValue.String() ||
+		c.propsalState.lockedRound != msg.Round {
+		return
+	}
+
+	if !c.timerBlock.Stop() {
+		<-c.timerBlock.C
+	}
+
+	c.state.Height = c.propsalState.Height
+	c.state.ParentBlock = c.state.Block
+	c.state.Block = c.propsalState.lockedValue
 }
 
 func (c *Consensus) onTimeoutProposal() {
@@ -386,6 +458,15 @@ func (c *Consensus) onTimeoutPrecommit() {
 	c.StartRound(true)
 }
 
+func (c *Consensus) onTimeoutBlock() {
+	if c.propsalState.Height != c.state.Height &&
+		c.propsalState.Step != precommit {
+		return
+	}
+
+	//TODO(tcfw): what to do waiting for signatures?
+}
+
 func (c *Consensus) sendNewRound() error {
 	msg := &ConsensusMsgNewRound{
 		Height:          c.propsalState.Height,
@@ -408,6 +489,16 @@ func (c *Consensus) sendVote(t VoteType, value string) error {
 	}
 
 	return c.sendMsg(msg)
+}
+
+func (c *Consensus) sendBlock() (*ConsensusMsgBlock, error) {
+	msg := &ConsensusMsgBlock{
+		Height: c.propsalState.Height,
+		Round:  c.propsalState.lockedRound,
+		CID:    c.propsalState.lockedValue.String(),
+	}
+
+	return msg, c.sendMsg(msg)
 }
 
 func (c *Consensus) sendProposal() error {
@@ -458,17 +549,4 @@ func (c *Consensus) sendMsg(msg interface{}) error {
 	hl.Signature = sig
 
 	return c.p2p.PublishContext(context.Background(), pubsubMsgsChanName, hl)
-}
-
-func (c *Consensus) onBlock(msg *ConsensusMsgBlock, from peer.ID) {
-	if from != c.propsalState.Proposer ||
-		c.propsalState.Step != precommit ||
-		msg.CID != c.propsalState.lockedValue.String() ||
-		c.propsalState.lockedRound != msg.Round {
-		return
-	}
-
-	c.state.Height = c.propsalState.Height
-	c.state.ParentBlock = c.state.Block
-	c.state.Block = c.propsalState.lockedValue
 }

@@ -12,7 +12,6 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	bhost "github.com/libp2p/go-libp2p/p2p/host/blank"
 	swarmt "github.com/libp2p/go-libp2p/p2p/net/swarm/testing"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
 	"github.com/tcfw/didem/pkg/did/consensus/mocks"
 	"github.com/tcfw/didem/pkg/tx"
@@ -44,8 +43,6 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 
 	db.On("Node", mock.Anything).Return(nodeRet, nil)
 
-	logger := logrus.NewEntry(logrus.StandardLogger())
-
 	for i, h := range hosts {
 		peers = append(peers, h.ID())
 		instances = append(instances, &Consensus{
@@ -56,10 +53,8 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 			p2p: &p2p{
 				self:   h.ID(),
 				router: psubs[i],
-				logger: logger,
 				topics: make(map[string]*pubsub.Topic),
 			},
-			logger: logger,
 		})
 	}
 

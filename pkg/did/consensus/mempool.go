@@ -7,7 +7,7 @@ import (
 )
 
 type MemPool interface {
-	AddTx(*tx.Tx) error
+	AddTx(*tx.Tx, int) error
 	GetTx() *tx.Tx
 }
 
@@ -59,7 +59,7 @@ func (m *TxMemPool) GetTx() *tx.Tx {
 	return nil
 }
 
-func (m *TxMemPool) AddTx(tx *tx.Tx) error {
+func (m *TxMemPool) AddTx(tx *tx.Tx, expires int) error {
 	heap.Push(&m.plist, tx)
 	return nil
 }

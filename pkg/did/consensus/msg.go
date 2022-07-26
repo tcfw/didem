@@ -42,7 +42,8 @@ func (m *Msg) Marshal() ([]byte, error) {
 }
 
 type TxMsg struct {
-	Tx *tx.Tx `msgpack:"t"`
+	Tx  *tx.Tx `msgpack:"t"`
+	TTL int    `msgpack:"ttl"`
 }
 
 type BlockMsg struct {
