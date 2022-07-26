@@ -9,8 +9,6 @@ const (
 	Version1 uint8 = 1
 )
 
-type ID []byte
-
 type TxType int8
 
 const (
@@ -18,27 +16,10 @@ const (
 )
 
 type Tx struct {
-	Version  uint8       `msgpack:"v"`
-	Children [2]ID       `msgpack:"c"`
-	Ts       int64       `msgpack:"t"`
-	Type     TxType      `msgpack:"T"`
-	Data     interface{} `msgpack:"d,noinline"`
-	Proof    Proof       `msgpack:"p,inline"`
-}
-
-type Proof struct {
-	Signatures []TxSignature `msgpack:"s"`
-}
-
-type TxSignature struct {
-	PubkTxId  ID     `msgpack:"p"`
-	Signature []byte `msgpack:"s"`
-}
-
-type PKPublish struct {
-	Nonce     []byte `msgpack:"n"`
-	KeyType   uint16 `msgpack:"t"`
-	PublicKey []byte `msgpack:"pk"`
+	Version uint8       `msgpack:"v"`
+	Ts      int64       `msgpack:"t"`
+	Type    TxType      `msgpack:"T"`
+	Data    interface{} `msgpack:"d,noinline"`
 }
 
 func (t *Tx) Marshal() ([]byte, error) {
@@ -57,17 +38,7 @@ func (t *Tx) Unmarshal(b []byte) error {
 
 	switch t.Type {
 	case TxType_PKPublish:
-		raw, err := msgpack.Marshal(t.Data)
-		if err != nil {
-			return err
-		}
-
-		pkp := &PKPublish{}
-		if err := msgpack.Unmarshal(raw, pkp); err != nil {
-			return err
-		}
-
-		t.Data = pkp
+		//DIDComm decode
 	default:
 		return errors.New("unknown data type")
 	}
