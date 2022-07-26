@@ -10,6 +10,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/tcfw/didem/pkg/storage"
 )
 
 const (
@@ -28,7 +29,7 @@ type Consensus struct {
 
 	db         Db
 	memPool    MemPool
-	blockStore BlockStore
+	blockStore storage.Storage
 
 	beacon <-chan int64
 	p2p    *p2p
@@ -295,7 +296,7 @@ func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
 
 	c.propsalState.Block = bc
 
-	block, err := c.blockStore.getBlock(bc)
+	block, err := c.blockStore.GetBlock(context.Background(), bc)
 	if err != nil {
 		c.logger.WithError(err).Error("getting block")
 		return
@@ -468,6 +469,6 @@ func (c *Consensus) onBlock(msg *ConsensusMsgBlock, from peer.ID) {
 	}
 
 	c.state.Height = c.propsalState.Height
-	c.state.ParentBlock = *c.state.Block
+	c.state.ParentBlock = c.state.Block
 	c.state.Block = c.propsalState.lockedValue
 }

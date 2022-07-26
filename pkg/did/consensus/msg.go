@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/tcfw/didem/pkg/storage"
 	"github.com/tcfw/didem/pkg/tx"
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -45,7 +46,7 @@ type TxMsg struct {
 }
 
 type BlockMsg struct {
-	Block *Block `msgpack:"b"`
+	Block *storage.Block `msgpack:"b"`
 }
 
 type ConsensusMsg struct {

@@ -55,6 +55,7 @@ func (p *p2p) Msgs(channel string) (<-chan *Msg, error) {
 				return
 			}
 
+			//ignore self
 			if bytes.Compare(selfBytes, m.From) == 0 {
 				continue
 			}

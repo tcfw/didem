@@ -1,6 +1,8 @@
-package consensus
+package storage
 
-import "github.com/ipfs/go-cid"
+import (
+	"github.com/ipfs/go-cid"
+)
 
 type BlockID string
 
@@ -22,8 +24,6 @@ type TxTrie struct {
 	Tx       cid.Cid   `msgpack:"t"`
 }
 
-type Tx struct{}
-
-func (b *Block) IsValid(bs BlockStore) error {
+func (b *Block) IsValid(bs Storage) error {
 	return nil
 }

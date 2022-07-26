@@ -49,10 +49,16 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 	for i, h := range hosts {
 		peers = append(peers, h.ID())
 		instances = append(instances, &Consensus{
-			id:     h.ID(),
-			priv:   h.Peerstore().PrivKey(h.ID()),
-			db:     db,
-			p2p:    &p2p{self: h.ID(), router: psubs[i], logger: logger, topics: make(map[string]*pubsub.Topic)},
+			id:      h.ID(),
+			priv:    h.Peerstore().PrivKey(h.ID()),
+			memPool: NewTxMemPool(),
+			db:      db,
+			p2p: &p2p{
+				self:   h.ID(),
+				router: psubs[i],
+				logger: logger,
+				topics: make(map[string]*pubsub.Topic),
+			},
 			logger: logger,
 		})
 	}
