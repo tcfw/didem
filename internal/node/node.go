@@ -9,10 +9,10 @@ import (
 	"github.com/libp2p/go-libp2p-core/protocol"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/tcfw/didem/internal/comm"
 	"github.com/tcfw/didem/internal/config"
 	"github.com/tcfw/didem/internal/did"
+	"github.com/tcfw/didem/internal/utils/logging"
 	didIface "github.com/tcfw/didem/pkg/did"
 	"github.com/tcfw/didem/pkg/storage"
 
@@ -26,8 +26,6 @@ type Node struct {
 	idStore          didIface.IdentityStore
 
 	handlers map[protocol.ID]interface{}
-
-	logger *logrus.Logger
 }
 
 func (n *Node) Storage() storage.Store {
@@ -98,7 +96,7 @@ func NewNode(ctx context.Context, opts ...NodeOption) (*Node, error) {
 func (n *Node) watchEvents() {
 	sub, err := n.p2p.host.EventBus().Subscribe(event.WildcardSubscription)
 	if err != nil {
-		n.logger.WithError(err).Error("subscribing to p2p events")
+		logging.Entry().WithError(err).Error("subscribing to p2p events")
 		return
 	}
 
@@ -113,34 +111,34 @@ func (n *Node) watchEvents() {
 					if addr.Action == event.Removed {
 						actionStr = "removed"
 					}
-					n.logger.WithField("addr", addr.Address.String()).WithField("action", actionStr).Info("updated reachability")
+					logging.Entry().WithField("addr", addr.Address.String()).WithField("action", actionStr).Info("updated reachability")
 				}
 			}
 		default:
-			n.logger.WithField("event", e).Debugf("unknown event %T", eventType)
+			logging.Entry().WithField("event", e).Debugf("unknown event %T", eventType)
 
 		}
 	}
 }
 
 func (n *Node) ListenAndServe() error {
-	n.logger.WithField("addrs", n.p2p.host.Addrs()).WithField("id", n.p2p.host.ID().String()).Info("Starting listening")
+	logging.Entry().WithField("addrs", n.p2p.host.Addrs()).WithField("id", n.p2p.host.ID().String()).Info("Starting listening")
 
 	select {}
 }
 
 func (n *Node) Stop() error {
-	n.logger.Warn("Shutting down")
+	logging.Entry().Warn("Shutting down")
 
 	return nil
 }
 
 func (n *Node) bootstrap(ctx context.Context, cfg *config.Config) error {
-	n.logger.Debugf("bootstrapping P2P host")
+	logging.Entry().Debugf("bootstrapping P2P host")
 
 	peers := cfg.P2P().BootstrapPeers
 	if len(peers) == 0 {
-		n.logger.Debug("no bootstrapping peers")
+		logging.Entry().Debug("no bootstrapping peers")
 	}
 
 	var wg sync.WaitGroup
@@ -161,9 +159,9 @@ func (n *Node) bootstrap(ctx context.Context, cfg *config.Config) error {
 			defer wg.Done()
 
 			if err := n.p2p.host.Connect(ctx, peerInfo); err != nil {
-				n.logger.WithField("peer", peerinfo.String()).WithError(err).Warning("failed to connect to bootstrap peer")
+				logging.Entry().WithField("peer", peerinfo.String()).WithError(err).Warning("failed to connect to bootstrap peer")
 			} else {
-				n.logger.Debug("Connection established with bootstrap peer:", *peerinfo)
+				logging.Entry().Debug("Connection established with bootstrap peer:", *peerinfo)
 			}
 		}(*peerinfo)
 	}

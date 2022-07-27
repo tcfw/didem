@@ -46,17 +46,14 @@ type Consensus struct {
 	timerBlock     *time.Timer
 }
 
-func NewConsensus(h host.Host, opts ...Option) (*Consensus, error) {
-	pubsub, err := pubsub.NewGossipSub(context.Background(), h)
-	if err != nil {
-		return nil, errors.Wrap(err, "constructing pubsub router")
-	}
-
+func NewConsensus(h host.Host, p *pubsub.PubSub, opts ...Option) (*Consensus, error) {
 	c := &Consensus{
 		id:      h.ID(),
-		p2p:     newP2P(h.ID(), pubsub),
+		p2p:     newP2P(h.ID(), p),
 		memPool: NewTxMemPool(),
 	}
+
+	c.setupTimers()
 
 	for _, opt := range opts {
 		if err := opt(c); err != nil {
@@ -104,18 +101,21 @@ func (c *Consensus) proposer() <-chan peer.ID {
 }
 
 func (c *Consensus) setupTimers() {
-	timers := []*time.Timer{
-		c.timerPropose,
-		c.timerPrevote,
-		c.timerPrecommit,
-		c.timerBlock,
+	c.timerPropose = time.NewTimer(1 * time.Minute)
+	if !c.timerPropose.Stop() {
+		<-c.timerPropose.C
 	}
-
-	for _, t := range timers {
-		t = time.NewTimer(1 * time.Minute)
-		if !t.Stop() {
-			<-t.C
-		}
+	c.timerPrevote = time.NewTimer(1 * time.Minute)
+	if !c.timerPrevote.Stop() {
+		<-c.timerPrevote.C
+	}
+	c.timerPrecommit = time.NewTimer(1 * time.Minute)
+	if !c.timerPrecommit.Stop() {
+		<-c.timerPrecommit.C
+	}
+	c.timerBlock = time.NewTimer(1 * time.Minute)
+	if !c.timerBlock.Stop() {
+		<-c.timerBlock.C
 	}
 }
 

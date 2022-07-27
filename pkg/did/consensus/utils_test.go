@@ -41,11 +41,11 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 		return nil
 	}
 
-	db.On("Node", mock.Anything).Return(nodeRet, nil)
+	db.On("Node", mock.Anything).Maybe().Return(nodeRet, nil)
 
 	for i, h := range hosts {
 		peers = append(peers, h.ID())
-		instances = append(instances, &Consensus{
+		c := &Consensus{
 			id:      h.ID(),
 			priv:    h.Peerstore().PrivKey(h.ID()),
 			memPool: NewTxMemPool(),
@@ -55,7 +55,9 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 				router: psubs[i],
 				topics: make(map[string]*pubsub.Topic),
 			},
-		})
+		}
+		c.setupTimers()
+		instances = append(instances, c)
 	}
 
 	switch {
@@ -154,5 +156,11 @@ func startAll(t *testing.T, instances []*Consensus) {
 		if err := instance.Start(); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func setF(t *testing.T, instances []*Consensus, f uint64) {
+	for _, instance := range instances {
+		instance.propsalState.f = f
 	}
 }

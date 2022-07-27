@@ -4,9 +4,11 @@ import (
 	"context"
 
 	"github.com/ipfs/go-cid"
+	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/protocol"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/tcfw/didem/pkg/did"
 )
 
@@ -21,4 +23,6 @@ type P2P interface {
 	Open(context.Context, peer.ID, protocol.ID) (network.Stream, error)
 	FindProvider(context.Context, cid.Cid) ([]peer.AddrInfo, error)
 	Peers() []peer.ID
+	Host() host.Host
+	PubSub() *pubsub.PubSub
 }

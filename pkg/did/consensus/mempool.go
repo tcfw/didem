@@ -22,17 +22,17 @@ func (h TxList) Less(i, j int) bool { return h[i].Ts < h[j].Ts }
 
 func (h TxList) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
 
-func (h *TxList) Push(x interface{}) {
+func (h TxList) Push(x interface{}) {
 	// Push and Pop use pointer receivers because they modify the slice's length,
 	// not just its contents.
-	*h = append(*h, x.(*tx.Tx))
+	h = append(h, x.(*tx.Tx))
 }
 
-func (h *TxList) Pop() interface{} {
-	old := *h
+func (h TxList) Pop() interface{} {
+	old := h
 	n := len(old)
 	x := old[n-1]
-	*h = old[0 : n-1]
+	h = old[0 : n-1]
 	return x
 }
 

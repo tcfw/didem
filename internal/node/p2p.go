@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/tcfw/didem/internal/config"
+	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/tcfw/didem/pkg/did"
 )
 
@@ -32,7 +33,7 @@ func newP2PHost(ctx context.Context, n *Node, cfg *config.Config) (*p2pHost, err
 		n: n,
 	}
 
-	id, err := getIdentity(ctx, cfg, n.logger)
+	id, err := getIdentity(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +71,7 @@ func newP2PHost(ctx context.Context, n *Node, cfg *config.Config) (*p2pHost, err
 	}
 
 	if cfg.P2P().Relay {
-		n.logger.Warn("p2p relay enabled")
+		logging.Entry().Warn("p2p relay enabled")
 		opts = append(opts, libp2p.EnableRelay(), libp2p.EnableAutoRelay())
 	}
 
@@ -87,7 +88,7 @@ func newP2PHost(ctx context.Context, n *Node, cfg *config.Config) (*p2pHost, err
 	go func() {
 		time.Sleep(2 * time.Second)
 		if err := h.dht.Bootstrap(context.Background()); err != nil {
-			n.logger.WithError(err).Error("bootstrapping DHT")
+			logging.Entry().WithError(err).Error("bootstrapping DHT")
 		}
 	}()
 
@@ -149,6 +150,14 @@ type p2pHost struct {
 	advertiseTimer time.Ticker
 }
 
+func (p *p2pHost) Host() host.Host {
+	return p.host
+}
+
+func (p *p2pHost) PubSub() *pubsub.PubSub {
+	return p.pubsub
+}
+
 func (p *p2pHost) Connect(ctx context.Context, info peer.AddrInfo) error {
 	return p.host.Connect(ctx, info)
 }
@@ -168,14 +177,14 @@ func (p *p2pHost) watchAdvertise(ctx context.Context) {
 }
 
 func (p *p2pHost) doAdvertise(ctx context.Context) {
-	p.n.logger.Debug("advertising identities started")
+	logging.Entry().Debug("advertising identities started")
 
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
 	ids, err := p.n.advertisableIdentities(ctx)
 	if err != nil {
-		p.n.logger.WithError(err).Error("getting ids to advertise")
+		logging.Entry().WithError(err).Error("getting ids to advertise")
 		return
 	}
 
@@ -188,14 +197,14 @@ func (p *p2pHost) doAdvertise(ctx context.Context) {
 			defer wg.Done()
 
 			if err := p.provideIdentity(ctx, id); err != nil {
-				p.n.logger.WithError(err).Error("failed to advertise identity")
+				logging.Entry().WithError(err).Error("failed to advertise identity")
 			}
 		}(id)
 	}
 
 	wg.Wait()
 
-	p.n.logger.Debug("advertisement finished")
+	logging.Entry().Debug("advertisement finished")
 }
 
 func (p *p2pHost) provideIdentity(ctx context.Context, id did.PrivateIdentity) error {
@@ -212,7 +221,7 @@ func (p *p2pHost) provideIdentity(ctx context.Context, id did.PrivateIdentity) e
 		return err
 	}
 
-	p.n.logger.WithField("id", pid.ID).Debug("advertising identity")
+	logging.Entry().WithField("id", pid.ID).Debug("advertising identity")
 
 	return p.dht.Provide(ctx, cid.NewCidV1(cid.Raw, mh), true)
 }

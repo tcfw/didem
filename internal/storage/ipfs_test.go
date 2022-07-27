@@ -31,7 +31,7 @@ func TestIPFSAdd(t *testing.T) {
 
 	expected := hex.EncodeToString(txbh[:])
 
-	idhex := hex.EncodeToString(id)
+	idhex := hex.EncodeToString(id.Bytes())
 
 	assert.Equal(t, expected, idhex)
 

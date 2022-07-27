@@ -108,6 +108,8 @@ func TestReceivePrevote(t *testing.T) {
 		}
 	}
 
+	//2x votes from each node
+
 	msg := <-sub
 	assert.Equal(t, MsgTypeConsensus, msg.Type)
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
@@ -115,4 +117,49 @@ func TestReceivePrevote(t *testing.T) {
 	msg = <-sub
 	assert.Equal(t, MsgTypeConsensus, msg.Type)
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+}
+
+func TestSuccessfulRound(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	_, instances := newConsensusPubSubNet(t, ctx, 3)
+
+	prop := instances[0]
+
+	sub, err := prop.p2p.Msgs(pubsubMsgsChanName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	setProposer(t, instances, prop.id)
+
+	startAll(t, instances[1:])
+
+	for _, instance := range instances {
+		if err := instance.StartRound(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	msg := <-sub
+	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreVote)
+	prop.onPreVote(msg.Consensus.Vote, msg.From)
+
+	msg = <-sub
+	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreVote)
+	prop.onPreVote(msg.Consensus.Vote, msg.From)
+
+	msg = <-sub
+	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreCommit)
+	prop.OnPreCommit(msg.Consensus.Vote, msg.From)
+
+	msg = <-sub
+	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreCommit)
+	prop.OnPreCommit(msg.Consensus.Vote, msg.From)
+
 }

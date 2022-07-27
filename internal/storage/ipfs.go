@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"path/filepath"
 	"sync"
 
@@ -23,14 +22,14 @@ import (
 	"github.com/multiformats/go-multiaddr"
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 
+	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/tcfw/didem/pkg/storage"
 	"github.com/tcfw/didem/pkg/tx"
 )
 
 var (
-	_ storage.Storage = (*IPFSStorage)(nil)
+	_ storage.Store = (*IPFSStorage)(nil)
 )
 
 func NewIPFSStorage(ctx context.Context) (*IPFSStorage, error) {
@@ -97,38 +96,26 @@ type IPFSStorage struct {
 	node coreiface.CoreAPI
 }
 
-func (is *IPFSStorage) PutTx(ctx context.Context, transaction *tx.Tx) (tx.ID, error) {
+func (is *IPFSStorage) PutTx(ctx context.Context, transaction *tx.Tx) (cid.Cid, error) {
 	d, err := transaction.Marshal()
 	if err != nil {
-		return nil, err
+		return cid.Undef, err
 	}
 
 	hashType := options.Block.Hash(multihash.SHA2_256, multihash.DefaultLengths[multihash.SHA2_256])
 
 	n, err := is.node.Block().Put(ctx, bytes.NewReader(d), hashType, options.Block.Pin(true))
 	if err != nil {
-		return nil, err
+		return cid.Undef, err
 	}
 
-	logrus.New().WithField("ipfs", n.Path().String()).Info("stored in IPFS")
+	logging.Entry().WithField("ipfs", n.Path().String()).Info("stored in IPFS")
 
-	id, err := idFromMultihash(n.Path().Cid().Hash())
-	if err != nil {
-		return nil, err
-	}
-
-	return id, nil
+	return n.Path().Cid(), nil
 }
 
-func (is *IPFSStorage) GetTx(ctx context.Context, id tx.ID) (*tx.Tx, error) {
-	mh, err := idToMultihash(id)
-	if err != nil {
-		return nil, err
-	}
-
-	cid := cid.NewCidV1(multihash.SHA3_384, mh)
-
-	n, err := is.node.Block().Get(ctx, path.IpldPath(cid))
+func (is *IPFSStorage) GetTx(ctx context.Context, id cid.Cid) (*tx.Tx, error) {
+	n, err := is.node.Block().Get(ctx, path.IpldPath(id))
 	if err != nil {
 		return nil, err
 	}
@@ -150,31 +137,8 @@ func (is *IPFSStorage) Tips(ctx context.Context) ([]tx.Tx, error) {
 	return nil, errors.New("not implemeneted")
 }
 
-func (is *IPFSStorage) Parents(ctx context.Context, id tx.ID) ([]tx.Tx, error) {
+func (is *IPFSStorage) Parents(ctx context.Context, id cid.Cid) ([]tx.Tx, error) {
 	return nil, errors.New("not implemeneted")
-}
-
-func idToMultihash(id tx.ID) (multihash.Multihash, error) {
-	mhBytes, err := multihash.Encode(id, multihash.SHA3_384)
-	if err != nil {
-		return nil, errors.Wrap(err, "encoding ID to multihash")
-	}
-
-	mh, err := multihash.Cast(mhBytes)
-	if err != nil {
-		return nil, errors.Wrap(err, "casting ID to multihash")
-	}
-
-	return mh, nil
-}
-
-func idFromMultihash(mh multihash.Multihash) (tx.ID, error) {
-	dmh, err := multihash.Decode(mh)
-	if err != nil {
-		return nil, err
-	}
-
-	return tx.ID(dmh.Digest), nil
 }
 
 func createTempRepo() (string, error) {
@@ -243,7 +207,7 @@ func connectToPeers(ctx context.Context, ipfs coreiface.CoreAPI, peers []string)
 			defer wg.Done()
 			err := ipfs.Swarm().Connect(ctx, *peerInfo)
 			if err != nil {
-				log.Printf("failed to connect to %s: %s", peerInfo.ID, err)
+				logging.Entry().Printf("failed to connect to %s: %s", peerInfo.ID, err)
 			}
 		}(peerInfo)
 	}
