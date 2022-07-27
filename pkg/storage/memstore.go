@@ -85,17 +85,17 @@ func (m *MemStore) GetBlock(ctx context.Context, id cid.Cid) (*Block, error) {
 	return b, nil
 }
 
-func (m *MemStore) PutTrie(ctx context.Context, txt *TxTrie) (cid.Cid, error) {
+func (m *MemStore) PutSet(ctx context.Context, txt *TxSet) (cid.Cid, error) {
 	return m.putObj(txt), nil
 }
 
-func (m *MemStore) GetTrie(ctx context.Context, id cid.Cid) (*TxTrie, error) {
+func (m *MemStore) GetSet(ctx context.Context, id cid.Cid) (*TxSet, error) {
 	d := m.getObj(id)
 	if d == nil {
 		return nil, ErrNotFound
 	}
 
-	txt := &TxTrie{}
+	txt := &TxSet{}
 	if err := msgpack.Unmarshal(d, txt); err != nil {
 		return nil, errors.Wrap(err, "unmarshalling ")
 	}

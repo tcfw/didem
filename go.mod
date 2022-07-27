@@ -3,6 +3,7 @@ module github.com/tcfw/didem
 go 1.17
 
 require (
+	github.com/bits-and-blooms/bloom/v3 v3.2.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
 	github.com/ipfs/go-cid v0.1.0
 	github.com/ipfs/go-ipfs v0.12.3-0.20220504184349-34aac1ee4316
@@ -37,6 +38,7 @@ require (
 	github.com/alexbrainman/goissue34681 v0.0.0-20191006012335-3fc7a47baff5 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bits-and-blooms/bitset v1.2.0 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/btcsuite/btcd v0.22.1 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.1.3 // indirect

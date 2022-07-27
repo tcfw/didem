@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	maxBlockTxCount = 1000
+	MaxBlockTxCount = 1000
+	MaxSetSize      = 100
 )
 
 type BlockID string
@@ -24,12 +25,13 @@ type Block struct {
 	Signers   uint32  `msgpack:"sn"`
 	Signature []byte  `msgpack:"s"`
 	Nonce     []byte  `msgpack:"n"`
+	Bloom     []byte  `msgpack:"b"`
 	TxRoot    cid.Cid `msgpack:"x"`
 }
 
-type TxTrie struct {
+type TxSet struct {
 	Children []cid.Cid `msgpack:"c"`
-	Tx       *cid.Cid  `msgpack:"t,omitempty"`
+	Txs      []cid.Cid `msgpack:"t,omitempty"`
 }
 
 type Validator interface {
@@ -46,43 +48,48 @@ func (v *TxValidator) IsValid(b *Block) error {
 
 func (v *TxValidator) AllTx(ctx context.Context, b *Block) ([]*tx.Tx, error) {
 	txSeen := map[string]*tx.Tx{}
-	visited := map[cid.Cid]struct{}{}
+	visited := cid.Set{}
 	queue := []cid.Cid{b.TxRoot}
 
 	for len(queue) != 0 {
 		//pop
-		trieCid := queue[0]
+		setCid := queue[0]
 		queue = queue[1:]
 
 		//just incase we encounter a loop (bad proposer?)
-		if _, ok := visited[trieCid]; ok {
+		if visited.Has(setCid) {
 			continue
 		} else {
-			visited[trieCid] = struct{}{}
+			visited.Add(setCid)
 		}
 
-		trie, err := v.s.GetTrie(ctx, trieCid)
+		set, err := v.s.GetSet(ctx, setCid)
 		if err != nil {
 			return nil, errors.Wrap(err, "getting root trie")
 		}
 
-		if trie.Tx != nil {
-			tx, err := v.s.GetTx(ctx, *trie.Tx)
+		//max check
+		if len(set.Txs) > MaxSetSize {
+			return nil, errors.Wrap(err, "too many tx in set")
+		}
+
+		for _, tcid := range set.Txs {
+			tx, err := v.s.GetTx(ctx, tcid)
 			if err != nil {
 				return nil, errors.Wrap(err, "getting root tx")
 			}
 
-			txSeen[trie.Tx.KeyString()] = tx
+			txSeen[tcid.KeyString()] = tx
 
 			//max check
-			if len(txSeen) > maxBlockTxCount {
+			if len(txSeen) > MaxBlockTxCount {
 				return nil, errors.New("block containers too many tx")
 			}
 		}
 
 		//push
-		if len(trie.Children) > 0 {
-			queue = append(queue, trie.Children...)
+		if len(set.Children) > 0 {
+			queue = append(queue, set.Children...)
 		}
 	}
 

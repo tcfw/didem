@@ -2,6 +2,7 @@ package consensus
 
 import (
 	"container/heap"
+	"sync"
 
 	"github.com/tcfw/didem/pkg/tx"
 )
@@ -17,27 +18,9 @@ var (
 
 type TxList []*tx.Tx
 
-func (h TxList) Len() int           { return len(h) }
-func (h TxList) Less(i, j int) bool { return h[i].Ts < h[j].Ts }
-
-func (h TxList) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
-
-func (h TxList) Push(x interface{}) {
-	// Push and Pop use pointer receivers because they modify the slice's length,
-	// not just its contents.
-	h = append(h, x.(*tx.Tx))
-}
-
-func (h TxList) Pop() interface{} {
-	old := h
-	n := len(old)
-	x := old[n-1]
-	h = old[0 : n-1]
-	return x
-}
-
 type TxMemPool struct {
 	plist TxList
+	mu    sync.Mutex
 }
 
 func NewTxMemPool() *TxMemPool {
@@ -45,14 +28,53 @@ func NewTxMemPool() *TxMemPool {
 		plist: make([]*tx.Tx, 0),
 	}
 
-	heap.Init(l.plist)
+	heap.Init(l)
 
 	return l
 }
 
+func (m *TxMemPool) Len() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	return len(m.plist)
+}
+
+func (m *TxMemPool) Less(i, j int) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	return m.plist[i].Ts < m.plist[j].Ts
+}
+
+func (m *TxMemPool) Swap(i, j int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.plist[i], m.plist[j] = m.plist[j], m.plist[i]
+}
+
+func (m *TxMemPool) Push(x interface{}) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.plist = append(m.plist, x.(*tx.Tx))
+}
+
+func (m *TxMemPool) Pop() interface{} {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	old := m.plist
+	n := len(old)
+	x := old[n-1]
+	m.plist = old[0 : n-1]
+	return x
+}
+
 func (m *TxMemPool) GetTx() *tx.Tx {
-	if m.plist.Len() > 0 {
-		t := heap.Pop(&m.plist)
+	if m.Len() > 0 {
+		t := heap.Pop(m)
 		return t.(*tx.Tx)
 	}
 
@@ -60,6 +82,6 @@ func (m *TxMemPool) GetTx() *tx.Tx {
 }
 
 func (m *TxMemPool) AddTx(tx *tx.Tx, expires int) error {
-	heap.Push(&m.plist, tx)
+	heap.Push(m, tx)
 	return nil
 }
