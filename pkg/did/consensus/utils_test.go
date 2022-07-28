@@ -14,10 +14,11 @@ import (
 	swarmt "github.com/libp2p/go-libp2p/p2p/net/swarm/testing"
 	"github.com/stretchr/testify/mock"
 	"github.com/tcfw/didem/pkg/did/consensus/mocks"
+	"github.com/tcfw/didem/pkg/storage"
 	"github.com/tcfw/didem/pkg/tx"
 )
 
-func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Host, []*Consensus) {
+func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Host, []*Consensus, MemPool) {
 	hosts := getNetHosts(t, ctx, n)
 
 	psubs := getGossipsubs(ctx, hosts)
@@ -43,13 +44,18 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 
 	db.On("Node", mock.Anything).Maybe().Return(nodeRet, nil)
 
+	blockStore := storage.NewMemStore()
+	memPool := NewTxMemPool()
+
 	for i, h := range hosts {
 		peers = append(peers, h.ID())
 		c := &Consensus{
-			id:      h.ID(),
-			priv:    h.Peerstore().PrivKey(h.ID()),
-			memPool: NewTxMemPool(),
-			db:      db,
+			id:         h.ID(),
+			priv:       h.Peerstore().PrivKey(h.ID()),
+			memPool:    memPool,
+			blockStore: blockStore,
+			validator:  storage.NewTxValidator(blockStore),
+			db:         db,
 			p2p: &p2p{
 				self:   h.ID(),
 				router: psubs[i],
@@ -69,7 +75,7 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 		sparseConnect(t, hosts)
 	}
 
-	return hosts, instances
+	return hosts, instances, memPool
 }
 
 func getNetHosts(t *testing.T, ctx context.Context, n int) []host.Host {

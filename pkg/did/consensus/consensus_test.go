@@ -3,12 +3,15 @@ package consensus
 import (
 	"context"
 	"testing"
+	"time"
 
 	peer "github.com/libp2p/go-libp2p-core/peer"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/tcfw/didem/pkg/did/consensus/mocks"
+	"github.com/tcfw/didem/pkg/did/w3cdid"
+	"github.com/tcfw/didem/pkg/tx"
 )
 
 func TestProposerFromBeacon(t *testing.T) {
@@ -54,7 +57,7 @@ func TestReceiveNewRound(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	_, instances := newConsensusPubSubNet(t, ctx, 3)
+	_, instances, _ := newConsensusPubSubNet(t, ctx, 3)
 
 	sub, err := instances[1].p2p.Msgs(pubsubMsgsChanName)
 	if err != nil {
@@ -91,14 +94,26 @@ func TestReceivePrevote(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	_, instances := newConsensusPubSubNet(t, ctx, 3)
+	_, instances, memPool := newConsensusPubSubNet(t, ctx, 3)
 
-	sub, err := instances[0].p2p.Msgs(pubsubMsgsChanName)
+	prop := instances[0]
+
+	sub, err := prop.p2p.Msgs(pubsubMsgsChanName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	setProposer(t, instances, instances[0].id)
+	setProposer(t, instances, prop.id)
+
+	tx := &tx.Tx{
+		Version: 1,
+		Ts:      time.Now().Unix(),
+		Type:    tx.TxType_PKPublish,
+		Data:    w3cdid.Document{},
+	}
+	if err := memPool.AddTx(tx, 0); err != nil {
+		t.Fatal(err)
+	}
 
 	startAll(t, instances[1:])
 
@@ -123,7 +138,7 @@ func TestSuccessfulRound(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	_, instances := newConsensusPubSubNet(t, ctx, 3)
+	_, instances, _ := newConsensusPubSubNet(t, ctx, 3)
 
 	prop := instances[0]
 

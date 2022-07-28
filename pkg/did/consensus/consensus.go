@@ -204,7 +204,15 @@ func (c *Consensus) StartRound(inc bool) error {
 	}
 
 	//build & upload block
-	c.propsalState.Block = cid.Undef
+	block, err := c.makeBlock()
+	if err != nil {
+		return errors.Wrap(err, "making new block")
+	}
+
+	c.propsalState.Block, err = c.blockStore.PutBlock(context.Background(), block)
+	if err != nil {
+		return errors.Wrap(err, "storing new block")
+	}
 
 	if err := c.sendProposal(); err != nil {
 		return errors.Wrap(err, "sending proposal")

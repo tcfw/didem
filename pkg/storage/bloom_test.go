@@ -13,8 +13,8 @@ func TestBloom(t *testing.T) {
 	mh2, _ := multihash.Sum([]byte{2}, multihash.SHA3_384, multihash.DefaultLengths[multihash.SHA3_384])
 
 	txCids := []cid.Cid{
-		cid.NewCidV1(CIDEncoding, mh1),
-		cid.NewCidV1(CIDEncoding, mh2),
+		cid.NewCidV1(CIDEncodingTx, mh1),
+		cid.NewCidV1(CIDEncodingTx, mh2),
 	}
 
 	b, err := MakeBloom(txCids)

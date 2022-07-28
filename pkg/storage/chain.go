@@ -11,27 +11,43 @@ import (
 const (
 	MaxBlockTxCount = 1000
 	MaxSetSize      = 100
+	Version         = 1
 )
 
 type BlockID string
 
 type Block struct {
-	Version   uint32  `msgpack:"v"`
-	ID        BlockID `magpack:"i"`
-	Parent    BlockID `msgpack:"p"`
-	Height    uint64  `msgpack:"h"`
-	CreatedAt uint64  `msgpack:"t"`
-	Proposer  string  `msgpack:"w"`
-	Signers   uint32  `msgpack:"sn"`
-	Signature []byte  `msgpack:"s"`
-	Nonce     []byte  `msgpack:"n"`
-	Bloom     []byte  `msgpack:"b"`
-	TxRoot    cid.Cid `msgpack:"x"`
+	Version   uint32   `msgpack:"v"`
+	ID        BlockID  `magpack:"i"`
+	Parent    BlockID  `msgpack:"p"`
+	Height    uint64   `msgpack:"h"`
+	CreatedAt int64    `msgpack:"t"`
+	Proposer  string   `msgpack:"w"`
+	Signers   uint32   `msgpack:"sn"`
+	Signature []byte   `msgpack:"s"`
+	Nonce     [32]byte `msgpack:"n"`
+	Bloom     []byte   `msgpack:"b"`
+	TxRoot    cid.Cid  `msgpack:"x"`
 }
 
 type TxSet struct {
 	Children []cid.Cid `msgpack:"c"`
 	Txs      []cid.Cid `msgpack:"t,omitempty"`
+}
+
+func NewTxSet(s Store, txs []cid.Cid) (*TxSet, error) {
+	n := len(txs)
+
+	if n > MaxBlockTxCount {
+		return nil, errors.New("too many tx for set")
+	}
+
+	if n < MaxSetSize {
+		return &TxSet{Txs: txs}, nil
+	}
+
+	//TODO(tcfw)
+	return nil, errors.New("not implemented")
 }
 
 type Validator interface {
@@ -40,6 +56,10 @@ type Validator interface {
 
 type TxValidator struct {
 	s Store
+}
+
+func NewTxValidator(s Store) *TxValidator {
+	return &TxValidator{s}
 }
 
 func (v *TxValidator) IsValid(b *Block) error {

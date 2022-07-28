@@ -10,6 +10,7 @@ import (
 type MemPool interface {
 	AddTx(*tx.Tx, int) error
 	GetTx() *tx.Tx
+	Len() int
 }
 
 var (
