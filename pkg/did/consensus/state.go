@@ -27,6 +27,9 @@ type State struct {
 	PreVotes   map[peer.ID]*ConsensusMsgVote
 	PreCommits map[peer.ID]*ConsensusMsgVote
 
+	PreVotesEvidence   map[peer.ID]*ConsensusMsgEvidence
+	PreCommitsEvidence map[peer.ID]*ConsensusMsgEvidence
+
 	lockedValue cid.Cid
 	lockedRound uint32
 }

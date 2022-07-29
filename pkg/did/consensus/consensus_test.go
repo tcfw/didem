@@ -24,7 +24,7 @@ func TestProposerFromBeacon(t *testing.T) {
 	}
 
 	db := mocks.NewDb(t)
-	db.On("Nodes").Return(peers, nil)
+	db.On("Nodes").Maybe().Return(peers, nil)
 
 	c := &Consensus{
 		beacon: beacon,
@@ -34,22 +34,25 @@ func TestProposerFromBeacon(t *testing.T) {
 	prop := c.proposer()
 
 	//testing modulus yay!
-	tests := map[int]int{
-		3: 0,
-		2: 2,
-		1: 1,
-		0: 0,
+	tests := []struct {
+		k int
+		v int
+	}{
+		{3, 0},
+		{2, 2},
+		{1, 1},
+		{0, 0},
 	}
 
 	go func() {
-		for k := range tests {
-			beacon <- int64(k)
+		for _, k := range tests {
+			beacon <- int64(k.k)
 		}
 	}()
 
 	for _, v := range tests {
 		gotPeer := <-prop
-		assert.Equal(t, peers[v], gotPeer)
+		assert.Equal(t, peers[v.v], gotPeer)
 	}
 }
 
@@ -176,5 +179,64 @@ func TestSuccessfulRound(t *testing.T) {
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
 	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreCommit)
 	prop.OnPreCommit(msg.Consensus.Vote, msg.From)
+
+}
+
+func TestNewRound(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	_, instances, _ := newConsensusPubSubNet(t, ctx, 3)
+
+	prop := instances[0]
+
+	sub, err := prop.p2p.Msgs(pubsubMsgsChanName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	setProposer(t, instances, prop.id)
+
+	startAll(t, instances[1:])
+
+	for _, instance := range instances {
+		if err := instance.StartRound(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	msg := <-sub
+	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+	assert.Equal(t, VoteTypePreVote, msg.Consensus.Vote.Type)
+	assert.Equal(t, uint32(1), msg.Consensus.Vote.Round)
+	prop.onPreVote(msg.Consensus.Vote, msg.From)
+
+	msg = <-sub
+	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+	assert.Equal(t, VoteTypePreVote, msg.Consensus.Vote.Type)
+	assert.Equal(t, uint32(1), msg.Consensus.Vote.Round)
+	prop.onPreVote(msg.Consensus.Vote, msg.From)
+
+	msg = <-sub
+	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreCommit)
+	assert.Equal(t, uint32(1), msg.Consensus.Vote.Round)
+	prop.OnPreCommit(msg.Consensus.Vote, msg.From)
+
+	msg = <-sub
+	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreCommit)
+	assert.Equal(t, uint32(1), msg.Consensus.Vote.Round)
+	prop.OnPreCommit(msg.Consensus.Vote, msg.From)
+
+	if err := prop.StartRound(true); err != nil {
+		t.Fatal(err)
+	}
+
+	msg = <-sub
+	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreVote)
+	assert.Equal(t, uint32(2), msg.Consensus.Vote.Round)
+	prop.onPreVote(msg.Consensus.Vote, msg.From)
 
 }

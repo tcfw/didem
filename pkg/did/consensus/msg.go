@@ -24,6 +24,7 @@ const (
 	ConsensusMsgTypeProposal
 	ConsensusMsgTypeVote
 	ConsensusMsgTypeBlock
+	ConsensusMsgTypeEvidence
 )
 
 type Msg struct {
@@ -52,10 +53,11 @@ type BlockMsg struct {
 
 type ConsensusMsg struct {
 	Type     ConsensusMsgType      `msgpack:"t"`
-	NewRound *ConsensusMsgNewRound `msgpack:"nr,omitempty"`
-	Proposal *ConsensusMsgProposal `msgpack:"po,omitempty"`
+	NewRound *ConsensusMsgNewRound `msgpack:"n,omitempty"`
+	Proposal *ConsensusMsgProposal `msgpack:"p,omitempty"`
 	Vote     *ConsensusMsgVote     `msgpack:"v,omitempty"`
 	Block    *ConsensusMsgBlock    `msgpack:"b,omitempty"`
+	Evidence *ConsensusMsgEvidence `msgpack:"e,omitempty"`
 }
 
 type ConsensusMsgNewRound struct {
@@ -88,6 +90,11 @@ type ConsensusMsgVote struct {
 	Timestamp time.Time `msgpack:"ts"`
 	Validator string    `msgpack:"v,omitempty"`
 	Signature []byte    `msgpack:"s,omitempty"`
+}
+
+type ConsensusMsgEvidence struct {
+	ConsensusMsgVote
+	Accepted bool `msgpack:"a"`
 }
 
 type ConsensusMsgBlock struct {

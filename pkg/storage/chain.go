@@ -23,7 +23,7 @@ type Block struct {
 	Height    uint64   `msgpack:"h"`
 	CreatedAt int64    `msgpack:"t"`
 	Proposer  string   `msgpack:"w"`
-	Signers   uint32   `msgpack:"sn"`
+	Signers   []byte   `msgpack:"sn"`
 	Signature []byte   `msgpack:"s"`
 	Nonce     [32]byte `msgpack:"n"`
 	Bloom     []byte   `msgpack:"b"`
