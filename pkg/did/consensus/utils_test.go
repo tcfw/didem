@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -16,6 +15,10 @@ import (
 	"github.com/tcfw/didem/pkg/did/consensus/mocks"
 	"github.com/tcfw/didem/pkg/storage"
 	"github.com/tcfw/didem/pkg/tx"
+	"go.dedis.ch/kyber/v3"
+	"go.dedis.ch/kyber/v3/pairing/bn256"
+	"go.dedis.ch/kyber/v3/sign/bls"
+	"go.dedis.ch/kyber/v3/util/random"
 )
 
 func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Host, []*Consensus, MemPool) {
@@ -26,16 +29,24 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 	peers := []peer.ID{}
 	instances := []*Consensus{}
 
+	sks := make([]kyber.Scalar, 0, n)
+	pks := make([]kyber.Point, 0, n)
+
+	for i := 0; i < n; i++ {
+		sk, pk := bls.NewKeyPair(bn256.NewSuite(), random.New())
+		sks = append(sks, sk)
+		pks = append(pks, pk)
+	}
+
 	db := mocks.NewDb(t)
 	db.On("Nodes").Return(peers, nil)
 	nodeRet := func(id peer.ID) *tx.Node {
-		for _, h := range hosts {
+		for i, h := range hosts {
 			if h.ID().String() == id.String() {
-				pk, _ := h.ID().ExtractPublicKey()
 				return &tx.Node{
 					Id:   h.ID(),
 					Did:  fmt.Sprintf("did:didem:%s", h.ID().String()),
-					Keys: []crypto.PubKey{pk},
+					Keys: []kyber.Point{pks[i]},
 				}
 			}
 		}
@@ -51,7 +62,7 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 		peers = append(peers, h.ID())
 		c := &Consensus{
 			id:         h.ID(),
-			priv:       h.Peerstore().PrivKey(h.ID()),
+			signingKey: sks[i],
 			memPool:    memPool,
 			blockStore: blockStore,
 			validator:  storage.NewTxValidator(blockStore),

@@ -1,17 +1,24 @@
 package consensus
 
 import (
-	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/pkg/errors"
+	"go.dedis.ch/kyber/v3"
+	"go.dedis.ch/kyber/v3/pairing/bn256"
+	"go.dedis.ch/kyber/v3/sign/bls"
 )
 
-func Verify(msg, signature []byte, key crypto.PubKey) error {
-	ok, err := key.Verify(msg, signature)
+func Verify(msg, signature []byte, from peer.ID, key kyber.Point) error {
+	d, err := from.MarshalBinary()
+	if err != nil {
+		return errors.Wrap(err, "marshaling id")
+	}
+
+	d = append(d, msg...)
+
+	err = bls.Verify(bn256.NewSuite(), key, d, signature)
 	if err != nil {
 		return err
-	}
-	if !ok {
-		return errors.New("invalid signature")
 	}
 
 	return nil

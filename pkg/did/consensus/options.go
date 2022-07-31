@@ -1,15 +1,15 @@
 package consensus
 
 import (
-	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/tcfw/didem/pkg/storage"
+	"go.dedis.ch/kyber/v3"
 )
 
 type Option func(*Consensus) error
 
-func WithIdentity(priv crypto.PrivKey) Option {
+func WithSigningKey(priv kyber.Scalar) Option {
 	return func(c *Consensus) error {
-		c.priv = priv
+		c.signingKey = priv
 		return nil
 	}
 }

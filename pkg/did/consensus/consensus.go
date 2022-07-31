@@ -6,13 +6,16 @@ import (
 	"time"
 
 	"github.com/ipfs/go-cid"
-	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/tcfw/didem/pkg/storage"
+	"go.dedis.ch/kyber/v3"
+	"go.dedis.ch/kyber/v3/pairing/bn256"
+	"go.dedis.ch/kyber/v3/sign/bls"
 )
 
 const (
@@ -28,8 +31,8 @@ var (
 )
 
 type Consensus struct {
-	id   peer.ID
-	priv crypto.PrivKey
+	id         peer.ID
+	signingKey kyber.Scalar
 
 	db         Db
 	memPool    MemPool
@@ -104,21 +107,16 @@ func (c *Consensus) proposer() <-chan peer.ID {
 
 func (c *Consensus) setupTimers() {
 	c.timerPropose = time.NewTimer(1 * time.Minute)
-	if !c.timerPropose.Stop() {
-		<-c.timerPropose.C
-	}
+	stopTimer(c.timerPropose)
+
 	c.timerPrevote = time.NewTimer(1 * time.Minute)
-	if !c.timerPrevote.Stop() {
-		<-c.timerPrevote.C
-	}
+	stopTimer(c.timerPrevote)
+
 	c.timerPrecommit = time.NewTimer(1 * time.Minute)
-	if !c.timerPrecommit.Stop() {
-		<-c.timerPrecommit.C
-	}
+	stopTimer(c.timerPrecommit)
+
 	c.timerBlock = time.NewTimer(1 * time.Minute)
-	if !c.timerBlock.Stop() {
-		<-c.timerBlock.C
-	}
+	stopTimer(c.timerBlock)
 }
 
 func (c *Consensus) watchTimeouts() {
@@ -144,7 +142,7 @@ func (c *Consensus) subscribeMsgs() error {
 
 	go func() {
 		for msg := range sub {
-			go c.OnMsg(msg)
+			c.OnMsg(msg)
 		}
 	}()
 
@@ -194,18 +192,21 @@ func (c *Consensus) StartRound(inc bool) error {
 		c.propsalState.Block = cid.Undef
 	}
 
-	c.timerPropose.Reset(timeoutPropose)
+	logging.Entry().WithFields(logrus.Fields{
+		"Height":   c.propsalState.Height,
+		"Round":    c.propsalState.Round,
+		"Proposer": c.propsalState.AmProposer,
+	}).Info("starting a new round")
 
 	if !c.propsalState.AmProposer {
+		restartTimer(c.timerPropose, timeoutPropose)
 		return nil
 	}
+
+	restartTimer(c.timerPrevote, timeoutPrevote)
 
 	if err := c.sendNewRound(); err != nil {
 		return errors.Wrap(err, "sending new round")
-	}
-
-	if c.propsalState.Round != 1 {
-		return nil
 	}
 
 	n, err := c.db.Nodes()
@@ -216,14 +217,16 @@ func (c *Consensus) StartRound(inc bool) error {
 	c.propsalState.f = (uint64(len(n))/3)*2 + 1
 
 	//build & upload block
-	block, err := c.makeBlock()
-	if err != nil {
-		return errors.Wrap(err, "making new block")
-	}
+	if c.propsalState.Block == cid.Undef {
+		block, err := c.makeBlock()
+		if err != nil {
+			return errors.Wrap(err, "making new block")
+		}
 
-	c.propsalState.Block, err = c.blockStore.PutBlock(context.Background(), block)
-	if err != nil {
-		return errors.Wrap(err, "storing new block")
+		c.propsalState.Block, err = c.blockStore.PutBlock(context.Background(), block)
+		if err != nil {
+			return errors.Wrap(err, "storing new block")
+		}
 	}
 
 	if err := c.sendProposal(); err != nil {
@@ -246,15 +249,23 @@ func (c *Consensus) OnMsg(msg *Msg) {
 		return
 	}
 
+	sd, err := msg.From.MarshalBinary()
+	if err != nil {
+		logging.WithError(err).Error("marshalling id")
+		return
+	}
+
 	signData, err := signatureData(msg)
 	if err != nil {
 		logging.WithError(err).Error("making msg signature data")
 		return
 	}
 
+	sd = append(sd, signData...)
+
 	hasValidSignature := false
 	for _, k := range node.Keys {
-		if err := Verify(signData, msg.Signature, k); err == nil {
+		if err := bls.Verify(bn256.NewSuite(), k, sd, msg.Signature); err == nil {
 			hasValidSignature = true
 			break
 		}
@@ -268,7 +279,7 @@ func (c *Consensus) OnMsg(msg *Msg) {
 	case MsgTypeConsensus:
 		c.onConsensusMsg(msg.Consensus, msg.From)
 	case MsgTypeTx:
-		c.onTx(msg.Tx, msg.From)
+		go c.onTx(msg.Tx, msg.From)
 	case MsgTypeBlock:
 	}
 }
@@ -295,10 +306,13 @@ func (c *Consensus) onTx(msg *TxMsg, from peer.ID) {
 }
 
 func (c *Consensus) onVote(msg *ConsensusMsgVote, from peer.ID) {
-	if from == c.propsalState.Proposer ||
-		msg.Height != c.propsalState.Height ||
+	if from == c.propsalState.Proposer {
+		logging.Error("ignoring vote from proposer")
+		return
+	} else if msg.Height != c.propsalState.Height ||
 		msg.BlockID != c.propsalState.Block.String() ||
 		msg.Round != c.propsalState.Round {
+		logging.Error("ignoring vote, invalid state")
 		return
 	}
 
@@ -318,8 +332,14 @@ func (c *Consensus) onVote(msg *ConsensusMsgVote, from peer.ID) {
 
 func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
 	if from != c.propsalState.Proposer {
+		logging.Error("ignorining new round not from current proposer")
 		return
 	}
+
+	logging.Entry().WithFields(logrus.Fields{
+		"Height": msg.Height,
+		"Round":  msg.Round,
+	}).Info("new round starting")
 
 	c.propsalState.lockedRound = 0
 	c.propsalState.lockedValue = cid.Undef
@@ -331,42 +351,28 @@ func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
 	c.propsalState.PreVotesEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
 	c.propsalState.PreCommitsEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
 
-	if !c.timerPrevote.Stop() {
-		<-c.timerPrevote.C
-	}
-	if !c.timerPrecommit.Stop() {
-		<-c.timerPrecommit.C
-	}
-	if !c.timerBlock.Stop() {
-		<-c.timerBlock.C
-	}
+	restartTimer(c.timerPropose, timeoutPropose)
 
-	c.timerPrevote.Reset(timeoutPrevote)
-
-	//should receive proposal on round 1
-	if c.propsalState.Round == 1 {
-		return
-	}
-
-	c.propsalState.Step = prevote
-
-	if c.propsalState.Block == cid.Undef {
-		if err := c.sendVote(VoteTypePreVote, ""); err != nil {
-			logging.WithError(err).Error("sending nil prevote")
-			return
-		}
-	} else {
-		if err := c.sendVote(VoteTypePreVote, c.propsalState.Block.String()); err != nil {
-			logging.WithError(err).Error("sending prevote")
-			return
-		}
-	}
+	logging.Entry().WithFields(logrus.Fields{
+		"Height": msg.Height,
+		"Round":  msg.Round,
+	}).Info("waiting for proposal to start")
 }
 
 func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
-	if from != c.propsalState.Proposer || c.propsalState.Step != propose {
+	if from != c.propsalState.Proposer {
+		logging.Error("ignorining proposal not from current proposer")
+		return
+	} else if c.propsalState.Step != propose {
+		logging.Error("ignorining proposal, wrong step")
 		return
 	}
+
+	logging.Entry().WithFields(logrus.Fields{
+		"Height": msg.Height,
+		"Round":  msg.Round,
+		"Value":  msg.BlockID,
+	}).Info("new proposal processing")
 
 	bc, err := c.validate(msg.BlockID)
 	if err != nil {
@@ -375,9 +381,7 @@ func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
 
 	c.propsalState.Block = bc
 
-	if !c.timerPropose.Stop() {
-		<-c.timerPropose.C
-	}
+	stopTimer(c.timerPropose)
 
 	if bc == cid.Undef {
 		if err := c.sendVote(VoteTypePreVote, ""); err != nil {
@@ -391,7 +395,7 @@ func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
 		}
 	}
 
-	c.timerPrevote.Reset(timeoutPrevote)
+	restartTimer(c.timerPrevote, timeoutPrevote)
 	c.propsalState.Step = prevote
 }
 
@@ -419,15 +423,13 @@ func (c *Consensus) onPreVote(msg *ConsensusMsgVote, from peer.ID) {
 	}
 
 	if c.propsalState.AmProposer {
-		c.timerPrecommit.Reset(timeoutPrecommit)
+		restartTimer(c.timerPrecommit, timeoutPrecommit)
 	}
 
 	c.propsalState.PreVotes[from] = msg
 
 	if uint64(len(c.propsalState.PreVotes)) >= c.propsalState.f {
-		if !c.timerPrevote.Stop() {
-			<-c.timerPrevote.C
-		}
+		stopTimer(c.timerPrevote)
 
 		id := c.propsalState.Block.String()
 		if err := c.sendVote(VoteTypePreCommit, id); err != nil {
@@ -438,7 +440,7 @@ func (c *Consensus) onPreVote(msg *ConsensusMsgVote, from peer.ID) {
 		c.propsalState.lockedValue = c.propsalState.Block
 		c.propsalState.lockedRound = c.propsalState.Round
 
-		c.timerPrecommit.Reset(timeoutPrecommit)
+		restartTimer(c.timerPrecommit, timeoutPrecommit)
 	}
 }
 
@@ -448,15 +450,13 @@ func (c *Consensus) OnPreCommit(msg *ConsensusMsgVote, from peer.ID) {
 	}
 
 	if c.propsalState.AmProposer {
-		c.timerPrecommit.Reset(timeoutPrecommit)
+		restartTimer(c.timerPrecommit, timeoutPrecommit)
 	}
 
 	c.propsalState.PreCommits[from] = msg
 
 	if uint64(len(c.propsalState.PreCommits)) >= c.propsalState.f {
-		if !c.timerPrecommit.Stop() {
-			<-c.timerPrecommit.C
-		}
+		stopTimer(c.timerPrecommit)
 
 		if c.propsalState.AmProposer {
 			msg, err := c.sendBlock()
@@ -466,7 +466,7 @@ func (c *Consensus) OnPreCommit(msg *ConsensusMsgVote, from peer.ID) {
 
 			c.onBlock(msg, c.id)
 		} else {
-			c.timerBlock.Reset(timeoutBlock)
+			restartTimer(c.timerBlock, timeoutBlock)
 		}
 	}
 }
@@ -492,9 +492,7 @@ func (c *Consensus) onBlock(msg *ConsensusMsgBlock, from peer.ID) {
 		return
 	}
 
-	if !c.timerBlock.Stop() {
-		<-c.timerBlock.C
-	}
+	stopTimer(c.timerBlock)
 
 	c.state.Height = c.propsalState.Height
 	c.state.ParentBlock = c.state.Block
@@ -507,6 +505,11 @@ func (c *Consensus) onTimeoutProposal() {
 		return
 	}
 
+	logging.Entry().WithFields(logrus.Fields{
+		"Height": c.propsalState.Height,
+		"Round":  c.propsalState.Round,
+	}).Info("timing out proposal")
+
 	c.propsalState.Step = prevote
 	c.sendVote(VoteTypePreVote, "")
 }
@@ -516,6 +519,11 @@ func (c *Consensus) onTimeoutPrevote() {
 		c.propsalState.Step != prevote {
 		return
 	}
+
+	logging.Entry().WithFields(logrus.Fields{
+		"Height": c.propsalState.Height,
+		"Round":  c.propsalState.Round,
+	}).Info("timing out prevote")
 
 	c.propsalState.Step = precommit
 	c.sendVote(VoteTypePreCommit, "")
@@ -530,6 +538,11 @@ func (c *Consensus) onTimeoutBlock() {
 		c.propsalState.Step != precommit {
 		return
 	}
+
+	logging.Entry().WithFields(logrus.Fields{
+		"Height": c.propsalState.Height,
+		"Round":  c.propsalState.Round,
+	}).Info("timing out block")
 
 	//TODO(tcfw): what to do waiting for signatures?
 }
@@ -601,6 +614,9 @@ func (c *Consensus) sendMsg(msg interface{}) error {
 	case *ConsensusMsgVote:
 		wrapper.Type = ConsensusMsgTypeVote
 		wrapper.Vote = msg
+	case *ConsensusMsgEvidence:
+		wrapper.Type = ConsensusMsgTypeEvidence
+		wrapper.Evidence = msg
 	case *ConsensusMsgBlock:
 		wrapper.Type = ConsensusMsgTypeBlock
 		wrapper.Block = msg
@@ -613,16 +629,40 @@ func (c *Consensus) sendMsg(msg interface{}) error {
 		Timestamp: time.Now(),
 	}
 
+	d, err := c.id.MarshalBinary()
+	if err != nil {
+		return errors.Wrap(err, "marshaling id")
+	}
+
 	signData, err := signatureData(hl)
 	if err != nil {
 		return errors.Wrap(err, "unable to create sign data")
 	}
 
-	sig, err := c.priv.Sign(signData)
+	d = append(d, signData...)
+
+	sig, err := bls.Sign(bn256.NewSuite(), c.signingKey, d)
 	if err != nil {
-		return errors.Wrap(err, "unable to sign")
+		return errors.Wrap(err, "signing vote data")
 	}
+
 	hl.Signature = sig
 
+	logging.Entry().WithField("msg", hl).Info("sending msg")
+
 	return c.p2p.PublishContext(context.Background(), pubsubMsgsChanName, hl)
+}
+
+func restartTimer(t *time.Timer, d time.Duration) {
+	stopTimer(t)
+	t.Reset(d)
+}
+
+func stopTimer(t *time.Timer) {
+	if !t.Stop() {
+		select {
+		case <-t.C:
+		default:
+		}
+	}
 }

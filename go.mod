@@ -24,6 +24,7 @@ require (
 	github.com/stretchr/testify v1.7.2
 	github.com/vektra/mockery/v2 v2.14.0
 	github.com/vmihailenco/msgpack/v5 v5.3.5
+	go.dedis.ch/kyber/v3 v3.0.13
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 	google.golang.org/grpc v1.46.2
 	google.golang.org/protobuf v1.28.0
@@ -230,6 +231,7 @@ require (
 	github.com/whyrusleeping/mdns v0.0.0-20190826153040-b9b60ed33aa9 // indirect
 	github.com/whyrusleeping/multiaddr-filter v0.0.0-20160516205228-e903e4adabd7 // indirect
 	github.com/whyrusleeping/timecache v0.0.0-20160911033111-cfcb2f1abfee // indirect
+	go.dedis.ch/fixbuf v1.0.3 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.opentelemetry.io/otel v1.6.3 // indirect
 	go.opentelemetry.io/otel/exporters/jaeger v1.6.3 // indirect
