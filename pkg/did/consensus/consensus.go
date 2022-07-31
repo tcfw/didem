@@ -1,6 +1,7 @@
 package consensus
 
 import (
+	"bytes"
 	"context"
 	"math/big"
 	"time"
@@ -31,6 +32,7 @@ var (
 )
 
 type Consensus struct {
+	chain      []byte
 	id         peer.ID
 	signingKey kyber.Scalar
 
@@ -237,6 +239,11 @@ func (c *Consensus) StartRound(inc bool) error {
 }
 
 func (c *Consensus) OnMsg(msg *Msg) {
+	if !bytes.Equal(msg.Chain, c.chain) {
+		logging.Error("received msg from different chain")
+		return
+	}
+
 	logging.Entry().WithField("msg", msg).Info("received msg")
 
 	node, err := c.db.Node(msg.From)
@@ -658,6 +665,7 @@ func (c *Consensus) sendMsg(msg interface{}) error {
 	hl := &Msg{
 		Type:      MsgTypeConsensus,
 		From:      c.id,
+		Chain:     c.chain,
 		Consensus: wrapper,
 		Timestamp: time.Now(),
 	}

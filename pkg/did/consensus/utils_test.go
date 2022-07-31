@@ -58,10 +58,14 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 	blockStore := storage.NewMemStore()
 	memPool := NewTxMemPool()
 
+	chain := make([]byte, 10)
+	rand.Read(chain)
+
 	for i, h := range hosts {
 		peers = append(peers, h.ID())
 		c := &Consensus{
 			id:         h.ID(),
+			chain:      chain,
 			signingKey: sks[i],
 			memPool:    memPool,
 			blockStore: blockStore,

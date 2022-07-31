@@ -30,6 +30,7 @@ const (
 type Msg struct {
 	Type      MsgType       `msgpack:"t"`
 	From      peer.ID       `msgpack:"p"`
+	Chain     []byte        `msgpack:"c"`
 	Tx        *TxMsg        `msgpack:"tx,omitempty"`
 	Block     *BlockMsg     `msgpack:"bl,omitempty"`
 	Consensus *ConsensusMsg `msgpack:"cn,omitempty"`
