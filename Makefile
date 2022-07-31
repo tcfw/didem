@@ -1,13 +1,13 @@
-GOBIN:=go
-DOCKERBIN:=docker
-GOFLAGS:=-ldflags="-w -s" -trimpath
-BUILD_DST:=./build
-BIN:=didem
+GOBIN?=go
+DOCKERBIN?=docker
+GOFLAGS?=-ldflags="-w -s" -trimpath
+BUILD_DST?=./build
+BIN?=didem
 
-IMGREPO:=ghcr.io/tcfw/
-IMG:=didem
-IMGVER:=latest
-IMGTAG:=$(IMGREPO)$(IMG):$(IMGVER)
+IMGREPO?=ghcr.io/tcfw/
+IMG?=didem
+IMGVER?=latest
+IMGTAG?=$(IMGREPO)$(IMG):$(IMGVER)
 
 .PHONY: build
 build:
