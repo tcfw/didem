@@ -163,22 +163,22 @@ func TestSuccessfulRound(t *testing.T) {
 	msg := <-sub
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
 	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreVote)
-	prop.onVote(msg.Consensus.Vote, msg.From)
+	prop.onVote(msg, msg.From)
 
 	msg = <-sub
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
 	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreVote)
-	prop.onVote(msg.Consensus.Vote, msg.From)
+	prop.onVote(msg, msg.From)
 
 	msg = <-sub
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
 	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreCommit)
-	prop.onVote(msg.Consensus.Vote, msg.From)
+	prop.onVote(msg, msg.From)
 
 	msg = <-sub
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
 	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreCommit)
-	prop.onVote(msg.Consensus.Vote, msg.From)
+	prop.onVote(msg, msg.From)
 }
 
 func TestNewRound(t *testing.T) {
@@ -208,39 +208,53 @@ func TestNewRound(t *testing.T) {
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
 	assert.Equal(t, VoteTypePreVote, msg.Consensus.Vote.Type)
 	assert.Equal(t, uint32(1), msg.Consensus.Vote.Round)
-	prop.onVote(msg.Consensus.Vote, msg.From)
+	prop.onVote(msg, msg.From)
 
 	msg = <-sub
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
 	assert.Equal(t, VoteTypePreVote, msg.Consensus.Vote.Type)
 	assert.Equal(t, uint32(1), msg.Consensus.Vote.Round)
-	prop.onVote(msg.Consensus.Vote, msg.From)
+	prop.onVote(msg, msg.From)
 
 	msg = <-sub
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
 	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreCommit)
 	assert.Equal(t, uint32(1), msg.Consensus.Vote.Round)
-	prop.onVote(msg.Consensus.Vote, msg.From)
+	prop.onVote(msg, msg.From)
 
 	msg = <-sub
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
 	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreCommit)
 	assert.Equal(t, uint32(1), msg.Consensus.Vote.Round)
-	prop.onVote(msg.Consensus.Vote, msg.From)
+	prop.onVote(msg, msg.From)
 
-	if err := prop.StartRound(true); err != nil {
-		t.Fatal(err)
+	for i := uint32(2); i < 5; i++ {
+		if err := prop.StartRound(true); err != nil {
+			t.Fatal(err)
+		}
+
+		msg = <-sub
+		assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+		assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreVote)
+		assert.Equal(t, i, msg.Consensus.Vote.Round)
+		prop.onVote(msg, msg.From)
+
+		msg = <-sub
+		assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+		assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreVote)
+		assert.Equal(t, i, msg.Consensus.Vote.Round)
+		prop.onVote(msg, msg.From)
+
+		msg = <-sub
+		assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+		assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreCommit)
+		assert.Equal(t, i, msg.Consensus.Vote.Round)
+		prop.onVote(msg, msg.From)
+
+		msg = <-sub
+		assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+		assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreCommit)
+		assert.Equal(t, i, msg.Consensus.Vote.Round)
+		prop.onVote(msg, msg.From)
 	}
-
-	msg = <-sub
-	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
-	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreVote)
-	assert.Equal(t, uint32(2), msg.Consensus.Vote.Round)
-	prop.onVote(msg.Consensus.Vote, msg.From)
-
-	msg = <-sub
-	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
-	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreVote)
-	assert.Equal(t, uint32(2), msg.Consensus.Vote.Round)
-	prop.onVote(msg.Consensus.Vote, msg.From)
 }

@@ -84,12 +84,11 @@ const (
 
 type ConsensusMsgVote struct {
 	Type      VoteType  `msgpack:"t"`
-	Height    uint64    `msgpack:"h,omitempty"`
-	Round     uint32    `msgpack:"r,omitempty"`
+	Height    uint64    `msgpack:"h"`
+	Round     uint32    `msgpack:"r"`
 	BlockID   string    `msgpack:"id"`
 	Timestamp time.Time `msgpack:"ts"`
-	Validator string    `msgpack:"v,omitempty"`
-	Signature []byte    `msgpack:"s,omitempty"`
+	Validator string    `msgpack:"v"`
 }
 
 type ConsensusMsgEvidence struct {
@@ -98,8 +97,9 @@ type ConsensusMsgEvidence struct {
 }
 
 type ConsensusMsgBlock struct {
-	Height    uint64 `msgpack:"h"`
-	Round     uint32 `msgpack:"r"`
-	CID       string `msgpack:"c"`
-	Signature []byte `msgpack:"s,omitempty"`
+	Height     uint64 `msgpack:"h"`
+	Round      uint32 `msgpack:"r"`
+	CID        string `msgpack:"c"`
+	Validators []byte `msgpack:"v"`
+	Signature  []byte `msgpack:"s"`
 }

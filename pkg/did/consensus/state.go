@@ -24,8 +24,8 @@ type State struct {
 
 	f uint64
 
-	PreVotes   map[peer.ID]*ConsensusMsgVote
-	PreCommits map[peer.ID]*ConsensusMsgVote
+	PreVotes   map[peer.ID]*Msg
+	PreCommits map[peer.ID]*Msg
 
 	PreVotesEvidence   map[peer.ID]*ConsensusMsgEvidence
 	PreCommitsEvidence map[peer.ID]*ConsensusMsgEvidence

@@ -179,8 +179,8 @@ func (c *Consensus) StartRound(inc bool) error {
 	c.propsalState.lockedValue = cid.Undef
 	c.propsalState.Step = propose
 	c.propsalState.Height = c.state.Height + 1
-	c.propsalState.PreVotes = make(map[peer.ID]*ConsensusMsgVote)
-	c.propsalState.PreCommits = make(map[peer.ID]*ConsensusMsgVote)
+	c.propsalState.PreVotes = make(map[peer.ID]*Msg)
+	c.propsalState.PreCommits = make(map[peer.ID]*Msg)
 	c.propsalState.PreVotesEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
 	c.propsalState.PreCommitsEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
 
@@ -277,25 +277,25 @@ func (c *Consensus) OnMsg(msg *Msg) {
 
 	switch msg.Type {
 	case MsgTypeConsensus:
-		c.onConsensusMsg(msg.Consensus, msg.From)
+		c.onConsensusMsg(msg, msg.From)
 	case MsgTypeTx:
 		go c.onTx(msg.Tx, msg.From)
 	case MsgTypeBlock:
 	}
 }
 
-func (c *Consensus) onConsensusMsg(msg *ConsensusMsg, from peer.ID) {
-	switch msg.Type {
+func (c *Consensus) onConsensusMsg(msg *Msg, from peer.ID) {
+	switch msg.Consensus.Type {
 	case ConsensusMsgTypeNewRound:
-		c.onNewRound(msg.NewRound, from)
+		c.onNewRound(msg.Consensus.NewRound, from)
 	case ConsensusMsgTypeProposal:
-		c.onProposal(msg.Proposal, from)
+		c.onProposal(msg.Consensus.Proposal, from)
 	case ConsensusMsgTypeVote:
-		c.onVote(msg.Vote, from)
+		c.onVote(msg, from)
 	case ConsensusMsgTypeBlock:
-		c.onBlock(msg.Block, from)
+		c.onBlock(msg.Consensus.Block, from)
 	case ConsensusMsgTypeEvidence:
-		c.onEvidence(msg.Evidence, from)
+		c.onEvidence(msg.Consensus.Evidence, from)
 	}
 }
 
@@ -305,26 +305,28 @@ func (c *Consensus) onTx(msg *TxMsg, from peer.ID) {
 	}
 }
 
-func (c *Consensus) onVote(msg *ConsensusMsgVote, from peer.ID) {
+func (c *Consensus) onVote(msg *Msg, from peer.ID) {
+	vote := msg.Consensus.Vote
+
 	if from == c.propsalState.Proposer {
 		logging.Error("ignoring vote from proposer")
 		return
-	} else if msg.Height != c.propsalState.Height ||
-		msg.BlockID != c.propsalState.Block.String() ||
-		msg.Round != c.propsalState.Round {
+	} else if vote.Height != c.propsalState.Height ||
+		vote.BlockID != c.propsalState.Block.String() ||
+		vote.Round != c.propsalState.Round {
 		logging.Error("ignoring vote, invalid state")
 		return
 	}
 
-	switch msg.Type {
+	switch vote.Type {
 	case VoteTypePreVote:
-		c.onPreVote(msg, from)
+		c.onPreVote(msg)
 	case VoteTypePreCommit:
-		c.OnPreCommit(msg, from)
+		c.OnPreCommit(msg)
 	}
 
 	if c.propsalState.AmProposer {
-		if err := c.sendEvidence(msg); err != nil {
+		if err := c.sendEvidence(vote); err != nil {
 			logging.WithError(err).Error("sending evidence")
 		}
 	}
@@ -346,8 +348,8 @@ func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
 	c.propsalState.Step = propose
 	c.propsalState.Height = msg.Height
 	c.propsalState.Round = msg.Round
-	c.propsalState.PreVotes = make(map[peer.ID]*ConsensusMsgVote)
-	c.propsalState.PreCommits = make(map[peer.ID]*ConsensusMsgVote)
+	c.propsalState.PreVotes = make(map[peer.ID]*Msg)
+	c.propsalState.PreCommits = make(map[peer.ID]*Msg)
 	c.propsalState.PreVotesEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
 	c.propsalState.PreCommitsEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
 
@@ -417,7 +419,7 @@ func (c *Consensus) validate(value string) (cid.Cid, error) {
 	return cv, nil
 }
 
-func (c *Consensus) onPreVote(msg *ConsensusMsgVote, from peer.ID) {
+func (c *Consensus) onPreVote(msg *Msg) {
 	if c.propsalState.Step != prevote {
 		return
 	}
@@ -426,7 +428,7 @@ func (c *Consensus) onPreVote(msg *ConsensusMsgVote, from peer.ID) {
 		restartTimer(c.timerPrecommit, timeoutPrecommit)
 	}
 
-	c.propsalState.PreVotes[from] = msg
+	c.propsalState.PreVotes[msg.From] = msg
 
 	if uint64(len(c.propsalState.PreVotes)) >= c.propsalState.f {
 		stopTimer(c.timerPrevote)
@@ -436,6 +438,7 @@ func (c *Consensus) onPreVote(msg *ConsensusMsgVote, from peer.ID) {
 			logging.WithError(err).Error("sending precommit")
 			return
 		}
+
 		c.propsalState.Step = precommit
 		c.propsalState.lockedValue = c.propsalState.Block
 		c.propsalState.lockedRound = c.propsalState.Round
@@ -444,7 +447,7 @@ func (c *Consensus) onPreVote(msg *ConsensusMsgVote, from peer.ID) {
 	}
 }
 
-func (c *Consensus) OnPreCommit(msg *ConsensusMsgVote, from peer.ID) {
+func (c *Consensus) OnPreCommit(msg *Msg) {
 	if c.propsalState.Step != precommit {
 		return
 	}
@@ -453,7 +456,7 @@ func (c *Consensus) OnPreCommit(msg *ConsensusMsgVote, from peer.ID) {
 		restartTimer(c.timerPrecommit, timeoutPrecommit)
 	}
 
-	c.propsalState.PreCommits[from] = msg
+	c.propsalState.PreVotes[msg.From] = msg
 
 	if uint64(len(c.propsalState.PreCommits)) >= c.propsalState.f {
 		stopTimer(c.timerPrecommit)
@@ -462,6 +465,7 @@ func (c *Consensus) OnPreCommit(msg *ConsensusMsgVote, from peer.ID) {
 			msg, err := c.sendBlock()
 			if err != nil {
 				logging.WithError(err).Error("failed to send blockmsg")
+				return
 			}
 
 			c.onBlock(msg, c.id)
@@ -586,6 +590,35 @@ func (c *Consensus) sendBlock() (*ConsensusMsgBlock, error) {
 		Round:  c.propsalState.lockedRound,
 		CID:    c.propsalState.lockedValue.String(),
 	}
+
+	pks := make([]kyber.Point, 0, len(c.propsalState.PreCommits))
+	sigs := make([][]byte, 0, len(c.propsalState.PreCommits))
+
+	for p, vote := range c.propsalState.PreCommits {
+		n, err := c.db.Node(p)
+		if err != nil {
+			return nil, errors.Wrap(err, "finding node")
+		}
+		for _, k := range n.Keys {
+			if k.String() == vote.Consensus.Vote.Validator {
+				pks = append(pks, k)
+			}
+		}
+
+		sigs = append(sigs, vote.Signature)
+	}
+	k := bls.AggregatePublicKeys(bn256.NewSuite(), pks...)
+	v, err := k.MarshalBinary()
+	if err != nil {
+		return nil, errors.Wrap(err, "aggregating public keys")
+	}
+	msg.Validators = v
+
+	s, err := bls.AggregateSignatures(bn256.NewSuite(), sigs...)
+	if err != nil {
+		return nil, errors.Wrap(err, "aggregating signatures")
+	}
+	msg.Signature = s
 
 	return msg, c.sendMsg(msg)
 }
