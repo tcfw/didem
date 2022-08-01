@@ -3,25 +3,25 @@ package storage
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"sync"
 
 	"github.com/ipfs/go-cid"
-	"github.com/ipfs/go-ipfs/config"
-	ipfsCore "github.com/ipfs/go-ipfs/core"
-	ipfsCoreiface "github.com/ipfs/go-ipfs/core/coreapi"
-	"github.com/ipfs/go-ipfs/core/node/libp2p"
-	"github.com/ipfs/go-ipfs/plugin/loader"
-	"github.com/ipfs/go-ipfs/repo/fsrepo"
 	coreiface "github.com/ipfs/interface-go-ipfs-core"
 	options "github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/ipfs/interface-go-ipfs-core/path"
+	"github.com/ipfs/kubo/config"
+	ipfsCore "github.com/ipfs/kubo/core"
+	ipfsCoreiface "github.com/ipfs/kubo/core/coreapi"
+	"github.com/ipfs/kubo/core/node/libp2p"
+	"github.com/ipfs/kubo/plugin/loader"
+	"github.com/ipfs/kubo/repo/fsrepo"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/multiformats/go-multihash"
-	"github.com/pkg/errors"
 
 	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/tcfw/didem/pkg/storage"
@@ -133,12 +133,20 @@ func (is *IPFSStorage) GetTx(ctx context.Context, id cid.Cid) (*tx.Tx, error) {
 	return tx, nil
 }
 
-func (is *IPFSStorage) Tips(ctx context.Context) ([]tx.Tx, error) {
-	return nil, errors.New("not implemeneted")
+func (is *IPFSStorage) PutBlock(context.Context, *storage.Block) (cid.Cid, error) {
+	return cid.Undef, errors.New("unimplemeneted")
 }
 
-func (is *IPFSStorage) Parents(ctx context.Context, id cid.Cid) ([]tx.Tx, error) {
-	return nil, errors.New("not implemeneted")
+func (is *IPFSStorage) GetBlock(context.Context, cid.Cid) (*storage.Block, error) {
+	return nil, errors.New("unimplemeneted")
+}
+
+func (is *IPFSStorage) PutSet(context.Context, *storage.TxSet) (cid.Cid, error) {
+	return cid.Undef, errors.New("unimplemeneted")
+}
+
+func (is *IPFSStorage) GetSet(context.Context, cid.Cid) (*storage.TxSet, error) {
+	return nil, errors.New("unimplemeneted")
 }
 
 func createTempRepo() (string, error) {
