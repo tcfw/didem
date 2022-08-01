@@ -39,7 +39,7 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 	}
 
 	db := mocks.NewDb(t)
-	db.On("Nodes").Return(peers, nil)
+	db.On("Nodes").Maybe().Return(peers, nil)
 	nodeRet := func(id peer.ID) *tx.Node {
 		for i, h := range hosts {
 			if h.ID().String() == id.String() {
@@ -78,6 +78,16 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 			},
 		}
 		c.setupTimers()
+		t.Cleanup(func() {
+			stopTimer(c.timerPropose)
+			stopTimer(c.timerPrevote)
+			stopTimer(c.timerPrecommit)
+			stopTimer(c.timerBlock)
+			select {
+			case c.stopTimerLoop <- struct{}{}:
+			default:
+			}
+		})
 		instances = append(instances, c)
 	}
 

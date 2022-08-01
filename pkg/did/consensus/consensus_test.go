@@ -162,22 +162,22 @@ func TestSuccessfulRound(t *testing.T) {
 
 	msg := <-sub
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
-	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreVote)
+	assert.Equal(t, VoteTypePreVote, msg.Consensus.Vote.Type)
 	prop.onVote(msg, msg.From)
 
 	msg = <-sub
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
-	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreVote)
+	assert.Equal(t, VoteTypePreVote, msg.Consensus.Vote.Type)
 	prop.onVote(msg, msg.From)
 
 	msg = <-sub
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
-	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreCommit)
+	assert.Equal(t, VoteTypePreCommit, msg.Consensus.Vote.Type)
 	prop.onVote(msg, msg.From)
 
 	msg = <-sub
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
-	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreCommit)
+	assert.Equal(t, VoteTypePreCommit, msg.Consensus.Vote.Type)
 	prop.onVote(msg, msg.From)
 }
 
@@ -218,13 +218,13 @@ func TestNewRound(t *testing.T) {
 
 	msg = <-sub
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
-	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreCommit)
+	assert.Equal(t, VoteTypePreCommit, msg.Consensus.Vote.Type)
 	assert.Equal(t, uint32(1), msg.Consensus.Vote.Round)
 	prop.onVote(msg, msg.From)
 
 	msg = <-sub
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
-	assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreCommit)
+	assert.Equal(t, VoteTypePreCommit, msg.Consensus.Vote.Type)
 	assert.Equal(t, uint32(1), msg.Consensus.Vote.Round)
 	prop.onVote(msg, msg.From)
 
@@ -235,26 +235,82 @@ func TestNewRound(t *testing.T) {
 
 		msg = <-sub
 		assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
-		assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreVote)
+		assert.Equal(t, VoteTypePreVote, msg.Consensus.Vote.Type)
 		assert.Equal(t, i, msg.Consensus.Vote.Round)
 		prop.onVote(msg, msg.From)
 
 		msg = <-sub
 		assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
-		assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreVote)
+		assert.Equal(t, VoteTypePreVote, msg.Consensus.Vote.Type)
 		assert.Equal(t, i, msg.Consensus.Vote.Round)
 		prop.onVote(msg, msg.From)
 
 		msg = <-sub
 		assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
-		assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreCommit)
+		assert.Equal(t, VoteTypePreCommit, msg.Consensus.Vote.Type)
 		assert.Equal(t, i, msg.Consensus.Vote.Round)
 		prop.onVote(msg, msg.From)
 
 		msg = <-sub
 		assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
-		assert.Equal(t, msg.Consensus.Vote.Type, VoteTypePreCommit)
+		assert.Equal(t, VoteTypePreCommit, msg.Consensus.Vote.Type)
 		assert.Equal(t, i, msg.Consensus.Vote.Round)
 		prop.onVote(msg, msg.From)
 	}
+}
+
+func TestTimeoutProposal(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	timeoutPropose = 20 * time.Millisecond
+	timeoutPrevote = 20 * time.Millisecond
+	timeoutPrecommit = 20 * time.Millisecond
+
+	t.Cleanup(func() {
+		timeoutPropose = 1 * time.Minute
+		timeoutPrevote = 1 * time.Minute
+		timeoutPrecommit = 1 * time.Minute
+	})
+
+	_, instances, _ := newConsensusPubSubNet(t, ctx, 2)
+
+	prop := instances[0]
+
+	sub, err := prop.p2p.Msgs(pubsubMsgsChanName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	setProposer(t, instances, prop.id)
+
+	startAll(t, instances[1:])
+
+	//fail to start proposer
+	for _, instance := range instances[1:] {
+		if err := instance.StartRound(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	//proposer should receive an empty vote for missing proposal
+	msg := <-sub
+	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+	assert.Equal(t, VoteTypePreVote, msg.Consensus.Vote.Type)
+	assert.Equal(t, uint32(1), msg.Consensus.Vote.Round)
+	assert.Equal(t, "", msg.Consensus.Vote.BlockID)
+
+	//proposer should receive an empty vote for missing prevotes
+	msg = <-sub
+	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+	assert.Equal(t, VoteTypePreCommit, msg.Consensus.Vote.Type)
+	assert.Equal(t, uint32(1), msg.Consensus.Vote.Round)
+	assert.Equal(t, "", msg.Consensus.Vote.BlockID)
+
+	//proposer should receive a new empty vote for missing precommits
+	msg = <-sub
+	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
+	assert.Equal(t, VoteTypePreVote, msg.Consensus.Vote.Type)
+	assert.Equal(t, uint32(2), msg.Consensus.Vote.Round)
+	assert.Equal(t, "", msg.Consensus.Vote.BlockID)
 }

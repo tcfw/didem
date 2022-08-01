@@ -3,11 +3,12 @@ package storage
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"sync"
+
+	"github.com/pkg/errors"
 
 	"github.com/ipfs/go-cid"
 	coreiface "github.com/ipfs/interface-go-ipfs-core"
@@ -22,6 +23,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/multiformats/go-multihash"
+	"github.com/vmihailenco/msgpack/v5"
 
 	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/tcfw/didem/pkg/storage"
@@ -96,12 +98,7 @@ type IPFSStorage struct {
 	node coreiface.CoreAPI
 }
 
-func (is *IPFSStorage) PutTx(ctx context.Context, transaction *tx.Tx) (cid.Cid, error) {
-	d, err := transaction.Marshal()
-	if err != nil {
-		return cid.Undef, err
-	}
-
+func (is *IPFSStorage) putRaw(ctx context.Context, d []byte) (cid.Cid, error) {
 	hashType := options.Block.Hash(multihash.SHA2_256, multihash.DefaultLengths[multihash.SHA2_256])
 
 	n, err := is.node.Block().Put(ctx, bytes.NewReader(d), hashType, options.Block.Pin(true))
@@ -114,13 +111,31 @@ func (is *IPFSStorage) PutTx(ctx context.Context, transaction *tx.Tx) (cid.Cid, 
 	return n.Path().Cid(), nil
 }
 
-func (is *IPFSStorage) GetTx(ctx context.Context, id cid.Cid) (*tx.Tx, error) {
+func (is *IPFSStorage) getRaw(ctx context.Context, id cid.Cid) ([]byte, error) {
 	n, err := is.node.Block().Get(ctx, path.IpldPath(id))
 	if err != nil {
 		return nil, err
 	}
 
 	data, err := ioutil.ReadAll(n)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func (is *IPFSStorage) PutTx(ctx context.Context, transaction *tx.Tx) (cid.Cid, error) {
+	d, err := transaction.Marshal()
+	if err != nil {
+		return cid.Undef, err
+	}
+
+	return is.putRaw(ctx, d)
+}
+
+func (is *IPFSStorage) GetTx(ctx context.Context, id cid.Cid) (*tx.Tx, error) {
+	data, err := is.getRaw(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -133,20 +148,51 @@ func (is *IPFSStorage) GetTx(ctx context.Context, id cid.Cid) (*tx.Tx, error) {
 	return tx, nil
 }
 
-func (is *IPFSStorage) PutBlock(context.Context, *storage.Block) (cid.Cid, error) {
-	return cid.Undef, errors.New("unimplemeneted")
+func (is *IPFSStorage) PutBlock(ctx context.Context, b *storage.Block) (cid.Cid, error) {
+	d, err := msgpack.Marshal(b)
+	if err != nil {
+		return cid.Undef, errors.Wrap(err, "mashaling tx")
+	}
+
+	return is.putRaw(ctx, d)
 }
 
-func (is *IPFSStorage) GetBlock(context.Context, cid.Cid) (*storage.Block, error) {
-	return nil, errors.New("unimplemeneted")
+func (is *IPFSStorage) GetBlock(ctx context.Context, id cid.Cid) (*storage.Block, error) {
+	data, err := is.getRaw(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	b := &storage.Block{}
+	if err := msgpack.Unmarshal(data, b); err != nil {
+		return nil, errors.Wrap(err, "unmarshalling block")
+	}
+
+	return b, nil
 }
 
-func (is *IPFSStorage) PutSet(context.Context, *storage.TxSet) (cid.Cid, error) {
-	return cid.Undef, errors.New("unimplemeneted")
+func (is *IPFSStorage) PutSet(ctx context.Context, txs *storage.TxSet) (cid.Cid, error) {
+	d, err := msgpack.Marshal(txs)
+	if err != nil {
+		return cid.Undef, errors.Wrap(err, "mashaling tx")
+	}
+
+	return is.putRaw(ctx, d)
 }
 
-func (is *IPFSStorage) GetSet(context.Context, cid.Cid) (*storage.TxSet, error) {
-	return nil, errors.New("unimplemeneted")
+func (is *IPFSStorage) GetSet(ctx context.Context, id cid.Cid) (*storage.TxSet, error) {
+
+	data, err := is.getRaw(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	txs := &storage.TxSet{}
+	if err := msgpack.Unmarshal(data, txs); err != nil {
+		return nil, errors.Wrap(err, "unmarshalling block")
+	}
+
+	return txs, nil
 }
 
 func createTempRepo() (string, error) {

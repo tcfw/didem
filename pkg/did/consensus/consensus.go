@@ -51,6 +51,7 @@ type Consensus struct {
 	timerPrevote   *time.Timer
 	timerPrecommit *time.Timer
 	timerBlock     *time.Timer
+	stopTimerLoop  chan struct{}
 }
 
 func NewConsensus(h host.Host, p *pubsub.PubSub, opts ...Option) (*Consensus, error) {
@@ -119,6 +120,8 @@ func (c *Consensus) setupTimers() {
 
 	c.timerBlock = time.NewTimer(1 * time.Minute)
 	stopTimer(c.timerBlock)
+
+	c.stopTimerLoop = make(chan struct{})
 }
 
 func (c *Consensus) watchTimeouts() {
@@ -132,6 +135,8 @@ func (c *Consensus) watchTimeouts() {
 			c.onTimeoutPrecommit()
 		case <-c.timerBlock.C:
 			c.onTimeoutBlock()
+		case <-c.stopTimerLoop:
+			return
 		}
 	}
 }
@@ -201,6 +206,10 @@ func (c *Consensus) StartRound(inc bool) error {
 	}).Info("starting a new round")
 
 	if !c.propsalState.AmProposer {
+		if c.propsalState.Block == cid.Undef && c.propsalState.Round > 1 {
+			//still waiting for a proposal
+			c.propsalState.Step = propose
+		}
 		restartTimer(c.timerPropose, timeoutPropose)
 		return nil
 	}
@@ -523,6 +532,8 @@ func (c *Consensus) onTimeoutProposal() {
 
 	c.propsalState.Step = prevote
 	c.sendVote(VoteTypePreVote, "")
+
+	restartTimer(c.timerPrevote, timeoutPrevote)
 }
 
 func (c *Consensus) onTimeoutPrevote() {
@@ -538,6 +549,8 @@ func (c *Consensus) onTimeoutPrevote() {
 
 	c.propsalState.Step = precommit
 	c.sendVote(VoteTypePreCommit, "")
+
+	restartTimer(c.timerPrecommit, timeoutPrecommit)
 }
 
 func (c *Consensus) onTimeoutPrecommit() {
