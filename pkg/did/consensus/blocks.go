@@ -17,7 +17,7 @@ func (c *Consensus) makeBlock() (*storage.Block, error) {
 
 	block := &storage.Block{
 		Version:   storage.Version,
-		Parent:    storage.BlockID(c.state.Block.String()),
+		Parent:    storage.BlockID(c.state.Block),
 		Height:    c.propsalState.Height,
 		CreatedAt: time.Now().Unix(),
 		Proposer:  c.id.String(),
@@ -31,6 +31,10 @@ func (c *Consensus) makeBlock() (*storage.Block, error) {
 	n := storage.MaxBlockTxCount
 	if c.memPool.Len() < n {
 		n = c.memPool.Len()
+	}
+
+	if n == 0 {
+		return nil, nil //nothing to propose
 	}
 
 	txs := make([]*tx.Tx, 0, n)

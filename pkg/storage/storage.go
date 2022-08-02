@@ -15,11 +15,14 @@ const (
 
 type Store interface {
 	PutTx(context.Context, *tx.Tx) (cid.Cid, error)
-	GetTx(context.Context, cid.Cid) (*tx.Tx, error)
+	GetTx(context.Context, tx.TxID) (*tx.Tx, error)
 
 	PutBlock(context.Context, *Block) (cid.Cid, error)
-	GetBlock(context.Context, cid.Cid) (*Block, error)
+	GetBlock(context.Context, BlockID) (*Block, error)
 
 	PutSet(context.Context, *TxSet) (cid.Cid, error)
 	GetSet(context.Context, cid.Cid) (*TxSet, error)
+
+	GetTxBlock(context.Context, tx.TxID) (*Block, error)
+	MarkBlock(context.Context, BlockID, BlockState) error
 }

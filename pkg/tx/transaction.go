@@ -1,6 +1,7 @@
 package tx
 
 import (
+	"github.com/ipfs/go-cid"
 	"github.com/pkg/errors"
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -14,6 +15,8 @@ type TxType int8
 const (
 	TxType_PKPublish TxType = iota + 1
 )
+
+type TxID cid.Cid
 
 type Tx struct {
 	Version uint8       `msgpack:"v"`

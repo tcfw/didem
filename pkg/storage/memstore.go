@@ -18,13 +18,17 @@ var (
 )
 
 type MemStore struct {
-	store map[cid.Cid][]byte
-	mu    sync.RWMutex
+	store    map[cid.Cid][]byte
+	txbIndex map[tx.TxID]BlockID
+	bState   map[BlockID]BlockState
+	mu       sync.RWMutex
 }
 
 func NewMemStore() *MemStore {
 	return &MemStore{
-		store: make(map[cid.Cid][]byte),
+		store:    make(map[cid.Cid][]byte),
+		txbIndex: make(map[tx.TxID]BlockID),
+		bState:   make(map[BlockID]BlockState),
 	}
 }
 
@@ -53,8 +57,8 @@ func (m *MemStore) PutTx(ctx context.Context, tx *tx.Tx) (cid.Cid, error) {
 	return m.putObj(tx), nil
 }
 
-func (m *MemStore) GetTx(ctx context.Context, id cid.Cid) (*tx.Tx, error) {
-	d := m.getObj(id)
+func (m *MemStore) GetTx(ctx context.Context, id tx.TxID) (*tx.Tx, error) {
+	d := m.getObj(cid.Cid(id))
 	if d == nil {
 		return nil, ErrNotFound
 	}
@@ -71,8 +75,38 @@ func (m *MemStore) PutBlock(ctx context.Context, b *Block) (cid.Cid, error) {
 	return m.putObj(b), nil
 }
 
-func (m *MemStore) GetBlock(ctx context.Context, id cid.Cid) (*Block, error) {
-	d := m.getObj(id)
+func (m *MemStore) GetTxBlock(ctx context.Context, id tx.TxID) (*Block, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	blkId, ok := m.txbIndex[id]
+	if !ok {
+		return nil, ErrNotFound
+	}
+
+	return m.GetBlock(ctx, blkId)
+}
+
+func (m *MemStore) MarkBlock(ctx context.Context, b BlockID, s BlockState) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	c := m.bState[b]
+	m.bState[b] = s
+
+	if c == BlockStateValidated && s == BlockStateAccepted {
+		m.indexBlockTx(ctx, b)
+	}
+
+	return nil
+}
+
+func (m *MemStore) indexBlockTx(ctx context.Context, b BlockID) {
+
+}
+
+func (m *MemStore) GetBlock(ctx context.Context, id BlockID) (*Block, error) {
+	d := m.getObj(cid.Cid(id))
 	if d == nil {
 		return nil, ErrNotFound
 	}

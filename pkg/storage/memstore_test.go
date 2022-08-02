@@ -23,7 +23,7 @@ func TestMemStore(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tx, err := m.GetTx(context.Background(), id)
+	tx, err := m.GetTx(context.Background(), tx.TxID(id))
 	if err != nil {
 		t.Fatal(err)
 	}

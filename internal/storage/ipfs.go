@@ -134,8 +134,8 @@ func (is *IPFSStorage) PutTx(ctx context.Context, transaction *tx.Tx) (cid.Cid, 
 	return is.putRaw(ctx, d)
 }
 
-func (is *IPFSStorage) GetTx(ctx context.Context, id cid.Cid) (*tx.Tx, error) {
-	data, err := is.getRaw(ctx, id)
+func (is *IPFSStorage) GetTx(ctx context.Context, id tx.TxID) (*tx.Tx, error) {
+	data, err := is.getRaw(ctx, cid.Cid(id))
 	if err != nil {
 		return nil, err
 	}
@@ -157,8 +157,8 @@ func (is *IPFSStorage) PutBlock(ctx context.Context, b *storage.Block) (cid.Cid,
 	return is.putRaw(ctx, d)
 }
 
-func (is *IPFSStorage) GetBlock(ctx context.Context, id cid.Cid) (*storage.Block, error) {
-	data, err := is.getRaw(ctx, id)
+func (is *IPFSStorage) GetBlock(ctx context.Context, id storage.BlockID) (*storage.Block, error) {
+	data, err := is.getRaw(ctx, cid.Cid(id))
 	if err != nil {
 		return nil, err
 	}

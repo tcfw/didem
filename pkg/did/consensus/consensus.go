@@ -234,9 +234,11 @@ func (c *Consensus) StartRound(inc bool) error {
 			return errors.Wrap(err, "making new block")
 		}
 
-		c.propsalState.Block, err = c.blockStore.PutBlock(context.Background(), block)
-		if err != nil {
-			return errors.Wrap(err, "storing new block")
+		if block != nil {
+			c.propsalState.Block, err = c.blockStore.PutBlock(context.Background(), block)
+			if err != nil {
+				return errors.Wrap(err, "storing new block")
+			}
 		}
 	}
 
@@ -423,7 +425,7 @@ func (c *Consensus) validate(value string) (cid.Cid, error) {
 		return cid.Undef, errors.Wrap(err, "unable to parse CID")
 	}
 
-	block, err := c.blockStore.GetBlock(context.Background(), cv)
+	block, err := c.blockStore.GetBlock(context.Background(), storage.BlockID(cv))
 	if err != nil {
 		return cid.Undef, errors.Wrap(err, "getting block")
 	}
