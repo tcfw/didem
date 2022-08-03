@@ -1,7 +1,6 @@
 package tx
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -20,9 +19,9 @@ func TestTxEncodeDecode(t *testing.T) {
 		Ts:      time.Now().Unix(),
 		Type:    TxType_Node,
 		Data: &Node{
-			Id:   "1111",
-			Did:  "did:example:abcdefghijklmnopqrstuvwxyz0123456789",
-			Keys: [][]byte{pubB},
+			Id:  "1111",
+			Did: "did:example:abcdefghijklmnopqrstuvwxyz0123456789",
+			Key: pubB,
 		},
 	}
 
@@ -30,8 +29,6 @@ func TestTxEncodeDecode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	fmt.Printf("msgpack hex: % x", b)
 
 	txrb := &Tx{}
 	if err := txrb.Unmarshal(b); err != nil {

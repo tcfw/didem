@@ -45,9 +45,9 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 			b, _ := pks[i].MarshalBinary()
 			if h.ID().String() == id.String() {
 				return &tx.Node{
-					Id:   h.ID().String(),
-					Did:  fmt.Sprintf("did:didem:%s", h.ID().String()),
-					Keys: [][]byte{b},
+					Id:  h.ID().String(),
+					Did: fmt.Sprintf("did:didem:%s", h.ID().String()),
+					Key: b,
 				}
 			}
 		}

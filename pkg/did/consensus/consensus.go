@@ -17,7 +17,6 @@ import (
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/pairing/bn256"
 	"go.dedis.ch/kyber/v3/sign/bls"
-	"go.dedis.ch/kyber/v3/util/random"
 )
 
 const (
@@ -270,7 +269,7 @@ func (c *Consensus) OnMsg(msg *Msg) {
 
 	sd, err := msg.From.MarshalBinary()
 	if err != nil {
-		logging.WithError(err).Error("marshalling id")
+		logging.WithError(err).Error("marshaling id")
 		return
 	}
 
@@ -282,19 +281,12 @@ func (c *Consensus) OnMsg(msg *Msg) {
 
 	sd = append(sd, signData...)
 
-	hasValidSignature := false
-	for _, k := range node.Keys {
-		_, pub := bls.NewKeyPair(bn256.NewSuite(), random.New())
-		if err := pub.UnmarshalBinary(k); err != nil {
-			logging.WithError(err).Error("unmarshaling key")
-			return
-		}
-		if err := bls.Verify(bn256.NewSuite(), pub, sd, msg.Signature); err == nil {
-			hasValidSignature = true
-			break
-		}
+	pub := bn256.NewSuite().G2().Point()
+	if err := pub.UnmarshalBinary(node.Key); err != nil {
+		logging.WithError(err).Error("unmarshaling key")
+		return
 	}
-	if !hasValidSignature {
+	if err := bls.Verify(bn256.NewSuite(), pub, sd, msg.Signature); err == nil {
 		logging.Error("no valid signature for msg from peer")
 		return
 	}
@@ -627,11 +619,11 @@ func (c *Consensus) sendBlock() (*ConsensusMsgBlock, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "finding node")
 		}
-		for _, k := range n.Keys {
-			if k.String() == vote.Consensus.Vote.Validator {
-				pks = append(pks, k)
-			}
+		pub := bn256.NewSuite().G2().Point()
+		if err := pub.UnmarshalBinary(n.Key); err != nil {
+			return nil, errors.Wrap(err, "unmarshalling node key")
 		}
+		pks = append(pks, pub)
 
 		sigs = append(sigs, vote.Signature)
 	}
