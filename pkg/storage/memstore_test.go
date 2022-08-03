@@ -15,7 +15,7 @@ func TestMemStore(t *testing.T) {
 	obj := &tx.Tx{
 		Version: 1,
 		Ts:      time.Now().Unix(),
-		Type:    tx.TxType_PKPublish,
+		Type:    tx.TxType_DID,
 	}
 
 	id, err := m.PutTx(context.Background(), obj)

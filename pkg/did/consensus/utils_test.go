@@ -42,11 +42,12 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 	db.On("Nodes").Maybe().Return(peers, nil)
 	nodeRet := func(id peer.ID) *tx.Node {
 		for i, h := range hosts {
+			b, _ := pks[i].MarshalBinary()
 			if h.ID().String() == id.String() {
 				return &tx.Node{
-					Id:   h.ID(),
+					Id:   h.ID().String(),
 					Did:  fmt.Sprintf("did:didem:%s", h.ID().String()),
-					Keys: []kyber.Point{pks[i]},
+					Keys: [][]byte{b},
 				}
 			}
 		}

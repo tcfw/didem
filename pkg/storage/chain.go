@@ -52,7 +52,7 @@ func (cl cidList) Len() int           { return len(cl) }
 func (cl cidList) Less(i, j int) bool { return bytes.Compare(cl[i].Bytes(), cl[j].Bytes()) == -1 }
 func (cl cidList) Swap(i, j int)      { cl[i], cl[j] = cl[j], cl[i] }
 
-func NewTxSet(s Store, txs []cid.Cid) (cid.Cid, error) {
+func NewTxSet(s Store, txs []cid.Cid) (*TxSet, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -61,19 +61,19 @@ func NewTxSet(s Store, txs []cid.Cid) (cid.Cid, error) {
 	n := len(txs)
 
 	if n > MaxBlockTxCount {
-		return cid.Undef, errors.New("too many tx for set")
+		return nil, errors.New("too many tx for set")
 	}
 
 	var root *TxSet
 
 	//TODO(tcfw)
 
-	c, err := s.PutSet(ctx, root)
+	_, err := s.PutSet(ctx, root)
 	if err != nil {
-		return cid.Undef, errors.Wrap(err, "storing root txset")
+		return nil, errors.Wrap(err, "storing root txset")
 	}
 
-	return c, nil
+	return root, nil
 }
 
 type Validator interface {

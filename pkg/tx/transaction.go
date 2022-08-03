@@ -13,7 +13,9 @@ const (
 type TxType int8
 
 const (
-	TxType_PKPublish TxType = iota + 1
+	TxType_DID TxType = iota + 1
+	TxType_VC
+	TxType_Node
 )
 
 type TxID cid.Cid
@@ -21,7 +23,7 @@ type TxID cid.Cid
 type Tx struct {
 	Version uint8       `msgpack:"v"`
 	Ts      int64       `msgpack:"t"`
-	Type    TxType      `msgpack:"T"`
+	Type    TxType      `msgpack:"e"`
 	Data    interface{} `msgpack:"d,noinline"`
 }
 
@@ -35,15 +37,26 @@ func (t *Tx) Marshal() ([]byte, error) {
 }
 
 func (t *Tx) Unmarshal(b []byte) error {
+	t.Data = &msgpack.RawMessage{}
+
 	if err := msgpack.Unmarshal(b, t); err != nil {
 		return err
 	}
 
 	switch t.Type {
-	case TxType_PKPublish:
-		//DIDComm decode
+	case TxType_DID:
+		//DID decode
+	case TxType_VC:
+		//VC decode
+	case TxType_Node:
+		//Node decode
+		t.Data = &Node{}
 	default:
 		return errors.New("unknown data type")
+	}
+
+	if err := msgpack.Unmarshal(b, t); err != nil {
+		return err
 	}
 
 	return nil

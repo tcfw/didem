@@ -17,6 +17,7 @@ import (
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/pairing/bn256"
 	"go.dedis.ch/kyber/v3/sign/bls"
+	"go.dedis.ch/kyber/v3/util/random"
 )
 
 const (
@@ -283,7 +284,12 @@ func (c *Consensus) OnMsg(msg *Msg) {
 
 	hasValidSignature := false
 	for _, k := range node.Keys {
-		if err := bls.Verify(bn256.NewSuite(), k, sd, msg.Signature); err == nil {
+		_, pub := bls.NewKeyPair(bn256.NewSuite(), random.New())
+		if err := pub.UnmarshalBinary(k); err != nil {
+			logging.WithError(err).Error("unmarshaling key")
+			return
+		}
+		if err := bls.Verify(bn256.NewSuite(), pub, sd, msg.Signature); err == nil {
 			hasValidSignature = true
 			break
 		}
