@@ -11,6 +11,7 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	bhost "github.com/libp2p/go-libp2p/p2p/host/blank"
 	swarmt "github.com/libp2p/go-libp2p/p2p/net/swarm/testing"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/tcfw/didem/pkg/did/consensus/mocks"
 	"github.com/tcfw/didem/pkg/storage"
@@ -20,6 +21,20 @@ import (
 	"go.dedis.ch/kyber/v3/sign/bls"
 	"go.dedis.ch/kyber/v3/util/random"
 )
+
+func TestCheckBn256PointMarhsaling(t *testing.T) {
+	_, pk := bls.NewKeyPair(bn256.NewSuite(), random.New())
+
+	b, err := pk.MarshalBinary()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	p := bn256.NewSuite().G2().Point()
+	p.UnmarshalBinary(b)
+
+	assert.True(t, pk.Equal(p))
+}
 
 func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Host, []*Consensus, MemPool) {
 	hosts := getNetHosts(t, ctx, n)

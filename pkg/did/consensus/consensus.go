@@ -228,7 +228,7 @@ func (c *Consensus) StartRound(inc bool) error {
 	c.propsalState.f = (uint64(len(n))/3)*2 + 1
 
 	//build & upload block
-	if c.propsalState.Block == cid.Undef {
+	if c.propsalState.Block.Equals(cid.Undef) {
 		block, err := c.makeBlock()
 		if err != nil {
 			return errors.Wrap(err, "making new block")
@@ -281,13 +281,14 @@ func (c *Consensus) OnMsg(msg *Msg) {
 
 	sd = append(sd, signData...)
 
-	pub := bn256.NewSuite().G2().Point()
+	suite := bn256.NewSuite()
+	pub := suite.G2().Point()
 	if err := pub.UnmarshalBinary(node.Key); err != nil {
 		logging.WithError(err).Error("unmarshaling key")
 		return
 	}
-	if err := bls.Verify(bn256.NewSuite(), pub, sd, msg.Signature); err == nil {
-		logging.Error("no valid signature for msg from peer")
+	if err := bls.Verify(suite, pub, sd, msg.Signature); err != nil {
+		logging.Error("invalid signature")
 		return
 	}
 
@@ -402,7 +403,7 @@ func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
 	stopTimer(c.timerPropose)
 
 	if bc == cid.Undef {
-		if err := c.sendVote(VoteTypePreVote, ""); err != nil {
+		if err := c.sendVote(VoteTypePreVote, cid.Undef.String()); err != nil {
 			logging.WithError(err).Error("sending nil prevote")
 			return
 		}
@@ -418,6 +419,10 @@ func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
 }
 
 func (c *Consensus) validate(value string) (cid.Cid, error) {
+	if value == cid.Undef.String() {
+		return cid.Undef, nil
+	}
+
 	cv, err := cid.Parse(value)
 	if err != nil {
 		return cid.Undef, errors.Wrap(err, "unable to parse CID")
