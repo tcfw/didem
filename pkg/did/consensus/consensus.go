@@ -483,13 +483,16 @@ func (c *Consensus) OnPreCommit(msg *Msg) {
 		stopTimer(c.timerPrecommit)
 
 		if c.propsalState.AmProposer {
-			msg, err := c.sendBlock()
-			if err != nil {
-				logging.WithError(err).Error("failed to send blockmsg")
-				return
-			}
+			//Give some time for other nodes to collect the evidence
+			time.AfterFunc(10*time.Second, func() {
+				msg, err := c.sendBlock()
+				if err != nil {
+					logging.WithError(err).Error("failed to send blockmsg")
+					return
+				}
 
-			c.onBlock(msg, c.id)
+				c.onBlock(msg, c.id)
+			})
 		} else {
 			restartTimer(c.timerBlock, timeoutBlock)
 		}
