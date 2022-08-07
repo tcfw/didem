@@ -43,7 +43,9 @@ type Block struct {
 
 type TxSet struct {
 	Children []cid.Cid `msgpack:"c"`
-	Txs      []cid.Cid `msgpack:"t,omitempty"`
+	Tx       cid.Cid   `msgpack:"t,omitempty"`
+
+	cid cid.Cid
 }
 
 type cidList []cid.Cid
@@ -64,16 +66,49 @@ func NewTxSet(s Store, txs []cid.Cid) (*TxSet, error) {
 		return nil, errors.New("too many tx for set")
 	}
 
-	var root *TxSet
+	nodes := []*TxSet{}
 
-	//TODO(tcfw)
+	for _, t := range txs {
+		ttx := &TxSet{Tx: t}
 
-	_, err := s.PutSet(ctx, root)
-	if err != nil {
-		return nil, errors.Wrap(err, "storing root txset")
+		c, err := s.PutSet(ctx, ttx)
+		if err != nil {
+			return nil, errors.Wrap(err, "storing root txset")
+		}
+
+		ttx.cid = c
+		nodes = append(nodes, ttx)
 	}
 
-	return root, nil
+	for len(nodes) > 1 {
+
+		if len(nodes)%2 == 1 {
+			nodes = append(nodes, nodes[len(nodes)-1])
+		}
+
+		parents := []*TxSet{}
+
+		for i := 0; i < len(nodes); i += 2 {
+			n := &TxSet{
+				Children: []cid.Cid{
+					nodes[i].cid,
+					nodes[i+1].cid,
+				},
+			}
+
+			c, err := s.PutSet(ctx, n)
+			if err != nil {
+				return nil, errors.Wrap(err, "storing root txset")
+			}
+			n.cid = c
+
+			parents = append(parents, n)
+		}
+
+		nodes = parents
+	}
+
+	return nodes[0], nil
 }
 
 type Validator interface {
@@ -114,23 +149,16 @@ func (v *TxValidator) AllTx(ctx context.Context, b *Block) ([]*tx.Tx, error) {
 			return nil, errors.Wrap(err, "getting root trie")
 		}
 
-		//max check
-		if len(set.Txs) > MaxSetSize {
-			return nil, errors.Wrap(err, "too many tx in set")
+		tx, err := v.s.GetTx(ctx, tx.TxID(set.Tx))
+		if err != nil {
+			return nil, errors.Wrap(err, "getting root tx")
 		}
 
-		for _, tcid := range set.Txs {
-			tx, err := v.s.GetTx(ctx, tx.TxID(tcid))
-			if err != nil {
-				return nil, errors.Wrap(err, "getting root tx")
-			}
+		txSeen[set.Tx.KeyString()] = tx
 
-			txSeen[tcid.KeyString()] = tx
-
-			//max check
-			if len(txSeen) > MaxBlockTxCount {
-				return nil, errors.New("block containers too many tx")
-			}
+		//max check
+		if len(txSeen) > MaxBlockTxCount {
+			return nil, errors.New("block containers too many tx")
 		}
 
 		//push
