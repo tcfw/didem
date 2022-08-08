@@ -151,7 +151,6 @@ func TestSuccessfulRound(t *testing.T) {
 	}
 
 	setProposer(t, instances, prop.id)
-
 	startAll(t, instances[1:])
 
 	for _, instance := range instances {
@@ -159,6 +158,8 @@ func TestSuccessfulRound(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+
+	blockVoteGracePeriod = 10 * time.Millisecond
 
 	msg := <-sub
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
@@ -179,6 +180,25 @@ func TestSuccessfulRound(t *testing.T) {
 	assert.Equal(t, ConsensusMsgTypeVote, msg.Consensus.Type)
 	assert.Equal(t, VoteTypePreCommit, msg.Consensus.Vote.Type)
 	prop.onVote(msg, msg.From)
+
+	assert.Len(t, prop.propsalState.PreVotes, 2)
+	assert.Len(t, prop.propsalState.PreCommits, 2)
+	assert.Len(t, prop.propsalState.PreVotesEvidence, 2)
+	assert.Len(t, prop.propsalState.PreCommitsEvidence, 2)
+	assert.Equal(t, block, prop.propsalState.Step)
+
+	time.Sleep(20 * time.Millisecond)
+
+	assert.Equal(t, block, prop.propsalState.Step)
+	assert.Equal(t, uint64(2), prop.state.Height)
+	assert.Equal(t, uint32(1), prop.propsalState.Round)
+
+	validator := instances[1]
+	for validator.state.Height == 1 {
+		time.Sleep(1 * time.Millisecond)
+	}
+
+	assert.Equal(t, uint64(2), prop.state.Height)
 }
 
 func TestNewRound(t *testing.T) {

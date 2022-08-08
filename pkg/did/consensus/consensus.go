@@ -25,10 +25,11 @@ const (
 )
 
 var (
-	timeoutPropose   = 1 * time.Minute
-	timeoutPrevote   = 1 * time.Minute
-	timeoutPrecommit = 1 * time.Minute
-	timeoutBlock     = 1 * time.Minute
+	timeoutPropose       = 1 * time.Minute
+	timeoutPrevote       = 1 * time.Minute
+	timeoutPrecommit     = 1 * time.Minute
+	timeoutBlock         = 1 * time.Minute
+	blockVoteGracePeriod = 10 * time.Second
 )
 
 type Consensus struct {
@@ -225,7 +226,7 @@ func (c *Consensus) StartRound(inc bool) error {
 		return errors.Wrap(err, "getting nodes")
 	}
 
-	c.propsalState.f = (uint64(len(n))/3)*2 + 1
+	c.propsalState.f = ((uint64(len(n)) / 3) * 2) + 1
 
 	//build & upload block
 	if c.propsalState.Block.Equals(cid.Undef) {
@@ -245,6 +246,8 @@ func (c *Consensus) StartRound(inc bool) error {
 	if err := c.sendProposal(); err != nil {
 		return errors.Wrap(err, "sending proposal")
 	}
+
+	c.propsalState.Step = prevote
 
 	return nil
 }
@@ -334,6 +337,9 @@ func (c *Consensus) onVote(msg *Msg, from peer.ID) {
 		logging.Error("ignoring vote, invalid state")
 		return
 	}
+
+	c.propsalState.voteMu.Lock()
+	defer c.propsalState.voteMu.Unlock()
 
 	switch vote.Type {
 	case VoteTypePreVote:
@@ -451,18 +457,18 @@ func (c *Consensus) onPreVote(msg *Msg) {
 
 	c.propsalState.PreVotes[msg.From] = msg
 
-	if uint64(len(c.propsalState.PreVotes)) >= c.propsalState.f {
+	if uint64(len(c.propsalState.PreVotes)) > c.propsalState.f {
 		stopTimer(c.timerPrevote)
+
+		c.propsalState.Step = precommit
+		c.propsalState.lockedValue = c.propsalState.Block
+		c.propsalState.lockedRound = c.propsalState.Round
 
 		id := c.propsalState.Block.String()
 		if err := c.sendVote(VoteTypePreCommit, id); err != nil {
 			logging.WithError(err).Error("sending precommit")
 			return
 		}
-
-		c.propsalState.Step = precommit
-		c.propsalState.lockedValue = c.propsalState.Block
-		c.propsalState.lockedRound = c.propsalState.Round
 
 		restartTimer(c.timerPrecommit, timeoutPrecommit)
 	}
@@ -477,14 +483,16 @@ func (c *Consensus) OnPreCommit(msg *Msg) {
 		restartTimer(c.timerPrecommit, timeoutPrecommit)
 	}
 
-	c.propsalState.PreVotes[msg.From] = msg
+	c.propsalState.PreCommits[msg.From] = msg
 
-	if uint64(len(c.propsalState.PreCommits)) >= c.propsalState.f {
+	if uint64(len(c.propsalState.PreCommits)) > c.propsalState.f {
 		stopTimer(c.timerPrecommit)
+
+		c.propsalState.Step = block
 
 		if c.propsalState.AmProposer {
 			//Give some time for other nodes to collect the evidence
-			time.AfterFunc(10*time.Second, func() {
+			time.AfterFunc(blockVoteGracePeriod, func() {
 				msg, err := c.sendBlock()
 				if err != nil {
 					logging.WithError(err).Error("failed to send blockmsg")
@@ -504,6 +512,9 @@ func (c *Consensus) onEvidence(msg *ConsensusMsgEvidence, from peer.ID) {
 		return
 	}
 
+	c.propsalState.voteMu.Lock()
+	defer c.propsalState.voteMu.Unlock()
+
 	switch msg.Type {
 	case VoteTypePreVote:
 		c.propsalState.PreVotesEvidence[from] = msg
@@ -514,7 +525,7 @@ func (c *Consensus) onEvidence(msg *ConsensusMsgEvidence, from peer.ID) {
 
 func (c *Consensus) onBlock(msg *ConsensusMsgBlock, from peer.ID) {
 	if from != c.propsalState.Proposer ||
-		c.propsalState.Step != precommit ||
+		c.propsalState.Step != block ||
 		msg.CID != c.propsalState.lockedValue.String() ||
 		c.propsalState.lockedRound != msg.Round {
 		return
@@ -583,6 +594,13 @@ func (c *Consensus) sendEvidence(m *ConsensusMsgVote) error {
 	msg := &ConsensusMsgEvidence{
 		ConsensusMsgVote: *m,
 		Accepted:         true,
+	}
+
+	switch m.Type {
+	case VoteTypePreVote:
+		c.propsalState.PreVotesEvidence[peer.ID(m.Validator)] = msg
+	case VoteTypePreCommit:
+		c.propsalState.PreCommitsEvidence[peer.ID(m.Validator)] = msg
 	}
 
 	return c.sendMsg(msg)

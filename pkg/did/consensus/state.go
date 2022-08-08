@@ -1,6 +1,8 @@
 package consensus
 
 import (
+	"sync"
+
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p-core/peer"
 )
@@ -11,6 +13,7 @@ const (
 	propose Step = iota
 	prevote
 	precommit
+	block
 )
 
 type State struct {
@@ -24,6 +27,7 @@ type State struct {
 
 	f uint64
 
+	voteMu     sync.Mutex
 	PreVotes   map[peer.ID]*Msg
 	PreCommits map[peer.ID]*Msg
 

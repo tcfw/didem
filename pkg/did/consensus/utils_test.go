@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -86,7 +87,12 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 			memPool:    memPool,
 			blockStore: blockStore,
 			validator:  storage.NewTxValidator(blockStore),
-			db:         db,
+			state: State{
+				Height: 1,
+				Round:  1,
+				Block:  cid.Undef,
+			},
+			db: db,
 			p2p: &p2p{
 				self:   h.ID(),
 				router: psubs[i],
