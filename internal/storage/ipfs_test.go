@@ -19,14 +19,14 @@ func TestIPFSAdd(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tx := &tx.Tx{}
+	tX := &tx.Tx{}
 
-	id, err := ipfs.PutTx(ctx, tx)
+	id, err := ipfs.PutTx(ctx, tX)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	txb, _ := tx.Marshal()
+	txb, _ := tX.Marshal()
 	txbh := sha3.Sum384(txb)
 
 	expected := hex.EncodeToString(txbh[:])
@@ -35,10 +35,10 @@ func TestIPFSAdd(t *testing.T) {
 
 	assert.Equal(t, expected, idhex)
 
-	txrb, err := ipfs.GetTx(ctx, id)
+	txrb, err := ipfs.GetTx(ctx, tx.TxID(id))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, tx, txrb)
+	assert.Equal(t, tX, txrb)
 }

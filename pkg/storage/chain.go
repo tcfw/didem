@@ -81,7 +81,6 @@ func NewTxSet(s Store, txs []cid.Cid) (*TxSet, error) {
 	}
 
 	for len(nodes) > 1 {
-
 		if len(nodes)%2 == 1 {
 			nodes = append(nodes, nodes[len(nodes)-1])
 		}

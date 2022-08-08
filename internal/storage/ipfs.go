@@ -181,7 +181,6 @@ func (is *IPFSStorage) PutSet(ctx context.Context, txs *storage.TxSet) (cid.Cid,
 }
 
 func (is *IPFSStorage) GetSet(ctx context.Context, id cid.Cid) (*storage.TxSet, error) {
-
 	data, err := is.getRaw(ctx, id)
 	if err != nil {
 		return nil, err
@@ -193,6 +192,14 @@ func (is *IPFSStorage) GetSet(ctx context.Context, id cid.Cid) (*storage.TxSet, 
 	}
 
 	return txs, nil
+}
+
+func (is *IPFSStorage) GetTxBlock(ctx context.Context, id tx.TxID) (*storage.Block, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (is *IPFSStorage) MarkBlock(ctx context.Context, id storage.BlockID, state storage.BlockState) error {
+	return fmt.Errorf("not implemented")
 }
 
 func createTempRepo() (string, error) {
