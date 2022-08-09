@@ -111,7 +111,8 @@ func NewTxSet(s Store, txs []cid.Cid) (*TxSet, error) {
 }
 
 type Validator interface {
-	IsValid(b *Block) error
+	IsBlockValid(context.Context, *Block) error
+	IsTxValid(context.Context, *tx.Tx) error
 }
 
 type TxValidator struct {
@@ -122,7 +123,23 @@ func NewTxValidator(s Store) *TxValidator {
 	return &TxValidator{s}
 }
 
-func (v *TxValidator) IsValid(b *Block) error {
+func (v *TxValidator) IsBlockValid(ctx context.Context, b *Block) error {
+	txs, err := v.AllTx(ctx, b)
+	if err != nil {
+		return errors.Wrap(err, "getting block txs")
+	}
+
+	for _, tx := range txs {
+		if err := v.IsTxValid(ctx, tx); err != nil {
+			return errors.Wrap(err, "invalid tx in block")
+		}
+	}
+
+	return nil
+}
+
+func (v *TxValidator) IsTxValid(ctx context.Context, t *tx.Tx) error {
+	//TODO
 	return nil
 }
 

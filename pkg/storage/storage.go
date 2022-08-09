@@ -14,6 +14,8 @@ const (
 )
 
 type Store interface {
+	MetadataProvider
+
 	PutTx(context.Context, *tx.Tx) (cid.Cid, error)
 	GetTx(context.Context, tx.TxID) (*tx.Tx, error)
 

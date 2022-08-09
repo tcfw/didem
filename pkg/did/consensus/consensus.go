@@ -429,17 +429,20 @@ func (c *Consensus) validate(value string) (cid.Cid, error) {
 		return cid.Undef, nil
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
 	cv, err := cid.Parse(value)
 	if err != nil {
 		return cid.Undef, errors.Wrap(err, "unable to parse CID")
 	}
 
-	block, err := c.blockStore.GetBlock(context.Background(), storage.BlockID(cv))
+	block, err := c.blockStore.GetBlock(ctx, storage.BlockID(cv))
 	if err != nil {
 		return cid.Undef, errors.Wrap(err, "getting block")
 	}
 
-	if err := c.validator.IsValid(block); err != nil {
+	if err := c.validator.IsBlockValid(ctx, block); err != nil {
 		return cid.Undef, errors.Wrap(err, "invalid block")
 	}
 

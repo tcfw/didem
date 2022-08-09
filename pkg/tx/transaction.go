@@ -11,11 +11,16 @@ const (
 )
 
 type TxType int8
+type TxAction int8
 
 const (
 	TxType_DID TxType = iota + 1
 	TxType_VC
 	TxType_Node
+
+	TxActionAdd TxAction = iota
+	TxActionUpdate
+	TxActionRevoke
 )
 
 type TxID cid.Cid
@@ -24,6 +29,7 @@ type Tx struct {
 	Version uint8       `msgpack:"v"`
 	Ts      int64       `msgpack:"t"`
 	Type    TxType      `msgpack:"e"`
+	Action  TxAction    `msgpack:"a"`
 	Data    interface{} `msgpack:"d,noinline"`
 }
 
@@ -46,6 +52,7 @@ func (t *Tx) Unmarshal(b []byte) error {
 	switch t.Type {
 	case TxType_DID:
 		//DID decode
+		t.Data = &DID{}
 	case TxType_VC:
 		//VC decode
 	case TxType_Node:
