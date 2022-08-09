@@ -37,10 +37,9 @@ type Consensus struct {
 	id         peer.ID
 	signingKey kyber.Scalar
 
-	db         Db
-	memPool    MemPool
-	blockStore storage.Store
-	validator  storage.Validator
+	memPool   MemPool
+	store     storage.Store
+	validator storage.Validator
 
 	beacon <-chan int64
 	p2p    *p2p
@@ -91,7 +90,7 @@ func (c *Consensus) proposer() <-chan peer.ID {
 
 	go func() {
 		for b := range c.beacon {
-			nodes, err := c.db.Nodes()
+			nodes, err := c.store.Nodes()
 			if err != nil {
 				logging.WithError(err).Error("getting node list")
 				continue
@@ -102,7 +101,7 @@ func (c *Consensus) proposer() <-chan peer.ID {
 			mn := m.Mod(m, big.NewInt(int64(len(nodes)))).Int64()
 
 			p := nodes[mn]
-			bCh <- p
+			bCh <- peer.ID(p)
 		}
 	}()
 
@@ -221,7 +220,7 @@ func (c *Consensus) StartRound(inc bool) error {
 		return errors.Wrap(err, "sending new round")
 	}
 
-	n, err := c.db.Nodes()
+	n, err := c.store.Nodes()
 	if err != nil {
 		return errors.Wrap(err, "getting nodes")
 	}
@@ -236,7 +235,7 @@ func (c *Consensus) StartRound(inc bool) error {
 		}
 
 		if block != nil {
-			c.propsalState.Block, err = c.blockStore.PutBlock(context.Background(), block)
+			c.propsalState.Block, err = c.store.PutBlock(context.Background(), block)
 			if err != nil {
 				return errors.Wrap(err, "storing new block")
 			}
@@ -260,7 +259,7 @@ func (c *Consensus) OnMsg(msg *Msg) {
 
 	logging.Entry().WithField("msg", msg).Info("received msg")
 
-	node, err := c.db.Node(msg.From)
+	node, err := c.store.Node(msg.From.String())
 	if err != nil {
 		logging.WithError(err).Error("fetching node")
 		return
@@ -437,7 +436,7 @@ func (c *Consensus) validate(value string) (cid.Cid, error) {
 		return cid.Undef, errors.Wrap(err, "unable to parse CID")
 	}
 
-	block, err := c.blockStore.GetBlock(ctx, storage.BlockID(cv))
+	block, err := c.store.GetBlock(ctx, storage.BlockID(cv))
 	if err != nil {
 		return cid.Undef, errors.Wrap(err, "getting block")
 	}
@@ -644,7 +643,7 @@ func (c *Consensus) sendBlock() (*ConsensusMsgBlock, error) {
 	sigs := make([][]byte, 0, len(c.propsalState.PreCommits))
 
 	for p, vote := range c.propsalState.PreCommits {
-		n, err := c.db.Node(p)
+		n, err := c.store.Node(p.String())
 		if err != nil {
 			return nil, errors.Wrap(err, "finding node")
 		}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p-core/host"
@@ -13,8 +14,6 @@ import (
 	bhost "github.com/libp2p/go-libp2p/p2p/host/blank"
 	swarmt "github.com/libp2p/go-libp2p/p2p/net/swarm/testing"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/tcfw/didem/pkg/did/consensus/mocks"
 	"github.com/tcfw/didem/pkg/storage"
 	"github.com/tcfw/didem/pkg/tx"
 	"go.dedis.ch/kyber/v3"
@@ -54,25 +53,24 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 		pks = append(pks, pk)
 	}
 
-	db := mocks.NewDb(t)
-	db.On("Nodes").Maybe().Return(peers, nil)
-	nodeRet := func(id peer.ID) *tx.Node {
-		for i, h := range hosts {
-			b, _ := pks[i].MarshalBinary()
-			if h.ID().String() == id.String() {
-				return &tx.Node{
-					Id:  h.ID().String(),
-					Did: fmt.Sprintf("did:didem:%s", h.ID().String()),
-					Key: b,
-				}
-			}
+	blockStore := storage.NewMemStore()
+
+	for i, h := range hosts {
+		b, _ := pks[i].MarshalBinary()
+		ntx := &tx.Tx{
+			Version: tx.Version1,
+			Ts:      time.Now().Unix(),
+			Type:    tx.TxType_Node,
+			Action:  tx.TxActionAdd,
+			Data: &tx.Node{
+				Id:  h.ID().String(),
+				Did: fmt.Sprintf("did:didem:%s", h.ID().String()),
+				Key: b,
+			},
 		}
-		return nil
+		blockStore.PutTx(context.Background(), ntx)
 	}
 
-	db.On("Node", mock.Anything).Maybe().Return(nodeRet, nil)
-
-	blockStore := storage.NewMemStore()
 	memPool := NewTxMemPool()
 
 	chain := make([]byte, 10)
@@ -85,14 +83,13 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 			chain:      chain,
 			signingKey: sks[i],
 			memPool:    memPool,
-			blockStore: blockStore,
+			store:      blockStore,
 			validator:  storage.NewTxValidator(blockStore),
 			state: State{
 				Height: 1,
 				Round:  1,
 				Block:  cid.Undef,
 			},
-			db: db,
 			p2p: &p2p{
 				self:   h.ID(),
 				router: psubs[i],

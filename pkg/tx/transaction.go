@@ -17,7 +17,9 @@ const (
 	TxType_DID TxType = iota + 1
 	TxType_VC
 	TxType_Node
+)
 
+const (
 	TxActionAdd TxAction = iota
 	TxActionUpdate
 	TxActionRevoke

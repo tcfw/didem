@@ -16,14 +16,7 @@ func WithSigningKey(priv kyber.Scalar) Option {
 
 func WithBlockStore(s storage.Store) Option {
 	return func(c *Consensus) error {
-		c.blockStore = s
-		return nil
-	}
-}
-
-func WithDB(db Db) Option {
-	return func(c *Consensus) error {
-		c.db = db
+		c.store = s
 		return nil
 	}
 }

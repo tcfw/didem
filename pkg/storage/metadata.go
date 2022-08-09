@@ -9,7 +9,7 @@ type MetadataProvider interface {
 	LookupDID(string) (*w3cdid.Document, error)
 	DIDHistory(string) ([]*tx.Tx, error)
 
-	Claims(string) ([]*tx.Tx, error)
+	Claims(string) ([]*tx.Tx, error) //TODO(tcfw): vc type
 
 	Nodes() ([]string, error)
 	Node(string) (*tx.Node, error)

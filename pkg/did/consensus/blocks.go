@@ -50,7 +50,7 @@ func (c *Consensus) makeBlock() (*storage.Block, error) {
 	txCids := make([]cid.Cid, 0, len(txs))
 
 	for _, tx := range txs {
-		c, err := c.blockStore.PutTx(ctx, tx)
+		c, err := c.store.PutTx(ctx, tx)
 		if err != nil {
 			return nil, errors.Wrap(err, "storing tx")
 		}
@@ -62,12 +62,12 @@ func (c *Consensus) makeBlock() (*storage.Block, error) {
 		return nil, errors.Wrap(err, "creating block bloom filter")
 	}
 
-	txSet, err := storage.NewTxSet(c.blockStore, txCids)
+	txSet, err := storage.NewTxSet(c.store, txCids)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating tx set")
 	}
 
-	txsCid, err := c.blockStore.PutSet(ctx, txSet)
+	txsCid, err := c.store.PutSet(ctx, txSet)
 	if err != nil {
 		return nil, errors.Wrap(err, "storing tx set")
 	}

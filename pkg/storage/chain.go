@@ -124,7 +124,7 @@ func NewTxValidator(s Store) *TxValidator {
 }
 
 func (v *TxValidator) IsBlockValid(ctx context.Context, b *Block) error {
-	txs, err := v.AllTx(ctx, b)
+	txs, err := v.s.AllTx(ctx, b)
 	if err != nil {
 		return errors.Wrap(err, "getting block txs")
 	}
@@ -141,52 +141,4 @@ func (v *TxValidator) IsBlockValid(ctx context.Context, b *Block) error {
 func (v *TxValidator) IsTxValid(ctx context.Context, t *tx.Tx) error {
 	//TODO
 	return nil
-}
-
-func (v *TxValidator) AllTx(ctx context.Context, b *Block) ([]*tx.Tx, error) {
-	txSeen := map[string]*tx.Tx{}
-	visited := cid.Set{}
-	queue := []cid.Cid{b.TxRoot}
-
-	for len(queue) != 0 {
-		//pop
-		setCid := queue[0]
-		queue = queue[1:]
-
-		//just incase we encounter a loop (bad proposer?)
-		if visited.Has(setCid) {
-			continue
-		} else {
-			visited.Add(setCid)
-		}
-
-		set, err := v.s.GetSet(ctx, setCid)
-		if err != nil {
-			return nil, errors.Wrap(err, "getting root trie")
-		}
-
-		tx, err := v.s.GetTx(ctx, tx.TxID(set.Tx))
-		if err != nil {
-			return nil, errors.Wrap(err, "getting root tx")
-		}
-
-		txSeen[set.Tx.KeyString()] = tx
-
-		//max check
-		if len(txSeen) > MaxBlockTxCount {
-			return nil, errors.New("block containers too many tx")
-		}
-
-		//push
-		if len(set.Children) > 0 {
-			queue = append(queue, set.Children...)
-		}
-	}
-
-	txList := make([]*tx.Tx, 0, len(txSeen))
-	for _, tx := range txSeen {
-		txList = append(txList, tx)
-	}
-
-	return txList, nil
 }
