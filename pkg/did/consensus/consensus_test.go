@@ -33,7 +33,7 @@ func TestProposerFromBeacon(t *testing.T) {
 			Type:    tx.TxType_Node,
 			Action:  tx.TxActionAdd,
 			Data: &tx.Node{
-				Id: p.String(),
+				Id: string(p),
 			},
 		}
 		cid, err := blockStore.PutTx(context.Background(), ntx)

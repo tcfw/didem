@@ -37,6 +37,9 @@ func NewMemStore() *MemStore {
 		objects:  make(map[cid.Cid][]byte),
 		txbIndex: make(map[tx.TxID]BlockID),
 		bState:   make(map[BlockID]BlockState),
+		nodes:    make(map[string]cid.Cid),
+		dids:     make(map[string]cid.Cid),
+		claims:   make(map[string][]cid.Cid),
 	}
 }
 
@@ -72,7 +75,7 @@ func (m *MemStore) GetTx(ctx context.Context, id tx.TxID) (*tx.Tx, error) {
 	}
 
 	tx := &tx.Tx{}
-	if err := msgpack.Unmarshal(d, tx); err != nil {
+	if err := tx.Unmarshal(d); err != nil {
 		return nil, errors.Wrap(err, "unmarshalling ")
 	}
 
@@ -137,7 +140,7 @@ func (m *MemStore) allTxCids(ctx context.Context, b *Block) (map[string]*tx.Tx, 
 				return nil, errors.Wrap(err, "getting root tx")
 			}
 
-			txSeen[set.Tx.KeyString()] = tx
+			txSeen[set.Tx.String()] = tx
 
 			//max check
 			if len(txSeen) > MaxBlockTxCount {
@@ -324,10 +327,10 @@ func (m *MemStore) Node(id string) (*tx.Node, error) {
 		return nil, ErrNotFound
 	}
 
-	node := &tx.Node{}
-	if err := msgpack.Unmarshal(d, node); err != nil {
+	t := &tx.Tx{}
+	if err := t.Unmarshal(d); err != nil {
 		return nil, errors.Wrap(err, "unmarshalling ")
 	}
 
-	return node, nil
+	return t.Data.(*tx.Node), nil
 }

@@ -225,6 +225,12 @@ func (c *Consensus) StartRound(inc bool) error {
 		return errors.Wrap(err, "getting nodes")
 	}
 
+	for i, ni := range n {
+		if ni == c.id.String() {
+			n = append(n[:i], n[i+1:]...) //TODO(tcfw)
+		}
+	}
+
 	c.propsalState.f = ((uint64(len(n)) / 3) * 2) + 1
 
 	//build & upload block
