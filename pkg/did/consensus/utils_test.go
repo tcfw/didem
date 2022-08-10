@@ -41,7 +41,6 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 
 	psubs := getGossipsubs(ctx, hosts)
 
-	peers := []peer.ID{}
 	instances := []*Consensus{}
 
 	sks := make([]kyber.Scalar, 0, n)
@@ -54,6 +53,8 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 	}
 
 	blockStore := storage.NewMemStore()
+
+	txs := []cid.Cid{}
 
 	for i, h := range hosts {
 		b, _ := pks[i].MarshalBinary()
@@ -68,7 +69,34 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 				Key: b,
 			},
 		}
-		blockStore.PutTx(context.Background(), ntx)
+		cid, err := blockStore.PutTx(context.Background(), ntx)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		txs = append(txs, cid)
+	}
+
+	txset, err := storage.NewTxSet(blockStore, txs)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	b := &storage.Block{
+		TxRoot: txset.Cid(),
+	}
+
+	c, err := blockStore.PutBlock(context.Background(), b)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := blockStore.MarkBlock(context.Background(), storage.BlockID(c), storage.BlockStateValidated); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := blockStore.MarkBlock(context.Background(), storage.BlockID(c), storage.BlockStateAccepted); err != nil {
+		t.Fatal(err)
 	}
 
 	memPool := NewTxMemPool()
@@ -77,7 +105,6 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 	rand.Read(chain)
 
 	for i, h := range hosts {
-		peers = append(peers, h.ID())
 		c := &Consensus{
 			id:         h.ID(),
 			chain:      chain,

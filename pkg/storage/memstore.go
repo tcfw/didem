@@ -111,7 +111,7 @@ func (m *MemStore) AllTx(ctx context.Context, b *Block) ([]*tx.Tx, error) {
 
 func (m *MemStore) allTxCids(ctx context.Context, b *Block) (map[string]*tx.Tx, error) {
 	txSeen := map[string]*tx.Tx{}
-	visited := cid.Set{}
+	visited := cid.NewSet()
 	queue := []cid.Cid{b.TxRoot}
 
 	for len(queue) != 0 {
@@ -131,16 +131,18 @@ func (m *MemStore) allTxCids(ctx context.Context, b *Block) (map[string]*tx.Tx, 
 			return nil, errors.Wrap(err, "getting root trie")
 		}
 
-		tx, err := m.GetTx(ctx, tx.TxID(set.Tx))
-		if err != nil {
-			return nil, errors.Wrap(err, "getting root tx")
-		}
+		if set.Tx != nil {
+			tx, err := m.GetTx(ctx, tx.TxID(*set.Tx))
+			if err != nil {
+				return nil, errors.Wrap(err, "getting root tx")
+			}
 
-		txSeen[set.Tx.KeyString()] = tx
+			txSeen[set.Tx.KeyString()] = tx
 
-		//max check
-		if len(txSeen) > MaxBlockTxCount {
-			return nil, errors.New("block containers too many tx")
+			//max check
+			if len(txSeen) > MaxBlockTxCount {
+				return nil, errors.New("block containers too many tx")
+			}
 		}
 
 		//push
@@ -154,10 +156,9 @@ func (m *MemStore) allTxCids(ctx context.Context, b *Block) (map[string]*tx.Tx, 
 
 func (m *MemStore) MarkBlock(ctx context.Context, b BlockID, s BlockState) error {
 	m.mu.Lock()
-	defer m.mu.Unlock()
-
 	c := m.bState[b]
 	m.bState[b] = s
+	m.mu.Unlock()
 
 	if c == BlockStateValidated && s == BlockStateAccepted {
 		if err := m.indexBlockTx(ctx, b); err != nil {

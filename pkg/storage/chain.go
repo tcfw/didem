@@ -43,9 +43,13 @@ type Block struct {
 
 type TxSet struct {
 	Children []cid.Cid `msgpack:"c"`
-	Tx       cid.Cid   `msgpack:"t,omitempty"`
+	Tx       *cid.Cid  `msgpack:"t,omitempty"`
 
 	cid cid.Cid
+}
+
+func (txs *TxSet) Cid() cid.Cid {
+	return txs.cid
 }
 
 type cidList []cid.Cid
@@ -69,7 +73,7 @@ func NewTxSet(s Store, txs []cid.Cid) (*TxSet, error) {
 	nodes := []*TxSet{}
 
 	for _, t := range txs {
-		ttx := &TxSet{Tx: t}
+		ttx := &TxSet{Tx: &t}
 
 		c, err := s.PutSet(ctx, ttx)
 		if err != nil {

@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ipfs/go-cid"
 	peer "github.com/libp2p/go-libp2p-core/peer"
-
 	"github.com/stretchr/testify/assert"
 
-	"github.com/tcfw/didem/pkg/did/consensus/mocks"
 	"github.com/tcfw/didem/pkg/did/w3cdid"
+	"github.com/tcfw/didem/pkg/storage"
 	"github.com/tcfw/didem/pkg/tx"
 )
 
@@ -23,12 +23,52 @@ func TestProposerFromBeacon(t *testing.T) {
 		peer.ID("peer_3"),
 	}
 
-	db := mocks.NewDb(t)
-	db.On("Nodes").Maybe().Return(peers, nil)
+	blockStore := storage.NewMemStore()
+	txs := []cid.Cid{}
+
+	for _, p := range peers {
+		ntx := &tx.Tx{
+			Version: tx.Version1,
+			Ts:      time.Now().Unix(),
+			Type:    tx.TxType_Node,
+			Action:  tx.TxActionAdd,
+			Data: &tx.Node{
+				Id: p.String(),
+			},
+		}
+		cid, err := blockStore.PutTx(context.Background(), ntx)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		txs = append(txs, cid)
+	}
+
+	txset, err := storage.NewTxSet(blockStore, txs)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	b := &storage.Block{
+		TxRoot: txset.Cid(),
+	}
+
+	bcid, err := blockStore.PutBlock(context.Background(), b)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := blockStore.MarkBlock(context.Background(), storage.BlockID(bcid), storage.BlockStateValidated); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := blockStore.MarkBlock(context.Background(), storage.BlockID(bcid), storage.BlockStateAccepted); err != nil {
+		t.Fatal(err)
+	}
 
 	c := &Consensus{
 		beacon: beacon,
-		db:     db,
+		store:  blockStore,
 	}
 
 	prop := c.proposer()
@@ -80,14 +120,14 @@ func TestReceiveNewRound(t *testing.T) {
 	msg := <-sub
 	assert.Equal(t, MsgTypeConsensus, msg.Type)
 	assert.Equal(t, ConsensusMsgTypeNewRound, msg.Consensus.Type)
-	assert.Equal(t, uint64(1), msg.Consensus.NewRound.Height)
+	assert.Equal(t, uint64(2), msg.Consensus.NewRound.Height)
 	assert.Equal(t, uint32(1), msg.Consensus.NewRound.Round)
 
 	//Propsal
 	msg = <-sub
 	assert.Equal(t, MsgTypeConsensus, msg.Type)
 	assert.Equal(t, ConsensusMsgTypeProposal, msg.Consensus.Type)
-	assert.Equal(t, uint64(1), msg.Consensus.Proposal.Height)
+	assert.Equal(t, uint64(2), msg.Consensus.Proposal.Height)
 	assert.Equal(t, uint32(1), msg.Consensus.Proposal.Round)
 	assert.NotEmpty(t, msg.Consensus.Proposal.BlockID)
 	assert.NotEmpty(t, msg.Consensus.Proposal.Timestamp)
