@@ -8,7 +8,6 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/pkg/errors"
-	"github.com/tcfw/didem/pkg/tx"
 )
 
 const (
@@ -112,37 +111,4 @@ func NewTxSet(s Store, txs []cid.Cid) (*TxSet, error) {
 	}
 
 	return nodes[0], nil
-}
-
-type Validator interface {
-	IsBlockValid(context.Context, *Block) error
-	IsTxValid(context.Context, *tx.Tx) error
-}
-
-type TxValidator struct {
-	s Store
-}
-
-func NewTxValidator(s Store) *TxValidator {
-	return &TxValidator{s}
-}
-
-func (v *TxValidator) IsBlockValid(ctx context.Context, b *Block) error {
-	txs, err := v.s.AllTx(ctx, b)
-	if err != nil {
-		return errors.Wrap(err, "getting block txs")
-	}
-
-	for _, tx := range txs {
-		if err := v.IsTxValid(ctx, tx); err != nil {
-			return errors.Wrap(err, "invalid tx in block")
-		}
-	}
-
-	return nil
-}
-
-func (v *TxValidator) IsTxValid(ctx context.Context, t *tx.Tx) error {
-	//TODO
-	return nil
 }

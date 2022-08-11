@@ -227,7 +227,8 @@ func (c *Consensus) StartRound(inc bool) error {
 
 	for i, ni := range n {
 		if ni == c.id.String() {
-			n = append(n[:i], n[i+1:]...) //TODO(tcfw)
+			n[i] = n[len(n)-1]
+			n = n[:len(n)-1]
 		}
 	}
 
@@ -442,12 +443,14 @@ func (c *Consensus) validate(value string) (cid.Cid, error) {
 		return cid.Undef, errors.Wrap(err, "unable to parse CID")
 	}
 
-	block, err := c.store.GetBlock(ctx, storage.BlockID(cv))
+	blockID := storage.BlockID(cv)
+
+	block, err := c.store.GetBlock(ctx, blockID)
 	if err != nil {
 		return cid.Undef, errors.Wrap(err, "getting block")
 	}
 
-	if err := c.validator.IsBlockValid(ctx, block); err != nil {
+	if err := c.validator.IsBlockValid(ctx, block, true); err != nil {
 		return cid.Undef, errors.Wrap(err, "invalid block")
 	}
 
@@ -537,6 +540,12 @@ func (c *Consensus) onBlock(msg *ConsensusMsgBlock, from peer.ID) {
 		msg.CID != c.propsalState.lockedValue.String() ||
 		c.propsalState.lockedRound != msg.Round {
 		return
+	}
+
+	if !c.propsalState.lockedValue.Equals(cid.Undef) {
+		if err := c.store.MarkBlock(context.Background(), storage.BlockID(c.propsalState.lockedValue), storage.BlockStateAccepted); err != nil {
+			logging.WithError(err).Error("marking block as accepted")
+		}
 	}
 
 	stopTimer(c.timerBlock)

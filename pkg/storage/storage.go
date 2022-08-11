@@ -22,7 +22,7 @@ type Store interface {
 	PutBlock(context.Context, *Block) (cid.Cid, error)
 	GetBlock(context.Context, BlockID) (*Block, error)
 
-	AllTx(context.Context, *Block) ([]*tx.Tx, error)
+	AllTx(context.Context, *Block) (map[tx.TxID]*tx.Tx, error)
 
 	PutSet(context.Context, *TxSet) (cid.Cid, error)
 	GetSet(context.Context, cid.Cid) (*TxSet, error)

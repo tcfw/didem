@@ -76,7 +76,3 @@ func (c *Consensus) makeBlock() (*storage.Block, error) {
 
 	return block, nil
 }
-
-func (c *Consensus) signBlock() error {
-	return nil
-}

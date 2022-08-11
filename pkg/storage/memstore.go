@@ -98,22 +98,12 @@ func (m *MemStore) GetTxBlock(ctx context.Context, id tx.TxID) (*Block, error) {
 	return m.GetBlock(ctx, blkId)
 }
 
-func (m *MemStore) AllTx(ctx context.Context, b *Block) ([]*tx.Tx, error) {
-	txSeen, err := m.allTxCids(ctx, b)
-	if err != nil {
-		return nil, err
-	}
-
-	txList := make([]*tx.Tx, 0, len(txSeen))
-	for _, tx := range txSeen {
-		txList = append(txList, tx)
-	}
-
-	return txList, nil
+func (m *MemStore) AllTx(ctx context.Context, b *Block) (map[tx.TxID]*tx.Tx, error) {
+	return m.allTxCids(ctx, b)
 }
 
-func (m *MemStore) allTxCids(ctx context.Context, b *Block) (map[string]*tx.Tx, error) {
-	txSeen := map[string]*tx.Tx{}
+func (m *MemStore) allTxCids(ctx context.Context, b *Block) (map[tx.TxID]*tx.Tx, error) {
+	txSeen := map[tx.TxID]*tx.Tx{}
 	visited := cid.NewSet()
 	queue := []cid.Cid{b.TxRoot}
 
@@ -135,12 +125,12 @@ func (m *MemStore) allTxCids(ctx context.Context, b *Block) (map[string]*tx.Tx, 
 		}
 
 		if set.Tx != nil {
-			tx, err := m.GetTx(ctx, tx.TxID(*set.Tx))
+			t, err := m.GetTx(ctx, tx.TxID(*set.Tx))
 			if err != nil {
 				return nil, errors.Wrap(err, "getting root tx")
 			}
 
-			txSeen[set.Tx.String()] = tx
+			txSeen[tx.TxID(*set.Tx)] = t
 
 			//max check
 			if len(txSeen) > MaxBlockTxCount {
@@ -187,9 +177,11 @@ func (m *MemStore) indexBlockTx(ctx context.Context, b BlockID) error {
 	}
 
 	for c, t := range txs {
-		cid, err := cid.Parse(c)
+		m.txbIndex[c] = b
+
+		cid, err := cid.Parse(cid.Cid(c))
 		if err != nil {
-			return err
+			return errors.Wrap(err, "parsing tx id")
 		}
 
 		switch t.Type {
