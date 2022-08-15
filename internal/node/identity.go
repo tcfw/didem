@@ -3,16 +3,20 @@ package node
 import (
 	"context"
 	"crypto/rand"
+	"encoding/base64"
 	"io/ioutil"
 	"os"
 	"path"
 
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/pkg/errors"
 	"github.com/tcfw/didem/internal/config"
 	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/tcfw/didem/pkg/did"
+
+	ipfsConfig "github.com/ipfs/kubo/config"
 )
 
 func getIdentity(ctx context.Context, cfg *config.Config) (libp2p.Option, error) {
@@ -59,6 +63,36 @@ func generateIdentity(ctx context.Context, cfg *config.Config) error {
 	}
 
 	return ioutil.WriteFile(cfg.P2P().IdentityFile, b, 0600)
+}
+
+func identityToIPFSConfigIdentity(fp string) (ipfsConfig.Identity, error) {
+	ident := ipfsConfig.Identity{}
+
+	idB, err := ioutil.ReadFile(fp)
+	if err != nil {
+		return ident, errors.Wrap(err, "reading identity file")
+	}
+
+	sk, err := crypto.UnmarshalPrivateKey(idB)
+	if err != nil {
+		return ident, errors.Wrap(err, "unmarshaling private key")
+	}
+
+	pk := sk.GetPublic()
+
+	skbytes, err := crypto.MarshalPrivateKey(sk)
+	if err != nil {
+		return ident, err
+	}
+	ident.PrivKey = base64.StdEncoding.EncodeToString(skbytes)
+
+	id, err := peer.IDFromPublicKey(pk)
+	if err != nil {
+		return ident, err
+	}
+	ident.PeerID = id.Pretty()
+
+	return ident, nil
 }
 
 func (n *Node) advertisableIdentities(ctx context.Context) ([]did.PrivateIdentity, error) {

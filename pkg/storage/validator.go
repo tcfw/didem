@@ -68,14 +68,50 @@ func (v *TxValidator) IsTxValid(ctx context.Context, t *tx.Tx) error {
 
 func (v *TxValidator) isNodeTxValid(ctx context.Context, t *tx.Tx) error {
 	//TODO(tcfw)
+	/*
+		checks:
+		->add
+		- is signed by genesis key &&
+		- node does not already exist &&
+		- node has registered did
+
+		->revoke
+		- is signed by node || signed by genesis key
+
+		->update: not supported
+	*/
 	return nil
 }
 
 func (v *TxValidator) isDIDTxValid(ctx context.Context, t *tx.Tx) error {
 	//TODO(tcfw)
+	/*
+		checks:
+		->add
+		- did does not exist &&
+		- tx is signed by did key &&
+		- is valid did structure
+
+		->update
+		- did exists
+		- tx signed by a key in did
+
+		->revoke
+		- did exists
+		- tx signed by a key in did
+	*/
 	return nil
 }
 func (v *TxValidator) isVCTxValid(ctx context.Context, t *tx.Tx) error {
 	//TODO(tcfw)
+	/*
+		checks:
+		->add
+		- has proof from controller &&
+		- is valid vc structure
+
+		->update
+		->revoke
+	*/
 	return nil
 }

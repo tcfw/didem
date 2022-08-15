@@ -5,13 +5,17 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
 
+	"github.com/cockroachdb/pebble"
 	"github.com/ipfs/go-cid"
 	coreiface "github.com/ipfs/interface-go-ipfs-core"
+	iface "github.com/ipfs/interface-go-ipfs-core"
 	options "github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/ipfs/kubo/config"
@@ -26,6 +30,7 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 
 	"github.com/tcfw/didem/internal/utils/logging"
+	"github.com/tcfw/didem/pkg/did/w3cdid"
 	"github.com/tcfw/didem/pkg/storage"
 	"github.com/tcfw/didem/pkg/tx"
 )
@@ -34,12 +39,56 @@ var (
 	_ storage.Store = (*IPFSStorage)(nil)
 )
 
-func NewIPFSStorage(ctx context.Context) (*IPFSStorage, error) {
+const (
+	cacheSize = 1 << 20 * 100
+
+	tableSep byte = ':'
+)
+
+const (
+	txBlockTPrefix byte = iota + 1
+	blockStateTPrefix
+	didTPrefix
+	didHisoryTPrefix
+	activeClaimTPrefix
+	nodesTPrefix
+	nodeTPrefix
+)
+
+func NewIPFSStorage(ctx context.Context, id config.Identity, repo string) (*IPFSStorage, error) {
+	ipfsRepo := filepath.Join(repo, "ipfs")
+	ipfs, err := ipfsStore(ctx, id, ipfsRepo)
+	if err != nil {
+		return nil, errors.Wrap(err, "opening ipfs block store")
+	}
+
+	metadataRepo := filepath.Join(repo, "metadata")
+	m, err := metadataStore(ctx, metadataRepo)
+	if err != nil {
+		return nil, errors.Wrap(err, "opening metadata store")
+	}
+
+	s := &IPFSStorage{
+		ipfsNode: ipfs,
+		metadata: m,
+	}
+
+	return s, nil
+}
+
+func ipfsStore(ctx context.Context, id config.Identity, repo string) (iface.CoreAPI, error) {
 	if err := setupPlugins(""); err != nil {
 		return nil, err
 	}
 
-	cfg := newIpfsCfg()
+	if err := createRepo(id, repo); err != nil {
+		return nil, errors.Wrap(err, "checking/creating ipfs repo")
+	}
+
+	cfg, err := newIpfsCfg(repo)
+	if err != nil {
+		return nil, errors.Wrap(err, "creating ipfs config from repo")
+	}
 
 	node, err := ipfsCore.NewNode(ctx, cfg)
 	if err != nil {
@@ -63,17 +112,22 @@ func NewIPFSStorage(ctx context.Context) (*IPFSStorage, error) {
 		connectToPeers(ctx, iface, bootstrapNodes)
 	}()
 
-	s := &IPFSStorage{
-		node: iface,
-	}
-
-	return s, nil
+	return iface, nil
 }
 
-func newIpfsCfg() *ipfsCore.BuildCfg {
+func metadataStore(ctx context.Context, repo string) (*pebble.DB, error) {
+	c := pebble.NewCache(cacheSize)
+	tc := pebble.NewTableCache(c, 16, 100)
+	defer tc.Unref()
+	defer c.Unref()
+
+	return pebble.Open(repo, &pebble.Options{Cache: c, TableCache: tc})
+}
+
+func newIpfsCfg(path string) (*ipfsCore.BuildCfg, error) {
 	c := &ipfsCore.BuildCfg{}
 
-	c.NilRepo = true
+	// c.NilRepo = true
 	c.Online = true
 	c.Routing = libp2p.DHTOption
 
@@ -84,24 +138,25 @@ func newIpfsCfg() *ipfsCore.BuildCfg {
 
 	// logrus.New().WithField("repo", repoPath).Infof("IPFS repo")
 
-	// repo, err := fsrepo.Open(repoPath)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	repo, err := fsrepo.Open(path)
+	if err != nil {
+		return nil, errors.Wrap(err, "opening ipfs repo")
+	}
 
-	// c.Repo = repo
+	c.Repo = repo
 
-	return c
+	return c, nil
 }
 
 type IPFSStorage struct {
-	node coreiface.CoreAPI
+	ipfsNode coreiface.CoreAPI
+	metadata *pebble.DB
 }
 
 func (is *IPFSStorage) putRaw(ctx context.Context, d []byte) (cid.Cid, error) {
 	hashType := options.Block.Hash(multihash.SHA2_256, multihash.DefaultLengths[multihash.SHA2_256])
 
-	n, err := is.node.Block().Put(ctx, bytes.NewReader(d), hashType, options.Block.Pin(true))
+	n, err := is.ipfsNode.Block().Put(ctx, bytes.NewReader(d), hashType, options.Block.Pin(true))
 	if err != nil {
 		return cid.Undef, err
 	}
@@ -112,7 +167,7 @@ func (is *IPFSStorage) putRaw(ctx context.Context, d []byte) (cid.Cid, error) {
 }
 
 func (is *IPFSStorage) getRaw(ctx context.Context, id cid.Cid) ([]byte, error) {
-	n, err := is.node.Block().Get(ctx, path.IpldPath(id))
+	n, err := is.ipfsNode.Block().Get(ctx, path.IpldPath(id))
 	if err != nil {
 		return nil, err
 	}
@@ -195,48 +250,87 @@ func (is *IPFSStorage) GetSet(ctx context.Context, id cid.Cid) (*storage.TxSet, 
 }
 
 func (is *IPFSStorage) GetTxBlock(ctx context.Context, id tx.TxID) (*storage.Block, error) {
-	return nil, fmt.Errorf("not implemented")
+	bcid, d, err := is.metadata.Get([]byte(fmt.Sprintf("txblock_%s", id)))
+	if err != nil {
+		return nil, errors.Wrap(err, "looking up tx block")
+	}
+	defer d.Close()
+
+	cid, err := cid.Cast(bcid)
+	if err != nil {
+		return nil, errors.Wrap(err, "casting tx block cid")
+	}
+
+	return is.GetBlock(ctx, storage.BlockID(cid))
 }
 
 func (is *IPFSStorage) MarkBlock(ctx context.Context, id storage.BlockID, state storage.BlockState) error {
 	return fmt.Errorf("not implemented")
 }
 
-func createTempRepo() (string, error) {
-	repoPath, err := ioutil.TempDir("", "ipfs-shell")
-	if err != nil {
-		return "", fmt.Errorf("failed to get temp dir: %s", err)
+func (is *IPFSStorage) AllTx(ctx context.Context, id *storage.Block) (map[tx.TxID]*tx.Tx, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (is *IPFSStorage) LookupDID(did string) (*w3cdid.Document, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (is *IPFSStorage) DIDHistory(did string) ([]*tx.Tx, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (is *IPFSStorage) Claims(did string) ([]*tx.Tx, error) { //TODO(tcfw): vc type
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (is *IPFSStorage) Nodes() ([]string, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (is *IPFSStorage) Node(id string) (*tx.Node, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func createRepo(identity config.Identity, path string) error {
+	if !strings.HasSuffix(path, "/") {
+		path += "/"
 	}
 
-	// Create a config with default options and a 2048 bit key
-	cfg, err := config.Init(ioutil.Discard, 2048)
-	if err != nil {
-		return "", err
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		err = os.MkdirAll(path, os.ModePerm)
+		if err != nil {
+			return errors.Wrap(err, "creating repo dir")
+		}
 	}
 
-	// Create the repo with the config
-	err = fsrepo.Init(repoPath, cfg)
+	defaultConfig, err := config.InitWithIdentity(identity)
 	if err != nil {
-		return "", fmt.Errorf("failed to init ephemeral node: %s", err)
+		return errors.Wrap(err, "creating default config")
 	}
 
-	return repoPath, nil
+	err = fsrepo.Init(path, defaultConfig)
+	if err != nil {
+		return errors.Wrap(err, "failed to init p2p config")
+	}
+
+	return nil
 }
 
 func setupPlugins(externalPluginsPath string) error {
 	// Load any external plugins if available on externalPluginsPath
 	plugins, err := loader.NewPluginLoader(filepath.Join(externalPluginsPath, "plugins"))
 	if err != nil {
-		return fmt.Errorf("error loading plugins: %s", err)
+		return errors.Wrap(err, "error loading plugins")
 	}
 
 	// Load preloaded and external plugins
 	if err := plugins.Initialize(); err != nil {
-		return fmt.Errorf("error initializing plugins: %s", err)
+		return errors.Wrap(err, "error initializing plugins")
 	}
 
 	if err := plugins.Inject(); err != nil {
-		return fmt.Errorf("error initializing plugins: %s", err)
+		return errors.Wrap(err, "error initializing plugins")
 	}
 
 	return nil

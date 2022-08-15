@@ -3,8 +3,12 @@ package storage
 import (
 	"context"
 	"encoding/hex"
+	"io/ioutil"
+	"os"
 	"testing"
 
+	"github.com/ipfs/interface-go-ipfs-core/options"
+	"github.com/ipfs/kubo/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/tcfw/didem/pkg/tx"
 	"golang.org/x/crypto/sha3"
@@ -14,14 +18,28 @@ func TestIPFSAdd(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	ipfs, err := NewIPFSStorage(ctx)
+	repoPath, err := ioutil.TempDir("", "ipfs-shell")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() {
+		os.RemoveAll(repoPath)
+	})
+
+	id, err := config.CreateIdentity(ioutil.Discard, []options.KeyGenerateOption{options.Key.Type(options.Ed25519Key)})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ipfs, err := NewIPFSStorage(ctx, id, repoPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	tX := &tx.Tx{}
 
-	id, err := ipfs.PutTx(ctx, tX)
+	cid, err := ipfs.PutTx(ctx, tX)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,11 +49,11 @@ func TestIPFSAdd(t *testing.T) {
 
 	expected := hex.EncodeToString(txbh[:])
 
-	idhex := hex.EncodeToString(id.Bytes())
+	idhex := hex.EncodeToString(cid.Bytes())
 
 	assert.Equal(t, expected, idhex)
 
-	txrb, err := ipfs.GetTx(ctx, tx.TxID(id))
+	txrb, err := ipfs.GetTx(ctx, tx.TxID(cid))
 	if err != nil {
 		t.Fatal(err)
 	}

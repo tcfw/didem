@@ -20,6 +20,7 @@ import (
 )
 
 type Node struct {
+	cfg              *config.Config
 	p2p              *p2pHost
 	storage          storage.Store
 	identityResolver didIface.Resolver
@@ -59,6 +60,7 @@ func NewNode(ctx context.Context, opts ...NodeOption) (*Node, error) {
 	}
 
 	n := &Node{
+		cfg:      cfg,
 		handlers: make(map[protocol.ID]interface{}),
 	}
 

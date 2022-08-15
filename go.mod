@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/bits-and-blooms/bloom/v3 v3.2.0
+	github.com/cockroachdb/pebble v0.0.0-20220814225252-0b6ec868ed93
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/ipfs/go-cid v0.2.0
 	github.com/ipfs/interface-go-ipfs-core v0.7.0

@@ -17,6 +17,7 @@ type P2P struct {
 	ListenAddrs    []string
 	Relay          bool
 	IdentityFile   string
+	IpfsRepo       string
 }
 
 const (
@@ -26,6 +27,7 @@ const (
 	Cfg_p2p_listeningAddrs            = "p2p.listeningAddrs"
 	Cfg_p2p_enableRelay               = "p2p.enableRelay"
 	Cfg_p2p_identityFile              = "p2p.identityFile"
+	Cfg_p2p_ipfsRepo                  = "p2p.ipfsRepo"
 )
 
 var (
@@ -41,6 +43,7 @@ var (
 		},
 		Cfg_p2p_enableRelay:  false,
 		Cfg_p2p_identityFile: "~/.didem/p2p_identity",
+		Cfg_p2p_ipfsRepo:     "~/.didem/data",
 	}
 )
 
@@ -59,6 +62,7 @@ func buildP2PConfig() (*P2P, error) {
 	c.ListenAddrs = viper.GetStringSlice(Cfg_p2p_listeningAddrs)
 	c.Relay = viper.GetBool(Cfg_p2p_enableRelay)
 	c.IdentityFile = expandPath(viper.GetString(Cfg_p2p_identityFile))
+	c.IpfsRepo = expandPath(viper.GetString(Cfg_p2p_ipfsRepo))
 
 	return c, nil
 }
