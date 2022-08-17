@@ -3,6 +3,7 @@ package storage
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -14,13 +15,12 @@ import (
 
 	"github.com/cockroachdb/pebble"
 	"github.com/ipfs/go-cid"
-	coreiface "github.com/ipfs/interface-go-ipfs-core"
-	iface "github.com/ipfs/interface-go-ipfs-core"
+	coreIface "github.com/ipfs/interface-go-ipfs-core"
 	options "github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/ipfs/kubo/config"
 	ipfsCore "github.com/ipfs/kubo/core"
-	ipfsCoreiface "github.com/ipfs/kubo/core/coreapi"
+	ipfsCoreApiIface "github.com/ipfs/kubo/core/coreapi"
 	"github.com/ipfs/kubo/core/node/libp2p"
 	"github.com/ipfs/kubo/plugin/loader"
 	"github.com/ipfs/kubo/repo/fsrepo"
@@ -36,7 +36,8 @@ import (
 )
 
 var (
-	_ storage.Store = (*IPFSStorage)(nil)
+	_           storage.Store = (*IPFSStorage)(nil)
+	ErrNotFound               = errors.New("not found")
 )
 
 const (
@@ -45,8 +46,10 @@ const (
 	tableSep byte = ':'
 )
 
+type metadataKeyType byte
+
 const (
-	txBlockTPrefix byte = iota + 1
+	txBlockTPrefix metadataKeyType = iota + 1
 	blockStateTPrefix
 	didTPrefix
 	didHisoryTPrefix
@@ -76,7 +79,7 @@ func NewIPFSStorage(ctx context.Context, id config.Identity, repo string) (*IPFS
 	return s, nil
 }
 
-func ipfsStore(ctx context.Context, id config.Identity, repo string) (iface.CoreAPI, error) {
+func ipfsStore(ctx context.Context, id config.Identity, repo string) (coreIface.CoreAPI, error) {
 	if err := setupPlugins(""); err != nil {
 		return nil, err
 	}
@@ -95,7 +98,7 @@ func ipfsStore(ctx context.Context, id config.Identity, repo string) (iface.Core
 		return nil, err
 	}
 
-	iface, err := ipfsCoreiface.NewCoreAPI(node)
+	iface, err := ipfsCoreApiIface.NewCoreAPI(node)
 	if err != nil {
 		return nil, err
 	}
@@ -149,14 +152,14 @@ func newIpfsCfg(path string) (*ipfsCore.BuildCfg, error) {
 }
 
 type IPFSStorage struct {
-	ipfsNode coreiface.CoreAPI
+	ipfsNode coreIface.CoreAPI
 	metadata *pebble.DB
 }
 
-func (is *IPFSStorage) putRaw(ctx context.Context, d []byte) (cid.Cid, error) {
+func (s *IPFSStorage) putRaw(ctx context.Context, d []byte) (cid.Cid, error) {
 	hashType := options.Block.Hash(multihash.SHA2_256, multihash.DefaultLengths[multihash.SHA2_256])
 
-	n, err := is.ipfsNode.Block().Put(ctx, bytes.NewReader(d), hashType, options.Block.Pin(true))
+	n, err := s.ipfsNode.Block().Put(ctx, bytes.NewReader(d), hashType, options.Block.Pin(true))
 	if err != nil {
 		return cid.Undef, err
 	}
@@ -166,8 +169,8 @@ func (is *IPFSStorage) putRaw(ctx context.Context, d []byte) (cid.Cid, error) {
 	return n.Path().Cid(), nil
 }
 
-func (is *IPFSStorage) getRaw(ctx context.Context, id cid.Cid) ([]byte, error) {
-	n, err := is.ipfsNode.Block().Get(ctx, path.IpldPath(id))
+func (s *IPFSStorage) getRaw(ctx context.Context, id cid.Cid) ([]byte, error) {
+	n, err := s.ipfsNode.Block().Get(ctx, path.IpldPath(id))
 	if err != nil {
 		return nil, err
 	}
@@ -180,17 +183,17 @@ func (is *IPFSStorage) getRaw(ctx context.Context, id cid.Cid) ([]byte, error) {
 	return data, nil
 }
 
-func (is *IPFSStorage) PutTx(ctx context.Context, transaction *tx.Tx) (cid.Cid, error) {
+func (s *IPFSStorage) PutTx(ctx context.Context, transaction *tx.Tx) (cid.Cid, error) {
 	d, err := transaction.Marshal()
 	if err != nil {
 		return cid.Undef, err
 	}
 
-	return is.putRaw(ctx, d)
+	return s.putRaw(ctx, d)
 }
 
-func (is *IPFSStorage) GetTx(ctx context.Context, id tx.TxID) (*tx.Tx, error) {
-	data, err := is.getRaw(ctx, cid.Cid(id))
+func (s *IPFSStorage) GetTx(ctx context.Context, id tx.TxID) (*tx.Tx, error) {
+	data, err := s.getRaw(ctx, cid.Cid(id))
 	if err != nil {
 		return nil, err
 	}
@@ -203,17 +206,17 @@ func (is *IPFSStorage) GetTx(ctx context.Context, id tx.TxID) (*tx.Tx, error) {
 	return tx, nil
 }
 
-func (is *IPFSStorage) PutBlock(ctx context.Context, b *storage.Block) (cid.Cid, error) {
+func (s *IPFSStorage) PutBlock(ctx context.Context, b *storage.Block) (cid.Cid, error) {
 	d, err := msgpack.Marshal(b)
 	if err != nil {
 		return cid.Undef, errors.Wrap(err, "mashaling tx")
 	}
 
-	return is.putRaw(ctx, d)
+	return s.putRaw(ctx, d)
 }
 
-func (is *IPFSStorage) GetBlock(ctx context.Context, id storage.BlockID) (*storage.Block, error) {
-	data, err := is.getRaw(ctx, cid.Cid(id))
+func (s *IPFSStorage) GetBlock(ctx context.Context, id storage.BlockID) (*storage.Block, error) {
+	data, err := s.getRaw(ctx, cid.Cid(id))
 	if err != nil {
 		return nil, err
 	}
@@ -226,17 +229,17 @@ func (is *IPFSStorage) GetBlock(ctx context.Context, id storage.BlockID) (*stora
 	return b, nil
 }
 
-func (is *IPFSStorage) PutSet(ctx context.Context, txs *storage.TxSet) (cid.Cid, error) {
+func (s *IPFSStorage) PutSet(ctx context.Context, txs *storage.TxSet) (cid.Cid, error) {
 	d, err := msgpack.Marshal(txs)
 	if err != nil {
 		return cid.Undef, errors.Wrap(err, "mashaling tx")
 	}
 
-	return is.putRaw(ctx, d)
+	return s.putRaw(ctx, d)
 }
 
-func (is *IPFSStorage) GetSet(ctx context.Context, id cid.Cid) (*storage.TxSet, error) {
-	data, err := is.getRaw(ctx, id)
+func (s *IPFSStorage) GetSet(ctx context.Context, id cid.Cid) (*storage.TxSet, error) {
+	data, err := s.getRaw(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -249,8 +252,8 @@ func (is *IPFSStorage) GetSet(ctx context.Context, id cid.Cid) (*storage.TxSet, 
 	return txs, nil
 }
 
-func (is *IPFSStorage) GetTxBlock(ctx context.Context, id tx.TxID) (*storage.Block, error) {
-	bcid, d, err := is.metadata.Get([]byte(fmt.Sprintf("txblock_%s", id)))
+func (s *IPFSStorage) GetTxBlock(ctx context.Context, id tx.TxID) (*storage.Block, error) {
+	bcid, d, err := s.metadata.Get([]byte(fmt.Sprintf("txblock_%s", id)))
 	if err != nil {
 		return nil, errors.Wrap(err, "looking up tx block")
 	}
@@ -261,35 +264,105 @@ func (is *IPFSStorage) GetTxBlock(ctx context.Context, id tx.TxID) (*storage.Blo
 		return nil, errors.Wrap(err, "casting tx block cid")
 	}
 
-	return is.GetBlock(ctx, storage.BlockID(cid))
+	return s.GetBlock(ctx, storage.BlockID(cid))
 }
 
-func (is *IPFSStorage) MarkBlock(ctx context.Context, id storage.BlockID, state storage.BlockState) error {
-	return fmt.Errorf("not implemented")
+func (s *IPFSStorage) MarkBlock(ctx context.Context, id storage.BlockID, state storage.BlockState) error {
+	k := typedKey(blockStateTPrefix, id.String())
+
+	cStateB, done, err := s.metadata.Get(k)
+	if err != nil && err != pebble.ErrNotFound {
+		return errors.Wrap(err, "looking up block state")
+	}
+	defer done.Close()
+
+	cState := storage.BlockState(binary.LittleEndian.Uint32(cStateB))
+
+	nStateB := make([]byte, 3)
+	binary.LittleEndian.PutUint32(nStateB, uint32(state))
+	if err := s.metadata.Set(k, nStateB, nil); err != nil {
+		return errors.Wrap(err, "setting block state")
+	}
+
+	if cState == storage.BlockStateValidated && state == storage.BlockStateAccepted {
+		if err := s.indexBlock(id); err != nil {
+			return errors.Wrap(err, "indexing block")
+		}
+	}
+
+	return nil
 }
 
-func (is *IPFSStorage) AllTx(ctx context.Context, id *storage.Block) (map[tx.TxID]*tx.Tx, error) {
+func (s *IPFSStorage) indexBlock(id storage.BlockID) error {
+	return nil
+}
+
+func (s *IPFSStorage) AllTx(ctx context.Context, id *storage.Block) (map[tx.TxID]*tx.Tx, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (is *IPFSStorage) LookupDID(did string) (*w3cdid.Document, error) {
+func (s *IPFSStorage) LookupDID(ctx context.Context, did string) (*w3cdid.Document, error) {
+	k := typedKey(didTPrefix, did)
+
+	txB, done, err := s.metadata.Get(k)
+	if err != nil {
+		if err == pebble.ErrNotFound {
+			return nil, ErrNotFound
+		}
+		return nil, errors.Wrap(err, "finding did metadata key")
+	}
+	defer done.Close()
+
+	cid, err := cid.Parse(txB)
+	if err != nil {
+		return nil, errors.Wrap(err, "casting did tx cid")
+	}
+
+	t, err := s.GetTx(ctx, tx.TxID(cid))
+	if err != nil {
+		return nil, errors.Wrap(err, "lookup id tx")
+	}
+
+	//check type
+	if t.Type != tx.TxType_DID {
+		return nil, errors.New("unexpected tx type")
+	}
+
+	data := t.Data.(*tx.DID)
+
+	return data.Document, nil
+}
+
+func (s *IPFSStorage) DIDHistory(ctx context.Context, id string) ([]*tx.Tx, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (is *IPFSStorage) DIDHistory(did string) ([]*tx.Tx, error) {
+func (s *IPFSStorage) Claims(ctx context.Context, did string) ([]*tx.Tx, error) { //TODO(tcfw): vc type
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (is *IPFSStorage) Claims(did string) ([]*tx.Tx, error) { //TODO(tcfw): vc type
+func (s *IPFSStorage) Nodes() ([]string, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (is *IPFSStorage) Nodes() ([]string, error) {
+func (s *IPFSStorage) Node(id string) (*tx.Node, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (is *IPFSStorage) Node(id string) (*tx.Node, error) {
-	return nil, fmt.Errorf("not implemented")
+func typedKey(kType metadataKeyType, parts ...string) []byte {
+	n := 1
+	for _, p := range parts {
+		n += len(p) + 1 //add sep as well
+	}
+
+	k := make([]byte, 0, n)
+	k = append(k, byte(kType))
+	for _, p := range parts {
+		k = append(k, []byte(p)...)
+		k = append(k, tableSep)
+	}
+
+	return k[:len(k)-1]
 }
 
 func createRepo(identity config.Identity, path string) error {
@@ -336,7 +409,7 @@ func setupPlugins(externalPluginsPath string) error {
 	return nil
 }
 
-func connectToPeers(ctx context.Context, ipfs coreiface.CoreAPI, peers []string) error {
+func connectToPeers(ctx context.Context, ipfs coreIface.CoreAPI, peers []string) error {
 	var wg sync.WaitGroup
 	peerInfos := make(map[peer.ID]*peer.AddrInfo, len(peers))
 	for _, addrStr := range peers {

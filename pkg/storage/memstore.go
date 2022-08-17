@@ -237,7 +237,7 @@ func (m *MemStore) GetSet(ctx context.Context, id cid.Cid) (*TxSet, error) {
 	return txt, nil
 }
 
-func (m *MemStore) LookupDID(id string) (*w3cdid.Document, error) {
+func (m *MemStore) LookupDID(_ context.Context, id string) (*w3cdid.Document, error) {
 	m.metaMu.RLock()
 	defer m.metaMu.RUnlock()
 
@@ -259,11 +259,11 @@ func (m *MemStore) LookupDID(id string) (*w3cdid.Document, error) {
 	return doc, nil
 }
 
-func (m *MemStore) DIDHistory(id string) ([]*tx.Tx, error) {
+func (m *MemStore) DIDHistory(_ context.Context, id string) ([]*tx.Tx, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (m *MemStore) Claims(id string) ([]*tx.Tx, error) {
+func (m *MemStore) Claims(_ context.Context, id string) ([]*tx.Tx, error) {
 	m.metaMu.RLock()
 	defer m.metaMu.RUnlock()
 

@@ -14,6 +14,12 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
+func TestTypedKey(t *testing.T) {
+	k := typedKey(txBlockTPrefix, "a", "a")
+	e := []byte{byte(txBlockTPrefix), 'a', tableSep, 'a'}
+	assert.Equal(t, e, k)
+}
+
 func TestIPFSAdd(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

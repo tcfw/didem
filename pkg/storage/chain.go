@@ -26,6 +26,10 @@ const (
 
 type BlockID cid.Cid
 
+func (b BlockID) String() string {
+	return cid.Cid(b).String()
+}
+
 type Block struct {
 	Version   uint32   `msgpack:"v"`
 	ID        BlockID  `magpack:"i"`
