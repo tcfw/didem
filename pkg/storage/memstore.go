@@ -305,7 +305,7 @@ func (m *MemStore) Nodes() ([]string, error) {
 	return n, nil
 }
 
-func (m *MemStore) Node(id string) (*tx.Node, error) {
+func (m *MemStore) Node(ctx context.Context, id string) (*tx.Node, error) {
 	m.metaMu.RLock()
 	defer m.metaMu.RUnlock()
 

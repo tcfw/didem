@@ -14,5 +14,5 @@ type MetadataProvider interface {
 	Claims(context.Context, string) ([]*tx.Tx, error) //TODO(tcfw): vc type
 
 	Nodes() ([]string, error)
-	Node(string) (*tx.Node, error)
+	Node(context.Context, string) (*tx.Node, error)
 }

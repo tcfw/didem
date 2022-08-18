@@ -43,7 +43,8 @@ var (
 const (
 	cacheSize = 1 << 20 * 100
 
-	tableSep byte = ':'
+	tableSep           byte = ':'
+	tableSepUpperBound      = tableSep + 1
 )
 
 type metadataKeyType byte
@@ -285,7 +286,7 @@ func (s *IPFSStorage) MarkBlock(ctx context.Context, id storage.BlockID, state s
 	}
 
 	if cState == storage.BlockStateValidated && state == storage.BlockStateAccepted {
-		if err := s.indexBlock(id); err != nil {
+		if err := s.indexBlock(ctx, id); err != nil {
 			return errors.Wrap(err, "indexing block")
 		}
 	}
@@ -293,8 +294,57 @@ func (s *IPFSStorage) MarkBlock(ctx context.Context, id storage.BlockID, state s
 	return nil
 }
 
-func (s *IPFSStorage) indexBlock(id storage.BlockID) error {
+func (s *IPFSStorage) indexBlock(ctx context.Context, id storage.BlockID) error {
+	b, err := s.GetBlock(ctx, id)
+	if err != nil {
+		return errors.Wrap(err, "getting block")
+	}
+
+	txs, err := s.AllTx(ctx, b)
+	if err != nil {
+		return errors.Wrap(err, "getting block transactions")
+	}
+
+	batch := s.metadata.NewBatch()
+	for id, t := range txs {
+		switch t.Type {
+		case tx.TxType_Node:
+			err = s.indexTxNode(batch, t, id)
+		case tx.TxType_DID:
+			err = s.indexTxDID(batch, t, id)
+		case tx.TxType_VC:
+			err = s.indexTxVC(batch, t, id)
+		default:
+			batch.Close()
+			return errors.New("unsupported tx type")
+		}
+		if err != nil {
+			batch.Close()
+			return errors.Wrap(err, fmt.Sprintf("indexing tx %s", id))
+		}
+	}
+
+	if err := batch.Commit(&pebble.WriteOptions{}); err != nil {
+		return errors.Wrap(err, "applying metadata batch index")
+	}
+
 	return nil
+}
+
+func (s *IPFSStorage) indexTxNode(b *pebble.Batch, ntx *tx.Tx, id tx.TxID) error {
+	switch ntx.Action {
+
+	default:
+		return fmt.Errorf("unsupported action %d", ntx.Action)
+	}
+}
+
+func (s *IPFSStorage) indexTxDID(b *pebble.Batch, dtx *tx.Tx, id tx.TxID) error {
+	return fmt.Errorf("not implemented")
+}
+
+func (s *IPFSStorage) indexTxVC(b *pebble.Batch, vtx *tx.Tx, id tx.TxID) error {
+	return fmt.Errorf("not implemented")
 }
 
 func (s *IPFSStorage) AllTx(ctx context.Context, id *storage.Block) (map[tx.TxID]*tx.Tx, error) {
@@ -337,16 +387,56 @@ func (s *IPFSStorage) DIDHistory(ctx context.Context, id string) ([]*tx.Tx, erro
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (s *IPFSStorage) Claims(ctx context.Context, did string) ([]*tx.Tx, error) { //TODO(tcfw): vc type
+func (s *IPFSStorage) Claims(ctx context.Context, did string) ([]*tx.Tx, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
 func (s *IPFSStorage) Nodes() ([]string, error) {
-	return nil, fmt.Errorf("not implemented")
+	list := []string{}
+	iter := s.metadata.NewIter(&pebble.IterOptions{
+		LowerBound: []byte{byte(nodesTPrefix)},
+		UpperBound: []byte{byte(nodesTPrefix) + 1},
+	})
+	defer iter.Close()
+
+	for iter.Next() {
+		v := iter.Value()
+		list = append(list, string(v))
+	}
+
+	return list, nil
 }
 
-func (s *IPFSStorage) Node(id string) (*tx.Node, error) {
-	return nil, fmt.Errorf("not implemented")
+func (s *IPFSStorage) Node(ctx context.Context, id string) (*tx.Node, error) {
+	key := typedKey(nodeTPrefix, id)
+	v, done, err := s.metadata.Get(key)
+	if err != nil {
+		if err == pebble.ErrNotFound {
+			return nil, ErrNotFound
+		}
+		return nil, errors.Wrap(err, "looking up node key")
+	}
+	defer done.Close()
+
+	cid, err := cid.Parse(v)
+	if err != nil {
+		return nil, errors.Wrap(err, "casting node cid")
+	}
+
+	nodeTx, err := s.GetTx(ctx, tx.TxID(cid))
+	if err != nil {
+		return nil, errors.Wrap(err, "getting node tx")
+	}
+
+	if nodeTx.Type != tx.TxType_Node {
+		return nil, errors.New("unexpected tx type")
+	}
+
+	if nodeTx.Action == tx.TxActionRevoke {
+		return nil, ErrNotFound
+	}
+
+	return nodeTx.Data.(*tx.Node), nil
 }
 
 func typedKey(kType metadataKeyType, parts ...string) []byte {

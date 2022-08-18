@@ -266,7 +266,7 @@ func (c *Consensus) OnMsg(msg *Msg) {
 
 	logging.Entry().WithField("msg", msg).Info("received msg")
 
-	node, err := c.store.Node(msg.From.String())
+	node, err := c.store.Node(context.Background(), msg.From.String())
 	if err != nil {
 		logging.WithError(err).Error("fetching node")
 		return
@@ -658,7 +658,7 @@ func (c *Consensus) sendBlock() (*ConsensusMsgBlock, error) {
 	sigs := make([][]byte, 0, len(c.propsalState.PreCommits))
 
 	for p, vote := range c.propsalState.PreCommits {
-		n, err := c.store.Node(p.String())
+		n, err := c.store.Node(context.Background(), p.String())
 		if err != nil {
 			return nil, errors.Wrap(err, "finding node")
 		}
