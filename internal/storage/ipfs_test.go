@@ -8,10 +8,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ipfs/go-cid"
 	"github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/ipfs/kubo/config"
 	"github.com/multiformats/go-multihash"
 	"github.com/stretchr/testify/assert"
+	"github.com/tcfw/didem/pkg/storage"
 	"github.com/tcfw/didem/pkg/tx"
 )
 
@@ -21,18 +23,12 @@ func TestTypedKey(t *testing.T) {
 	assert.Equal(t, e, k)
 }
 
-func TestIPFSAdd(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
+func tempIPFSStorage(t *testing.T, ctx context.Context) *IPFSStorage {
+	bootstrapNodes = []string{}
 	repoPath, err := ioutil.TempDir("", "ipfs-shell")
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	t.Cleanup(func() {
-		os.RemoveAll(repoPath)
-	})
 
 	id, err := config.CreateIdentity(ioutil.Discard, []options.KeyGenerateOption{options.Key.Type(options.Ed25519Key)})
 	if err != nil {
@@ -43,6 +39,20 @@ func TestIPFSAdd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	t.Cleanup(func() {
+		os.RemoveAll(repoPath)
+		ipfs.Close()
+	})
+
+	return ipfs
+}
+
+func TestIPFSAdd(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ipfs := tempIPFSStorage(t, ctx)
 
 	tX := &tx.Tx{
 		Version: tx.Version1,
@@ -77,4 +87,40 @@ func TestIPFSAdd(t *testing.T) {
 	}
 
 	assert.Equal(t, tX, txrb)
+}
+
+func TestTxSetPutGet(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ipfs := tempIPFSStorage(t, ctx)
+
+	tX := &tx.Tx{
+		Version: tx.Version1,
+		Ts:      time.Now().Unix(),
+		Type:    tx.TxType_Node,
+		Data: &tx.Node{
+			Id:  "1111",
+			Did: "did:example:abcdefghijklmnopqrstuvwxyz0123456789",
+			Key: nil,
+		},
+	}
+
+	txCid, err := ipfs.PutTx(ctx, tX)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	root, err := storage.NewTxSet(ipfs, []cid.Cid{txCid})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	txrb, err := ipfs.AllTx(ctx, &storage.Block{TxRoot: root.Cid()})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Len(t, txrb, 1)
+	assert.Equal(t, tX, txrb[tx.TxID(txCid)])
 }

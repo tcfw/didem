@@ -39,6 +39,14 @@ import (
 var (
 	_           storage.Store = (*IPFSStorage)(nil)
 	ErrNotFound               = errors.New("not found")
+
+	bootstrapNodes = []string{
+		// IPFS Bootstrapper nodes.
+		"/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
+		"/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
+		"/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
+		"/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
+	}
 )
 
 const (
@@ -64,7 +72,7 @@ const (
 
 func NewIPFSStorage(ctx context.Context, id config.Identity, repo string) (*IPFSStorage, error) {
 	ipfsRepo := filepath.Join(repo, "ipfs")
-	ipfs, err := ipfsStore(ctx, id, ipfsRepo)
+	ipfs, close, err := ipfsStore(ctx, id, ipfsRepo)
 	if err != nil {
 		return nil, errors.Wrap(err, "opening ipfs block store")
 	}
@@ -78,48 +86,51 @@ func NewIPFSStorage(ctx context.Context, id config.Identity, repo string) (*IPFS
 	s := &IPFSStorage{
 		ipfsNode: ipfs,
 		metadata: m,
+		Close:    close,
 	}
 
 	return s, nil
 }
 
-func ipfsStore(ctx context.Context, id config.Identity, repo string) (coreIface.CoreAPI, error) {
-	if err := setupPlugins(""); err != nil {
-		return nil, err
+var (
+	ipfsSetup sync.Once
+)
+
+func ipfsStore(ctx context.Context, id config.Identity, repo string) (coreIface.CoreAPI, func() error, error) {
+	var err error
+
+	ipfsSetup.Do(func() {
+		err = setupPlugins("")
+	})
+
+	if err != nil {
+		return nil, nil, err
 	}
 
 	if err := createRepo(id, repo); err != nil {
-		return nil, errors.Wrap(err, "checking/creating ipfs repo")
+		return nil, nil, errors.Wrap(err, "checking/creating ipfs repo")
 	}
 
 	cfg, err := newIpfsCfg(repo)
 	if err != nil {
-		return nil, errors.Wrap(err, "creating ipfs config from repo")
+		return nil, nil, errors.Wrap(err, "creating ipfs config from repo")
 	}
 
 	node, err := ipfsCore.NewNode(ctx, cfg)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	iface, err := ipfsCoreApiIface.NewCoreAPI(node)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	go func() {
-		bootstrapNodes := []string{
-			// IPFS Bootstrapper nodes.
-			"/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
-			"/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
-			"/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
-			"/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
-		}
-
 		connectToPeers(ctx, iface, bootstrapNodes)
 	}()
 
-	return iface, nil
+	return iface, node.Close, nil
 }
 
 func metadataStore(ctx context.Context, repo string) (*pebble.DB, error) {
@@ -132,18 +143,10 @@ func metadataStore(ctx context.Context, repo string) (*pebble.DB, error) {
 }
 
 func newIpfsCfg(path string) (*ipfsCore.BuildCfg, error) {
-	c := &ipfsCore.BuildCfg{}
-
-	// c.NilRepo = true
-	c.Online = true
-	c.Routing = libp2p.DHTOption
-
-	// repoPath, err := createTempRepo()
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// logrus.New().WithField("repo", repoPath).Infof("IPFS repo")
+	c := &ipfsCore.BuildCfg{
+		Online:  true,
+		Routing: libp2p.DHTServerOption,
+	}
 
 	repo, err := fsrepo.Open(path)
 	if err != nil {
@@ -158,6 +161,8 @@ func newIpfsCfg(path string) (*ipfsCore.BuildCfg, error) {
 type IPFSStorage struct {
 	ipfsNode coreIface.CoreAPI
 	metadata *pebble.DB
+
+	Close func() error
 }
 
 func (s *IPFSStorage) putRaw(ctx context.Context, d []byte) (cid.Cid, error) {
@@ -268,7 +273,7 @@ func (s *IPFSStorage) GetSet(ctx context.Context, id cid.Cid) (*storage.TxSet, e
 }
 
 func (s *IPFSStorage) GetTxBlock(ctx context.Context, id tx.TxID) (*storage.Block, error) {
-	bcid, d, err := s.metadata.Get([]byte(fmt.Sprintf("txblock_%s", id)))
+	bcid, d, err := s.metadata.Get(typedKey(txBlockTPrefix, id.String()))
 	if err != nil {
 		return nil, errors.Wrap(err, "looking up tx block")
 	}
@@ -308,8 +313,8 @@ func (s *IPFSStorage) MarkBlock(ctx context.Context, id storage.BlockID, state s
 	return nil
 }
 
-func (s *IPFSStorage) indexBlock(ctx context.Context, id storage.BlockID) error {
-	b, err := s.GetBlock(ctx, id)
+func (s *IPFSStorage) indexBlock(ctx context.Context, bId storage.BlockID) error {
+	b, err := s.GetBlock(ctx, bId)
 	if err != nil {
 		return errors.Wrap(err, "getting block")
 	}
@@ -319,12 +324,16 @@ func (s *IPFSStorage) indexBlock(ctx context.Context, id storage.BlockID) error 
 		return errors.Wrap(err, "getting block transactions")
 	}
 
-	if err := s.ipfsNode.Pin().Add(ctx, path.IpfsPath(cid.Cid(id))); err != nil {
+	if err := s.ipfsNode.Pin().Add(ctx, path.IpfsPath(cid.Cid(bId))); err != nil {
 		return errors.Wrap(err, "pinning block")
 	}
 
 	batch := s.metadata.NewBatch()
 	for id, t := range txs {
+		if err := batch.Set(typedKey(txBlockTPrefix, cid.Cid(id).String()), cid.Cid(bId).Bytes(), nil); err != nil {
+			return errors.Wrap(err, "a")
+		}
+
 		switch t.Type {
 		case tx.TxType_Node:
 			err = s.indexTxNode(batch, t, id)
