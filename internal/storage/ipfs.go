@@ -29,6 +29,7 @@ import (
 	"github.com/multiformats/go-multihash"
 	"github.com/vmihailenco/msgpack/v5"
 
+	"github.com/tcfw/didem/internal/coinflip"
 	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/tcfw/didem/pkg/did/w3cdid"
 	"github.com/tcfw/didem/pkg/storage"
@@ -45,6 +46,8 @@ const (
 
 	tableSep           byte = ':'
 	tableSepUpperBound      = tableSep + 1
+
+	allTxNWorkers = 3
 )
 
 type metadataKeyType byte
@@ -171,7 +174,7 @@ func (s *IPFSStorage) putRaw(ctx context.Context, d []byte) (cid.Cid, error) {
 }
 
 func (s *IPFSStorage) getRaw(ctx context.Context, id cid.Cid) ([]byte, error) {
-	n, err := s.ipfsNode.Block().Get(ctx, path.IpldPath(id))
+	n, err := s.ipfsNode.Block().Get(ctx, path.IpfsPath(id))
 	if err != nil {
 		return nil, err
 	}
@@ -305,6 +308,10 @@ func (s *IPFSStorage) indexBlock(ctx context.Context, id storage.BlockID) error 
 		return errors.Wrap(err, "getting block transactions")
 	}
 
+	if err := s.ipfsNode.Pin().Add(ctx, path.IpfsPath(cid.Cid(id))); err != nil {
+		return errors.Wrap(err, "pinning block")
+	}
+
 	batch := s.metadata.NewBatch()
 	for id, t := range txs {
 		switch t.Type {
@@ -322,6 +329,13 @@ func (s *IPFSStorage) indexBlock(ctx context.Context, id storage.BlockID) error 
 			batch.Close()
 			return errors.Wrap(err, fmt.Sprintf("indexing tx %s", id))
 		}
+
+		//50% chance of storing the Tx
+		if coinflip.Flip() {
+			if err := s.ipfsNode.Pin().Add(ctx, path.IpfsPath(cid.Cid(id))); err != nil {
+				return errors.Wrap(err, "pinning block")
+			}
+		}
 	}
 
 	if err := batch.Commit(&pebble.WriteOptions{}); err != nil {
@@ -332,23 +346,88 @@ func (s *IPFSStorage) indexBlock(ctx context.Context, id storage.BlockID) error 
 }
 
 func (s *IPFSStorage) indexTxNode(b *pebble.Batch, ntx *tx.Tx, id tx.TxID) error {
-	switch ntx.Action {
+	c := ntx.Data.(*tx.Node)
+	k := typedKey(nodesTPrefix, c.Id)
 
+	switch ntx.Action {
+	case tx.TxActionAdd:
+		return b.Set(k, cid.Cid(id).Bytes(), nil)
+	case tx.TxActionRevoke:
+		return b.Delete(k, nil)
 	default:
 		return fmt.Errorf("unsupported action %d", ntx.Action)
 	}
 }
 
 func (s *IPFSStorage) indexTxDID(b *pebble.Batch, dtx *tx.Tx, id tx.TxID) error {
-	return fmt.Errorf("not implemented")
+	c := dtx.Data.(*tx.DID)
+	k := typedKey(didTPrefix, c.Document.ID)
+
+	//append to did history
+	ak := typedKey(didHisoryTPrefix, c.Document.ID, id.String())
+	if err := b.Set(ak, cid.Cid(id).Bytes(), nil); err != nil {
+		return errors.Wrap(err, "appending to did history")
+	}
+
+	switch dtx.Action {
+	case tx.TxActionAdd, tx.TxActionUpdate:
+		return b.Set(k, cid.Cid(id).Bytes(), nil)
+	case tx.TxActionRevoke:
+		return b.Delete(k, nil)
+	default:
+		return fmt.Errorf("unsupported action %d", dtx.Action)
+	}
 }
 
 func (s *IPFSStorage) indexTxVC(b *pebble.Batch, vtx *tx.Tx, id tx.TxID) error {
+	//todo append to did history
+
 	return fmt.Errorf("not implemented")
 }
 
-func (s *IPFSStorage) AllTx(ctx context.Context, id *storage.Block) (map[tx.TxID]*tx.Tx, error) {
-	return nil, fmt.Errorf("not implemented")
+func (s *IPFSStorage) AllTx(ctx context.Context, b *storage.Block) (map[tx.TxID]*tx.Tx, error) {
+	txSeen := map[tx.TxID]*tx.Tx{}
+	visited := cid.NewSet()
+	queue := []cid.Cid{b.TxRoot}
+
+	for len(queue) != 0 {
+		//pop
+		setCid := queue[0]
+		queue = queue[1:]
+
+		//just incase we encounter a loop (bad proposer?)
+		if visited.Has(setCid) {
+			continue
+		} else {
+			visited.Add(setCid)
+		}
+
+		set, err := s.GetSet(ctx, setCid)
+		if err != nil {
+			return nil, errors.Wrap(err, "getting root trie")
+		}
+
+		if set.Tx != nil {
+			t, err := s.GetTx(ctx, tx.TxID(*set.Tx))
+			if err != nil {
+				return nil, errors.Wrap(err, "getting root tx")
+			}
+
+			txSeen[tx.TxID(*set.Tx)] = t
+
+			//max check
+			if len(txSeen) > storage.MaxBlockTxCount {
+				return nil, errors.New("block containers too many tx")
+			}
+		}
+
+		//push
+		if len(set.Children) > 0 {
+			queue = append(queue, set.Children...)
+		}
+	}
+
+	return txSeen, nil
 }
 
 func (s *IPFSStorage) LookupDID(ctx context.Context, did string) (*w3cdid.Document, error) {
@@ -384,6 +463,65 @@ func (s *IPFSStorage) LookupDID(ctx context.Context, did string) (*w3cdid.Docume
 }
 
 func (s *IPFSStorage) DIDHistory(ctx context.Context, id string) ([]*tx.Tx, error) {
+	hIter := s.metadata.NewIter(&pebble.IterOptions{
+		LowerBound: []byte{byte(didHisoryTPrefix)},
+		UpperBound: []byte{byte(didHisoryTPrefix) + 1},
+	})
+	hCids := cid.NewSet()
+
+	for hIter.First(); hIter.Valid(); hIter.Next() {
+		c, err := cid.Cast(hIter.Value())
+		if err == nil {
+			hCids.Add(c)
+		}
+	}
+	defer hIter.Close()
+
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var errC chan error
+	cidC := make(chan cid.Cid, hCids.Len())
+	done := make(chan struct{})
+
+	wg.Add(hCids.Len())
+
+	go func() {
+		for _, c := range hCids.Keys() {
+			cidC <- c
+		}
+
+		wg.Wait()
+		close(cidC)
+		done <- struct{}{}
+	}()
+
+	txs := make([]*tx.Tx, 0, hCids.Len())
+
+	for i := 0; i < allTxNWorkers; i++ {
+		go func() {
+			for c := range cidC {
+				tx, err := s.GetTx(ctx, tx.TxID(c))
+				if err != nil {
+					wg.Done()
+					errC <- err
+					continue
+				}
+
+				mu.Lock()
+				txs = append(txs, tx)
+				mu.Unlock()
+
+				wg.Done()
+			}
+		}()
+	}
+
+	select {
+	case err := <-errC:
+		return nil, errors.Wrap(err, "fetching tx")
+	case <-done:
+	}
+
 	return nil, fmt.Errorf("not implemented")
 }
 
@@ -399,7 +537,7 @@ func (s *IPFSStorage) Nodes() ([]string, error) {
 	})
 	defer iter.Close()
 
-	for iter.Next() {
+	for iter.First(); iter.Valid(); iter.Next() {
 		v := iter.Value()
 		list = append(list, string(v))
 	}

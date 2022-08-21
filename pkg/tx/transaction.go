@@ -27,6 +27,10 @@ const (
 
 type TxID cid.Cid
 
+func (t TxID) String() string {
+	return cid.Cid(t).String()
+}
+
 type Tx struct {
 	Version   uint8       `msgpack:"v"`
 	Ts        int64       `msgpack:"t"`
@@ -63,7 +67,7 @@ func (t *Tx) Unmarshal(b []byte) error {
 		//Node decode
 		t.Data = &Node{}
 	default:
-		return errors.New("unknown data type")
+		return errors.New("unknown tx data type")
 	}
 
 	if err := msgpack.Unmarshal(b, t); err != nil {

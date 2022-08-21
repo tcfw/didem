@@ -6,12 +6,13 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/ipfs/kubo/config"
+	"github.com/multiformats/go-multihash"
 	"github.com/stretchr/testify/assert"
 	"github.com/tcfw/didem/pkg/tx"
-	"golang.org/x/crypto/sha3"
 )
 
 func TestTypedKey(t *testing.T) {
@@ -43,7 +44,16 @@ func TestIPFSAdd(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tX := &tx.Tx{}
+	tX := &tx.Tx{
+		Version: tx.Version1,
+		Ts:      time.Now().Unix(),
+		Type:    tx.TxType_Node,
+		Data: &tx.Node{
+			Id:  "1111",
+			Did: "did:example:abcdefghijklmnopqrstuvwxyz0123456789",
+			Key: nil,
+		},
+	}
 
 	cid, err := ipfs.PutTx(ctx, tX)
 	if err != nil {
@@ -51,13 +61,15 @@ func TestIPFSAdd(t *testing.T) {
 	}
 
 	txb, _ := tX.Marshal()
-	txbh := sha3.Sum384(txb)
+	txbh, err := multihash.Sum(txb[:], multihash.SHA2_256, multihash.DefaultLengths[multihash.SHA2_256])
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	expected := hex.EncodeToString(txbh[:])
-
 	idhex := hex.EncodeToString(cid.Bytes())
 
-	assert.Equal(t, expected, idhex)
+	assert.Equal(t, expected, idhex[4:])
 
 	txrb, err := ipfs.GetTx(ctx, tx.TxID(cid))
 	if err != nil {
