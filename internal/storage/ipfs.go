@@ -239,7 +239,18 @@ func (s *IPFSStorage) PutSet(ctx context.Context, txs *storage.TxSet) (cid.Cid, 
 		return cid.Undef, errors.Wrap(err, "mashaling tx")
 	}
 
-	return s.putRaw(ctx, d)
+	c, err := s.putRaw(ctx, d)
+	if err != nil {
+		return cid.Undef, errors.Wrap(err, "storing txset")
+	}
+
+	if coinflip.Flip() {
+		if err := s.ipfsNode.Pin().Add(ctx, path.IpfsPath(c)); err != nil {
+			return cid.Undef, errors.Wrap(err, "pinning txset")
+		}
+	}
+
+	return c, nil
 }
 
 func (s *IPFSStorage) GetSet(ctx context.Context, id cid.Cid) (*storage.TxSet, error) {
