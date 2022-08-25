@@ -20,7 +20,7 @@ const (
 )
 
 const (
-	TxActionAdd TxAction = iota
+	TxActionAdd TxAction = iota + 1
 	TxActionUpdate
 	TxActionRevoke
 )

@@ -124,3 +124,127 @@ func TestTxSetPutGet(t *testing.T) {
 	assert.Len(t, txrb, 1)
 	assert.Equal(t, tX, txrb[tx.TxID(txCid)])
 }
+
+func TestNodeIndex(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ipfs := tempIPFSStorage(t, ctx)
+
+	//Check no nodes exist
+
+	n, err := ipfs.Nodes()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Len(t, n, 0)
+
+	tX := &tx.Tx{
+		Version: tx.Version1,
+		Ts:      time.Now().Unix(),
+		Type:    tx.TxType_Node,
+		Action:  tx.TxActionAdd,
+		Data: &tx.Node{
+			Id:  "1111",
+			Did: "did:example:abcdefghijklmnopqrstuvwxyz0123456789",
+			Key: nil,
+		},
+	}
+
+	txcid, err := ipfs.PutTx(ctx, tX)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	txs, err := storage.NewTxSet(ipfs, []cid.Cid{txcid})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	b := &storage.Block{
+		TxRoot: txs.Cid(),
+	}
+
+	bcid, err := ipfs.PutBlock(ctx, b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bid := storage.BlockID(bcid)
+
+	if err := ipfs.MarkBlock(ctx, bid, storage.BlockStateValidated); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := ipfs.MarkBlock(ctx, bid, storage.BlockStateAccepted); err != nil {
+		t.Fatal(err)
+	}
+
+	//Check new node exists
+
+	n, err = ipfs.Nodes()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Len(t, n, 1)
+	assert.Equal(t, tX.Data.(*tx.Node).Id, n[0])
+
+	ntx, err := ipfs.Node(ctx, n[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, tX.Data, ntx)
+
+	//Remove node
+
+	tX = &tx.Tx{
+		Version: tx.Version1,
+		Ts:      time.Now().Unix(),
+		Type:    tx.TxType_Node,
+		Action:  tx.TxActionRevoke,
+		Data: &tx.Node{
+			Id:  "1111",
+			Did: "did:example:abcdefghijklmnopqrstuvwxyz0123456789",
+			Key: nil,
+		},
+	}
+
+	txcid, err = ipfs.PutTx(ctx, tX)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	txs, err = storage.NewTxSet(ipfs, []cid.Cid{txcid})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	b = &storage.Block{
+		TxRoot: txs.Cid(),
+	}
+
+	bcid, err = ipfs.PutBlock(ctx, b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bid = storage.BlockID(bcid)
+
+	if err := ipfs.MarkBlock(ctx, bid, storage.BlockStateValidated); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := ipfs.MarkBlock(ctx, bid, storage.BlockStateAccepted); err != nil {
+		t.Fatal(err)
+	}
+
+	//Check no nodes exist
+
+	n, err = ipfs.Nodes()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Len(t, n, 0)
+}

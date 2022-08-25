@@ -67,7 +67,6 @@ const (
 	didHisoryTPrefix
 	activeClaimTPrefix
 	nodesTPrefix
-	nodeTPrefix
 )
 
 func NewIPFSStorage(ctx context.Context, id config.Identity, repo string) (*IPFSStorage, error) {
@@ -294,11 +293,15 @@ func (s *IPFSStorage) MarkBlock(ctx context.Context, id storage.BlockID, state s
 	if err != nil && err != pebble.ErrNotFound {
 		return errors.Wrap(err, "looking up block state")
 	}
-	defer done.Close()
+	if err != pebble.ErrNotFound {
+		defer done.Close()
+	} else {
+		cStateB = make([]byte, 4)
+	}
 
 	cState := storage.BlockState(binary.LittleEndian.Uint32(cStateB))
 
-	nStateB := make([]byte, 3)
+	nStateB := make([]byte, 4)
 	binary.LittleEndian.PutUint32(nStateB, uint32(state))
 	if err := s.metadata.Set(k, nStateB, nil); err != nil {
 		return errors.Wrap(err, "setting block state")
@@ -377,6 +380,7 @@ func (s *IPFSStorage) indexTxNode(b *pebble.Batch, ntx *tx.Tx, id tx.TxID) error
 	default:
 		return fmt.Errorf("unsupported action %d", ntx.Action)
 	}
+
 }
 
 func (s *IPFSStorage) indexTxDID(b *pebble.Batch, dtx *tx.Tx, id tx.TxID) error {
@@ -558,15 +562,15 @@ func (s *IPFSStorage) Nodes() ([]string, error) {
 	defer iter.Close()
 
 	for iter.First(); iter.Valid(); iter.Next() {
-		v := iter.Value()
-		list = append(list, string(v))
+		v := iter.Key()
+		list = append(list, string(v[1:]))
 	}
 
 	return list, nil
 }
 
 func (s *IPFSStorage) Node(ctx context.Context, id string) (*tx.Node, error) {
-	key := typedKey(nodeTPrefix, id)
+	key := typedKey(nodesTPrefix, id)
 	v, done, err := s.metadata.Get(key)
 	if err != nil {
 		if err == pebble.ErrNotFound {
