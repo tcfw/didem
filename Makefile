@@ -29,3 +29,7 @@ docker-push:
 .PHONY: gen-api
 gen-api:
 	@./scripts/genproto.sh
+
+.PHONY: test
+test:
+	go test ./...

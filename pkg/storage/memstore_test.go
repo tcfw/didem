@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tcfw/didem/pkg/did/w3cdid"
 	"github.com/tcfw/didem/pkg/tx"
 )
 
@@ -16,6 +17,8 @@ func TestMemStore(t *testing.T) {
 		Version: 1,
 		Ts:      time.Now().Unix(),
 		Type:    tx.TxType_DID,
+		Action:  tx.TxActionAdd,
+		Data:    &tx.DID{Document: &w3cdid.Document{}},
 	}
 
 	id, err := m.PutTx(context.Background(), obj)
