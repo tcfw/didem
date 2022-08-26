@@ -13,6 +13,7 @@ import (
 	"github.com/ipfs/kubo/config"
 	"github.com/multiformats/go-multihash"
 	"github.com/stretchr/testify/assert"
+	"github.com/tcfw/didem/pkg/did/w3cdid"
 	"github.com/tcfw/didem/pkg/storage"
 	"github.com/tcfw/didem/pkg/tx"
 )
@@ -247,4 +248,121 @@ func TestNodeIndex(t *testing.T) {
 	}
 
 	assert.Len(t, n, 0)
+}
+
+func TestDidIndex(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ipfs := tempIPFSStorage(t, ctx)
+
+	did := "did:example:abc"
+
+	//Assert empty
+	doc, err := ipfs.LookupDID(ctx, did)
+	assert.ErrorIs(t, err, ErrNotFound)
+	assert.Nil(t, doc)
+
+	h, err := ipfs.DIDHistory(ctx, did)
+	assert.NoError(t, err)
+	assert.Len(t, h, 0)
+
+	diddoc := &w3cdid.Document{
+		ID: did,
+	}
+
+	//Add DID
+	tX := &tx.Tx{
+		Version: tx.Version1,
+		Ts:      time.Now().Unix(),
+		Type:    tx.TxType_DID,
+		Action:  tx.TxActionAdd,
+		Data:    &tx.DID{Document: diddoc},
+	}
+
+	txcid, err := ipfs.PutTx(ctx, tX)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	txs, err := storage.NewTxSet(ipfs, []cid.Cid{txcid})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	b := &storage.Block{
+		TxRoot: txs.Cid(),
+	}
+
+	bcid, err := ipfs.PutBlock(ctx, b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bid := storage.BlockID(bcid)
+
+	if err := ipfs.MarkBlock(ctx, bid, storage.BlockStateValidated); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := ipfs.MarkBlock(ctx, bid, storage.BlockStateAccepted); err != nil {
+		t.Fatal(err)
+	}
+
+	//Check for DID
+	doc, err = ipfs.LookupDID(ctx, did)
+	assert.NoError(t, err)
+	assert.Equal(t, diddoc, doc)
+
+	h, err = ipfs.DIDHistory(ctx, did)
+	assert.NoError(t, err)
+	assert.Len(t, h, 1)
+	assert.Equal(t, tX, h[0])
+
+	//Revoke
+
+	tX = &tx.Tx{
+		Version: tx.Version1,
+		Ts:      time.Now().Unix(),
+		Type:    tx.TxType_DID,
+		Action:  tx.TxActionRevoke,
+		Data:    &tx.DID{Document: diddoc},
+	}
+
+	txcid, err = ipfs.PutTx(ctx, tX)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	txs, err = storage.NewTxSet(ipfs, []cid.Cid{txcid})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	b = &storage.Block{
+		TxRoot: txs.Cid(),
+	}
+
+	bcid, err = ipfs.PutBlock(ctx, b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bid = storage.BlockID(bcid)
+
+	if err := ipfs.MarkBlock(ctx, bid, storage.BlockStateValidated); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := ipfs.MarkBlock(ctx, bid, storage.BlockStateAccepted); err != nil {
+		t.Fatal(err)
+	}
+
+	//Check for DID revoke
+	doc, err = ipfs.LookupDID(ctx, did)
+	assert.ErrorIs(t, err, ErrNotFound)
+	assert.Nil(t, doc)
+
+	h, err = ipfs.DIDHistory(ctx, did)
+	assert.NoError(t, err)
+	assert.Len(t, h, 2)
+
 }

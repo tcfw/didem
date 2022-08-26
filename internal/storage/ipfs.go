@@ -546,7 +546,7 @@ func (s *IPFSStorage) DIDHistory(ctx context.Context, id string) ([]*tx.Tx, erro
 	case <-done:
 	}
 
-	return nil, fmt.Errorf("not implemented")
+	return txs, nil
 }
 
 func (s *IPFSStorage) Claims(ctx context.Context, did string) ([]*tx.Tx, error) {
