@@ -9,6 +9,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
+	"github.com/tcfw/didem/pkg/did/genesis"
 	"github.com/tcfw/didem/pkg/did/w3cdid"
 	"github.com/tcfw/didem/pkg/tx"
 	"github.com/vmihailenco/msgpack/v5"
@@ -30,6 +31,8 @@ type MemStore struct {
 	nodes    map[string]cid.Cid
 	dids     map[string]cid.Cid
 	claims   map[string][]cid.Cid
+
+	genesisApplied bool
 }
 
 func NewMemStore() *MemStore {
@@ -321,8 +324,18 @@ func (m *MemStore) Node(ctx context.Context, id string) (*tx.Node, error) {
 
 	t := &tx.Tx{}
 	if err := t.Unmarshal(d); err != nil {
-		return nil, errors.Wrap(err, "unmarshalling ")
+		return nil, errors.Wrap(err, "unmarshalling")
 	}
 
 	return t.Data.(*tx.Node), nil
+}
+
+func (m *MemStore) HasGenesisApplied() bool {
+	return m.genesisApplied
+}
+
+func (m *MemStore) ApplyGenesis(*genesis.Info) error {
+	m.genesisApplied = true
+
+	return nil
 }

@@ -1,4 +1,4 @@
-package comm
+package stream
 
 import (
 	"bufio"
@@ -9,14 +9,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-type streamRW struct {
+type RW struct {
 	s   network.Stream
 	buf *bytes.Buffer
 	rw  *bufio.ReadWriter
 }
 
-func NewStreamRW(s network.Stream) *streamRW {
-	rw := &streamRW{
+func NewRW(s network.Stream) *RW {
+	rw := &RW{
 		s:   s,
 		buf: new(bytes.Buffer),
 		rw:  bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s)),
@@ -24,7 +24,7 @@ func NewStreamRW(s network.Stream) *streamRW {
 	return rw
 }
 
-func (c *streamRW) Write(b []byte) error {
+func (c *RW) Write(b []byte) error {
 	c.buf.Reset()
 	c.buf.Grow(4)
 	binary.LittleEndian.PutUint32(c.buf.Bytes()[:4], uint32(len(b)))
@@ -40,7 +40,7 @@ func (c *streamRW) Write(b []byte) error {
 	return c.rw.Flush()
 }
 
-func (c *streamRW) Read() ([]byte, error) {
+func (c *RW) Read() ([]byte, error) {
 	c.buf.Reset()
 	c.buf.Grow(4)
 	if _, err := c.rw.Read(c.buf.Bytes()[:4]); err != nil {

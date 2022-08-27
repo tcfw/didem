@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package p2p;
+
+option go_package = "github.com/tcfw/didem/api/";
+
+message ConsensusRequest {
+  oneof Request { TipRequest Tip = 1; }
+}
+
+message TipRequest { string chainId = 1; }
+
+message TipResponse {
+  string tip = 1;
+  string chainId = 2;
+}

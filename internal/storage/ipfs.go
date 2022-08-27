@@ -31,6 +31,7 @@ import (
 
 	"github.com/tcfw/didem/internal/coinflip"
 	"github.com/tcfw/didem/internal/utils/logging"
+	"github.com/tcfw/didem/pkg/did/genesis"
 	"github.com/tcfw/didem/pkg/did/w3cdid"
 	"github.com/tcfw/didem/pkg/storage"
 	"github.com/tcfw/didem/pkg/tx"
@@ -67,6 +68,7 @@ const (
 	didHisoryTPrefix
 	activeClaimTPrefix
 	nodesTPrefix
+	genesisTPrefix
 )
 
 func NewIPFSStorage(ctx context.Context, id config.Identity, repo string) (*IPFSStorage, error) {
@@ -567,6 +569,28 @@ func (s *IPFSStorage) Nodes() ([]string, error) {
 	}
 
 	return list, nil
+}
+
+func (s *IPFSStorage) HasGenesisApplied() bool {
+	_, done, err := s.metadata.Get(typedKey(genesisTPrefix))
+	if err != nil {
+		if err != pebble.ErrNotFound {
+			logging.Entry().Warn("failed reading genesis prefix")
+		}
+		return false
+	}
+	defer done.Close()
+	return true
+}
+
+func (s *IPFSStorage) ApplyGenesis(g *genesis.Info) error {
+	//TODO(tcfw)
+
+	if err := s.metadata.Set(typedKey(genesisTPrefix), []byte{}, nil); err != nil {
+		return errors.Wrap(err, "storing genesis prefix")
+	}
+
+	return nil
 }
 
 func (s *IPFSStorage) Node(ctx context.Context, id string) (*tx.Node, error) {

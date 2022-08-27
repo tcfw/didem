@@ -6,6 +6,7 @@ import (
 
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/pkg/errors"
+	"github.com/tcfw/didem/internal/stream"
 	"github.com/tcfw/didem/pkg/comm"
 	"github.com/tcfw/didem/pkg/did"
 	"github.com/vmihailenco/msgpack/v5"
@@ -20,7 +21,7 @@ type ServerHandler struct {
 
 	//stream
 	stream network.Stream
-	rw     *streamRW
+	rw     *stream.RW
 
 	//handshake state
 	clientHello *comm.Message
@@ -28,12 +29,12 @@ type ServerHandler struct {
 	received    *comm.Message
 }
 
-func NewServerHandler(stream network.Stream, store comm.Store, idStore did.IdentityStore) *ServerHandler {
+func NewServerHandler(nstream network.Stream, store comm.Store, idStore did.IdentityStore) *ServerHandler {
 	s := &ServerHandler{
-		stream:  stream,
+		stream:  nstream,
 		emStore: store,
 		idStore: idStore,
-		rw:      NewStreamRW(stream),
+		rw:      stream.NewRW(nstream),
 	}
 
 	return s

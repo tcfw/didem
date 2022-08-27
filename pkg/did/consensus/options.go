@@ -1,6 +1,7 @@
 package consensus
 
 import (
+	"github.com/tcfw/didem/pkg/did/genesis"
 	"github.com/tcfw/didem/pkg/storage"
 	"go.dedis.ch/kyber/v3"
 )
@@ -31,6 +32,15 @@ func WithBeaconSource(s <-chan int64) Option {
 func WithValidator(v storage.Validator) Option {
 	return func(c *Consensus) error {
 		c.validator = v
+		return nil
+	}
+}
+
+func WithGenesis(g *genesis.Info) Option {
+	return func(c *Consensus) error {
+		c.chain = []byte(g.ChainID)
+		c.genesis = g
+
 		return nil
 	}
 }

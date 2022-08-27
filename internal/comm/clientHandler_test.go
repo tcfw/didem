@@ -9,6 +9,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/stretchr/testify/assert"
+	"github.com/tcfw/didem/internal/stream"
 	"github.com/tcfw/didem/pkg/comm"
 	commPkg "github.com/tcfw/didem/pkg/comm"
 	"github.com/tcfw/didem/pkg/did"
@@ -29,7 +30,7 @@ func TestSendClientHello(t *testing.T) {
 	done := make(chan struct{}, 1)
 
 	h1.SetStreamHandler(ProtocolID, func(s network.Stream) {
-		sh := &ServerHandler{rw: NewStreamRW(s)}
+		sh := &ServerHandler{rw: stream.NewRW(s)}
 
 		if err := sh.readClientHello(); err != nil {
 			t.Fatal(err)
@@ -87,7 +88,7 @@ func TestSendClientHello(t *testing.T) {
 	stream := &ClientStream{
 		ch:     handle,
 		stream: s,
-		rw:     NewStreamRW(s),
+		rw:     stream.NewRW(s),
 	}
 
 	if err := stream.sendHello(); err != nil {

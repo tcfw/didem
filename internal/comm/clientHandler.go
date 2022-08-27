@@ -11,6 +11,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
+	"github.com/tcfw/didem/internal/stream"
 	"github.com/tcfw/didem/pkg/comm"
 	"github.com/tcfw/didem/pkg/did"
 	"github.com/tcfw/didem/pkg/node"
@@ -33,7 +34,7 @@ type ClientStream struct {
 
 	//stream
 	stream network.Stream
-	rw     *streamRW
+	rw     *stream.RW
 
 	//state
 	serverHello *comm.Message
@@ -63,11 +64,11 @@ func (c *ClientHandler) handle(ctx context.Context) error {
 	for _, s := range ss {
 		wg.Add(1)
 
-		go func(stream network.Stream) {
+		go func(s network.Stream) {
 			defer wg.Done()
-			defer stream.Close()
+			defer s.Close()
 
-			cs := ClientStream{ch: c, stream: stream, rw: NewStreamRW(stream)}
+			cs := ClientStream{ch: c, stream: s, rw: stream.NewRW(s)}
 
 			if err := cs.handshake(); err != nil {
 				errs <- errors.Wrap(err, "client handshake")

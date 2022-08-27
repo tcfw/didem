@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/tcfw/didem/internal/utils/logging"
+	"github.com/tcfw/didem/pkg/did/genesis"
 	"github.com/tcfw/didem/pkg/storage"
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/pairing/bn256"
@@ -36,6 +37,8 @@ type Consensus struct {
 	chain      []byte
 	id         peer.ID
 	signingKey kyber.Scalar
+
+	genesis *genesis.Info
 
 	memPool   MemPool
 	store     storage.Store
@@ -69,6 +72,12 @@ func NewConsensus(h host.Host, p *pubsub.PubSub, opts ...Option) (*Consensus, er
 		}
 	}
 
+	if c.genesis != nil && !c.store.HasGenesisApplied() {
+		if err := c.store.ApplyGenesis(c.genesis); err != nil {
+			return nil, errors.Wrap(err, "applying genesis")
+		}
+	}
+
 	return c, nil
 }
 
@@ -83,6 +92,14 @@ func (c *Consensus) Start() error {
 	}
 
 	return c.subscribeTx()
+}
+
+func (c *Consensus) State() *State {
+	return &c.state
+}
+
+func (c *Consensus) ChainID() string {
+	return string(c.chain)
 }
 
 func (c *Consensus) proposer() <-chan peer.ID {
