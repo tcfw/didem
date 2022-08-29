@@ -625,6 +625,10 @@ func (s *IPFSStorage) Node(ctx context.Context, id string) (*tx.Node, error) {
 	return nodeTx.Data.(*tx.Node), nil
 }
 
+func (s *IPFSStorage) Stop() error {
+	return s.metadata.Close()
+}
+
 func typedKey(kType metadataKeyType, parts ...string) []byte {
 	n := 1
 	for _, p := range parts {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/drand/drand/client"
 	"github.com/libp2p/go-libp2p-core/event"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/protocol"
@@ -27,6 +28,8 @@ type Node struct {
 	idStore          didIface.IdentityStore
 
 	handlers map[protocol.ID]interface{}
+
+	drand client.Client
 }
 
 func (n *Node) Storage() storage.Store {
@@ -51,6 +54,10 @@ func (n *Node) Did() *did.Handler {
 
 func (n *Node) Comm() *comm.Handler {
 	return n.handlers[comm.ProtocolID].(*comm.Handler)
+}
+
+func (n *Node) Cfg() *config.Config {
+	return n.cfg
 }
 
 func NewNode(ctx context.Context, opts ...NodeOption) (*Node, error) {
@@ -83,6 +90,14 @@ func NewNode(ctx context.Context, opts ...NodeOption) (*Node, error) {
 	}
 
 	go n.watchEvents()
+
+	if cfg.RawRandomSource {
+		drs, err := newDrandClient(n.p2p.pubsub)
+		if err != nil {
+			return nil, errors.Wrap(err, "constructing randomness source")
+		}
+		n.drand = drs
+	}
 
 	if err := n.setupStreamHandlers(); err != nil {
 		return nil, errors.Wrap(err, "attaching stream handlers")
@@ -131,6 +146,10 @@ func (n *Node) ListenAndServe() error {
 
 func (n *Node) Stop() error {
 	logging.Entry().Warn("Shutting down")
+
+	if err := n.storage.Stop(); err != nil {
+		logging.Entry().WithError(err).Error("closing storage")
+	}
 
 	return nil
 }

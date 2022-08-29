@@ -6,6 +6,10 @@ var (
 	logger *logrus.Entry
 )
 
+func SetLevel(l logrus.Level) {
+	logger.Logger.SetLevel(l)
+}
+
 func init() {
 	if logger == nil {
 		logger = logrus.NewEntry(logrus.New())

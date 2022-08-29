@@ -9,13 +9,18 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/protocol"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/tcfw/didem/internal/config"
 	"github.com/tcfw/didem/pkg/did"
+	"github.com/tcfw/didem/pkg/storage"
 )
 
 type Node interface {
 	P2P() P2P
 	Resolver() did.Resolver
 	ID() did.IdentityStore
+	Cfg() *config.Config
+	Storage() storage.Store
+	RandomSource() <-chan int64
 }
 
 type P2P interface {

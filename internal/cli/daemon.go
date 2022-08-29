@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"os"
 	"os/signal"
@@ -13,6 +12,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/tcfw/didem/internal/api"
 	"github.com/tcfw/didem/internal/node"
+	"github.com/tcfw/didem/internal/utils/logging"
 )
 
 var (
@@ -54,7 +54,7 @@ func runDaemon(cmd *cobra.Command, args []string) error {
 	defer api.Shutdown(ctx)
 
 	go func() {
-		fmt.Printf("Starting CLI API on %d", viper.GetInt("api_port"))
+		logging.Entry().Infof("Starting CLI API on port %d", viper.GetInt("api_port"))
 		if err := api.ListenAndServe(&net.TCPAddr{Port: viper.GetInt("api_port")}); err != nil {
 			errCh <- err
 		}

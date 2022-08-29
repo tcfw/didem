@@ -35,7 +35,13 @@ type Handler struct {
 func NewHandler(n node.Node) *Handler {
 	h := n.P2P().Host()
 	p := n.P2P().PubSub()
-	c, err := consensus.NewConsensus(h, p)
+
+	opts := []consensus.Option{
+		consensus.WithBlockStore(n.Storage()),
+		consensus.WithBeaconSource(n.RandomSource()),
+	}
+
+	c, err := consensus.NewConsensus(h, p, opts...)
 	if err != nil {
 		logging.Entry().Panic(err)
 	}
@@ -45,13 +51,21 @@ func NewHandler(n node.Node) *Handler {
 
 func (h *Handler) Start() error {
 	var peers []peer.ID
-	bo := &backoff.Backoff{}
+	bo := &backoff.Backoff{
+		Min: 5 * time.Second,
+		Max: 5 * time.Minute,
+	}
 
 	for {
 		peers = h.n.P2P().Peers()
 		if len(peers) < tipSetPeerCountStartThreshold {
-			logging.Entry().Info("waiting for more peers before querying block chain tip")
-			time.Sleep(bo.Duration())
+			d := bo.Duration()
+			logging.Entry().
+				WithField("waiting", d).
+				WithField("have", len(peers)).
+				WithField("need", tipSetPeerCountStartThreshold).
+				Info("waiting for more peers")
+			time.Sleep(d)
 			continue
 		}
 

@@ -4,12 +4,14 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/tcfw/didem/internal/utils/logging"
 )
 
 var (
 	defaults = map[string]interface{}{
-		"verbose":       false,
-		"identityStore": "~/.didem/identities.yaml",
+		"verbose":         false,
+		"identityStore":   "~/.didem/identities.yaml",
+		"rawRandomSource": true,
 	}
 )
 
@@ -45,18 +47,20 @@ func GetConfig() (*Config, error) {
 	}
 
 	if viper.GetBool("verbose") {
-		logrus.SetLevel(logrus.DebugLevel)
 		logrus.WithField("level", "debug").Debug("setting log level")
+		logging.SetLevel(logrus.DebugLevel)
 	}
 
 	c.IdentityStore = expandPath(viper.GetString("identityStore"))
+	c.RawRandomSource = viper.GetBool("rawRandomSource")
 
 	return c, nil
 }
 
 type Config struct {
-	p2p           *P2P
-	IdentityStore string
+	p2p             *P2P
+	IdentityStore   string
+	RawRandomSource bool
 }
 
 func (c *Config) P2P() *P2P {

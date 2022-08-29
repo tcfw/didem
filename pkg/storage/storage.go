@@ -29,4 +29,6 @@ type Store interface {
 
 	GetTxBlock(context.Context, tx.TxID) (*Block, error)
 	MarkBlock(context.Context, BlockID, BlockState) error
+
+	Stop() error
 }

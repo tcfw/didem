@@ -339,3 +339,7 @@ func (m *MemStore) ApplyGenesis(*genesis.Info) error {
 
 	return nil
 }
+
+func (m *MemStore) Stop() error {
+	return nil
+}

@@ -6,6 +6,7 @@ require (
 	github.com/bits-and-blooms/bloom/v3 v3.2.0
 	github.com/cockroachdb/pebble v0.0.0-20220814225252-0b6ec868ed93
 	github.com/coreos/go-systemd/v22 v22.3.3-0.20220203105225-a9a7ef127534 // indirect
+	github.com/drand/drand v1.3.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/ipfs/go-cid v0.2.0
 	github.com/ipfs/interface-go-ipfs-core v0.7.0

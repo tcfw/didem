@@ -1,10 +1,13 @@
 package node
 
 import (
+	"time"
+
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/protocol"
 	"github.com/tcfw/didem/internal/comm"
 	"github.com/tcfw/didem/internal/did"
+	"github.com/tcfw/didem/internal/utils/logging"
 )
 
 type handlerSetup func(n *Node) (network.StreamHandler, interface{}, error)
@@ -34,6 +37,15 @@ func (n *Node) setupStreamHandlers() error {
 
 func newDidStreamHandler(n *Node) (network.StreamHandler, interface{}, error) {
 	did := did.NewHandler(n)
+
+	go func() {
+		for {
+			if err := did.Start(); err != nil {
+				logging.Entry().WithError(err).Error("running did handler")
+				time.Sleep(10 * time.Second)
+			}
+		}
+	}()
 
 	return did.Handle, did, nil
 }

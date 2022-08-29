@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/tcfw/didem/internal/storage"
+	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/tcfw/didem/pkg/did"
 	storageIface "github.com/tcfw/didem/pkg/storage"
 )
@@ -27,6 +28,8 @@ func WithDefaultOptions(ctx context.Context) NodeOption {
 		if err != nil {
 			return errors.Wrap(err, "converting ident from config")
 		}
+
+		logging.Entry().WithField("repo", repo).Info("Booting IPFS storage")
 
 		ipfs, err := storage.NewIPFSStorage(ctx, ident, repo)
 		if err != nil {
