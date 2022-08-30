@@ -78,7 +78,21 @@ func NewConsensus(h host.Host, p *pubsub.PubSub, opts ...Option) (*Consensus, er
 		}
 	}
 
+	b, err := c.store.GetLastApplied(context.Background())
+	if err != nil {
+		return nil, errors.Wrap(err, "fetching last applied block")
+	}
+	if b != nil {
+		c.state.Block = cid.Cid(b.ID)
+		c.state.Height = b.Height
+		c.state.ParentBlock = cid.Cid(b.Parent)
+	}
+
 	return c, nil
+}
+
+func (c *Consensus) Validator() storage.Validator {
+	return c.validator
 }
 
 func (c *Consensus) Start() error {
@@ -566,6 +580,10 @@ func (c *Consensus) onBlock(msg *ConsensusMsgBlock, from peer.ID) {
 	}
 
 	stopTimer(c.timerBlock)
+
+	if err := c.store.UpdateLastApplied(context.Background(), storage.BlockID(c.propsalState.lockedValue)); err != nil {
+		logging.WithError(err).Error("marking block as latest")
+	}
 
 	c.state.Height = c.propsalState.Height
 	c.state.ParentBlock = c.state.Block

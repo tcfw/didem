@@ -374,3 +374,5 @@ func TestTimeoutProposal(t *testing.T) {
 	assert.Equal(t, uint32(2), msg.Consensus.Vote.Round)
 	assert.Equal(t, "", msg.Consensus.Vote.BlockID)
 }
+
+//TODO(tcfw): test timeout proposer switch

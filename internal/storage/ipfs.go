@@ -69,6 +69,7 @@ const (
 	activeClaimTPrefix
 	nodesTPrefix
 	genesisTPrefix
+	latestBlockTPrefix
 )
 
 func NewIPFSStorage(ctx context.Context, id config.Identity, repo string) (*IPFSStorage, error) {
@@ -164,6 +165,32 @@ type IPFSStorage struct {
 	metadata *pebble.DB
 
 	Close func() error
+}
+
+func (s *IPFSStorage) UpdateLastApplied(ctx context.Context, id storage.BlockID) error {
+	if err := s.metadata.Set(typedKey(latestBlockTPrefix), []byte(id.String()), &pebble.WriteOptions{Sync: true}); err != nil {
+		return errors.Wrap(err, "storing last block ref")
+	}
+
+	return nil
+}
+
+func (s *IPFSStorage) GetLastApplied(ctx context.Context) (*storage.Block, error) {
+	d, done, err := s.metadata.Get(typedKey(latestBlockTPrefix))
+	if err != nil {
+		if err == pebble.ErrNotFound {
+			return nil, nil
+		}
+		return nil, errors.Wrap(err, "getting last block ref")
+	}
+	defer done.Close()
+
+	bid, err := cid.Cast(d)
+	if err != nil {
+		return nil, errors.Wrap(err, "casting block ref")
+	}
+
+	return s.GetBlock(ctx, storage.BlockID(bid))
 }
 
 func (s *IPFSStorage) putRaw(ctx context.Context, d []byte) (cid.Cid, error) {

@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ipfs/go-cid"
 	"github.com/jpillora/backoff"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -16,6 +17,7 @@ import (
 	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/tcfw/didem/pkg/did/consensus"
 	"github.com/tcfw/didem/pkg/node"
+	"github.com/tcfw/didem/pkg/storage"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -30,15 +32,20 @@ type Handler struct {
 	n node.Node
 
 	consensus *consensus.Consensus
+	validator storage.Validator
 }
 
 func NewHandler(n node.Node) *Handler {
 	h := n.P2P().Host()
 	p := n.P2P().PubSub()
 
+	validator := storage.NewTxValidator(n.Storage())
+
 	opts := []consensus.Option{
 		consensus.WithBlockStore(n.Storage()),
 		consensus.WithBeaconSource(n.RandomSource()),
+		consensus.WithValidator(validator),
+		// consensus.WithGenesis(),
 	}
 
 	c, err := consensus.NewConsensus(h, p, opts...)
@@ -99,7 +106,16 @@ func (h *Handler) Start() error {
 		return h.consensus.Start()
 	}
 
-	//TODO(tcfw): Play forward chain
+	bcid, err := cid.Parse(tip)
+	if err != nil {
+		logging.Entry().WithError(err).Info("parsing chain tip cid")
+		return h.consensus.Start()
+	}
+
+	if err := h.validator.ApplyFromTip(context.Background(), storage.BlockID(bcid)); err != nil {
+		logging.Entry().WithError(err).Info("applying updated tip")
+		return h.consensus.Start()
+	}
 
 	return nil
 }
@@ -214,7 +230,7 @@ func (h *Handler) Handle(nstream network.Stream) {
 	case *api.ConsensusRequest_Tip:
 		h.handleTipReq(ctx, s, req.GetTip())
 	default:
-		logging.Error("unsupported request type: %T", t)
+		logging.Entry().Errorf("unsupported request type: %T", t)
 		return
 	}
 }

@@ -32,18 +32,34 @@ type MemStore struct {
 	dids     map[string]cid.Cid
 	claims   map[string][]cid.Cid
 
+	lastBlock BlockID
+
 	genesisApplied bool
 }
 
 func NewMemStore() *MemStore {
 	return &MemStore{
-		objects:  make(map[cid.Cid][]byte),
-		txbIndex: make(map[tx.TxID]BlockID),
-		bState:   make(map[BlockID]BlockState),
-		nodes:    make(map[string]cid.Cid),
-		dids:     make(map[string]cid.Cid),
-		claims:   make(map[string][]cid.Cid),
+		objects:   make(map[cid.Cid][]byte),
+		txbIndex:  make(map[tx.TxID]BlockID),
+		bState:    make(map[BlockID]BlockState),
+		nodes:     make(map[string]cid.Cid),
+		dids:      make(map[string]cid.Cid),
+		claims:    make(map[string][]cid.Cid),
+		lastBlock: BlockID(cid.Undef),
 	}
+}
+
+func (m *MemStore) UpdateLastApplied(_ context.Context, id BlockID) error {
+	m.lastBlock = id
+	return nil
+}
+
+func (m *MemStore) GetLastApplied(ctx context.Context) (*Block, error) {
+	if m.lastBlock == BlockID(cid.Undef) {
+		return nil, nil
+	}
+
+	return m.GetBlock(ctx, m.lastBlock)
 }
 
 func (m *MemStore) putObj(obj interface{}) cid.Cid {

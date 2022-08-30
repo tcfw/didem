@@ -4,12 +4,14 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/tcfw/didem/pkg/tx"
 )
 
 type Validator interface {
 	IsBlockValid(context.Context, *Block, bool) error
 	IsTxValid(context.Context, *tx.Tx) error
+	ApplyFromTip(context.Context, BlockID) error
 }
 
 type TxValidator struct {
@@ -18,6 +20,34 @@ type TxValidator struct {
 
 func NewTxValidator(s Store) *TxValidator {
 	return &TxValidator{s}
+}
+
+func (v *TxValidator) ApplyFromTip(ctx context.Context, id BlockID) error {
+	lastApplied, err := v.s.GetLastApplied(ctx)
+	if err != nil {
+		return errors.Wrap(err, "getting last applied block")
+	}
+
+	currentTip, err := v.s.GetBlock(ctx, id)
+	if err != nil {
+		return errors.Wrap(err, "getting tip block")
+	}
+
+	logging.Entry().Warn("Fetching new blocks")
+
+	//Fetch all older blocks and queue up play forward
+	queue := []BlockID{currentTip.ID}
+
+	for currentTip.ID != lastApplied.ID {
+		currentTip, err = v.s.GetBlock(ctx, currentTip.Parent)
+		if err != nil {
+			return errors.Wrap(err, "getting block")
+		}
+		queue = append(queue, currentTip.ID)
+		logging.Entry().Infof("%d to process\r", len(queue))
+	}
+
+	return nil
 }
 
 func (v *TxValidator) IsBlockValid(ctx context.Context, b *Block, isNewBlock bool) error {
