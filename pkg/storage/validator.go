@@ -131,11 +131,12 @@ func (v *TxValidator) isNodeTxValid(ctx context.Context, t *tx.Tx) error {
 	*/
 
 	switch t.Action {
-	case tx.TxActionAdd:
-	case tx.TxActionRevoke:
-	case tx.TxActionUpdate:
+	// case tx.TxActionAdd:
+	// case tx.TxActionRevoke:
+	default:
 		return ErrOpNotSupported
 	}
+
 	return nil
 }
 
@@ -187,6 +188,8 @@ func (v *TxValidator) isDIDTxValid(ctx context.Context, t *tx.Tx) error {
 		if err := existingDid.Signed(signature, sigmsg); err != nil {
 			return ErrDIDInvalidSignature
 		}
+	default:
+		return ErrOpNotSupported
 	}
 
 	return nil

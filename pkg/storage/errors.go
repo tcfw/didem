@@ -9,5 +9,5 @@ var (
 	ErrDIDInvalid          = errors.New("DID is invalid")
 	ErrDIDInvalidSignature = errors.New("tx signature not signed by key in DID")
 
-	ErrOpNotSupported = errors.New("tx operation not supported on tx type")
+	ErrOpNotSupported = errors.New("operation not supported on tx type")
 )
