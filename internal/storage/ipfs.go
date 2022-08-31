@@ -38,8 +38,7 @@ import (
 )
 
 var (
-	_           storage.Store = (*IPFSStorage)(nil)
-	ErrNotFound               = errors.New("not found")
+	_ storage.Store = (*IPFSStorage)(nil)
 
 	bootstrapNodes = []string{
 		// IPFS Bootstrapper nodes.
@@ -489,7 +488,7 @@ func (s *IPFSStorage) LookupDID(ctx context.Context, did string) (*w3cdid.Docume
 	txB, done, err := s.metadata.Get(k)
 	if err != nil {
 		if err == pebble.ErrNotFound {
-			return nil, ErrNotFound
+			return nil, storage.ErrNotFound
 		}
 		return nil, errors.Wrap(err, "finding did metadata key")
 	}
@@ -625,7 +624,7 @@ func (s *IPFSStorage) Node(ctx context.Context, id string) (*tx.Node, error) {
 	v, done, err := s.metadata.Get(key)
 	if err != nil {
 		if err == pebble.ErrNotFound {
-			return nil, ErrNotFound
+			return nil, storage.ErrNotFound
 		}
 		return nil, errors.Wrap(err, "looking up node key")
 	}
@@ -646,7 +645,7 @@ func (s *IPFSStorage) Node(ctx context.Context, id string) (*tx.Node, error) {
 	}
 
 	if nodeTx.Action == tx.TxActionRevoke {
-		return nil, ErrNotFound
+		return nil, storage.ErrNotFound
 	}
 
 	return nodeTx.Data.(*tx.Node), nil

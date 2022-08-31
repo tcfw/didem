@@ -16,7 +16,6 @@ import (
 )
 
 var (
-	ErrNotFound = errors.New("not found")
 
 	_ Store = (*MemStore)(nil)
 )

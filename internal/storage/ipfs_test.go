@@ -260,7 +260,7 @@ func TestDidIndex(t *testing.T) {
 
 	//Assert empty
 	doc, err := ipfs.LookupDID(ctx, did)
-	assert.ErrorIs(t, err, ErrNotFound)
+	assert.ErrorIs(t, err, storage.ErrNotFound)
 	assert.Nil(t, doc)
 
 	h, err := ipfs.DIDHistory(ctx, did)
@@ -358,7 +358,7 @@ func TestDidIndex(t *testing.T) {
 
 	//Check for DID revoke
 	doc, err = ipfs.LookupDID(ctx, did)
-	assert.ErrorIs(t, err, ErrNotFound)
+	assert.ErrorIs(t, err, storage.ErrNotFound)
 	assert.Nil(t, doc)
 
 	h, err = ipfs.DIDHistory(ctx, did)

@@ -33,18 +33,37 @@ func (v *TxValidator) ApplyFromTip(ctx context.Context, id BlockID) error {
 		return errors.Wrap(err, "getting tip block")
 	}
 
-	logging.Entry().Warn("Fetching new blocks")
+	logging.Entry().Info("Fetching new blocks")
 
 	//Fetch all older blocks and queue up play forward
-	queue := []BlockID{currentTip.ID}
+	queue := []*Block{currentTip}
 
 	for currentTip.ID != lastApplied.ID {
 		currentTip, err = v.s.GetBlock(ctx, currentTip.Parent)
 		if err != nil {
 			return errors.Wrap(err, "getting block")
 		}
-		queue = append(queue, currentTip.ID)
+		queue = append(queue, currentTip)
 		logging.Entry().Infof("%d to process\r", len(queue))
+	}
+
+	//invert queue
+	for i, j := 0, len(queue)-1; i < j; i, j = i+1, j-1 {
+		queue[i], queue[j] = queue[j], queue[i]
+	}
+
+	logging.Entry().Info("Applying new blocks")
+
+	//validate and import each block
+	for i, b := range queue {
+		if err := v.IsBlockValid(ctx, b, true); err != nil {
+			return errors.Wrap(err, "validating block")
+		}
+
+		if err := v.s.MarkBlock(ctx, b.ID, BlockStateAccepted); err != nil {
+			return errors.Wrap(err, "indexing block")
+		}
+		logging.Entry().Infof("%d blocks processed\r", i)
 	}
 
 	return nil
@@ -110,11 +129,32 @@ func (v *TxValidator) isNodeTxValid(ctx context.Context, t *tx.Tx) error {
 
 		->update: not supported
 	*/
+
+	switch t.Action {
+	case tx.TxActionAdd:
+	case tx.TxActionRevoke:
+	case tx.TxActionUpdate:
+		return ErrOpNotSupported
+	}
 	return nil
 }
 
 func (v *TxValidator) isDIDTxValid(ctx context.Context, t *tx.Tx) error {
-	//TODO(tcfw)
+	did := t.Data.(*tx.DID)
+	existingDid, lookupErr := v.s.LookupDID(ctx, did.Document.ID)
+
+	//construct signature data
+	signature := t.Signature
+	t.Signature = nil
+	sigmsg, err := t.Marshal()
+	if err != nil {
+		return errors.Wrap(err, "marshalling tx for signature")
+	}
+
+	if err := did.Document.IsValid(); err != nil {
+		return ErrDIDInvalid
+	}
+
 	/*
 		checks:
 		->add
@@ -130,6 +170,25 @@ func (v *TxValidator) isDIDTxValid(ctx context.Context, t *tx.Tx) error {
 		- did exists
 		- tx signed by a key in did
 	*/
+
+	switch t.Action {
+	case tx.TxActionAdd:
+		if lookupErr != ErrNotFound {
+			return ErrDIDAlreadyExists
+		}
+
+		if err := did.Document.Signed(signature, sigmsg); err != nil {
+			return ErrDIDInvalidSignature
+		}
+	case tx.TxActionUpdate, tx.TxActionRevoke:
+		if lookupErr != nil {
+			return errors.Wrap(err, "tx validation")
+		}
+		if err := existingDid.Signed(signature, sigmsg); err != nil {
+			return ErrDIDInvalidSignature
+		}
+	}
+
 	return nil
 }
 func (v *TxValidator) isVCTxValid(ctx context.Context, t *tx.Tx) error {
