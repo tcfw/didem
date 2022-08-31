@@ -19,6 +19,7 @@ require (
 	github.com/libp2p/go-libp2p-pubsub v0.6.1
 	github.com/miekg/dns v1.1.50
 	github.com/multiformats/go-multiaddr v0.6.0
+	github.com/multiformats/go-multibase v0.1.0
 	github.com/multiformats/go-multihash v0.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.0
