@@ -103,6 +103,22 @@ func (v *TxValidator) IsBlockValid(ctx context.Context, b *Block, isNewBlock boo
 }
 
 func (v *TxValidator) IsTxValid(ctx context.Context, t *tx.Tx) error {
+	if t.Version != tx.Version1 {
+		return ErrTxVersionNotSupported
+	}
+
+	if t.Ts == 0 {
+		return ErrTxMissingTimestamp
+	}
+
+	if t.From == "" {
+		return ErrTxMissingFrom
+	}
+
+	if t.Data == nil {
+		return ErrTxMissingData
+	}
+
 	switch t.Type {
 	case tx.TxType_DID:
 		return v.isDIDTxValid(ctx, t)
@@ -111,7 +127,7 @@ func (v *TxValidator) IsTxValid(ctx context.Context, t *tx.Tx) error {
 	case tx.TxType_Node:
 		return v.isNodeTxValid(ctx, t)
 	default:
-		return errors.New("unknown Tx type")
+		return ErrTxUnsupportedType
 	}
 }
 

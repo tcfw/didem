@@ -16,7 +16,6 @@ import (
 )
 
 var (
-
 	_ Store = (*MemStore)(nil)
 )
 
@@ -194,6 +193,10 @@ func (m *MemStore) indexBlockTx(ctx context.Context, b BlockID) error {
 		return errors.Wrap(err, "getting block tx")
 	}
 
+	return m.applyTxs(ctx, b, txs)
+}
+
+func (m *MemStore) applyTxs(ctx context.Context, b BlockID, txs map[tx.TxID]*tx.Tx) error {
 	for c, t := range txs {
 		m.txbIndex[c] = b
 
@@ -349,10 +352,17 @@ func (m *MemStore) HasGenesisApplied() bool {
 	return m.genesisApplied
 }
 
-func (m *MemStore) ApplyGenesis(*genesis.Info) error {
+func (m *MemStore) ApplyGenesis(gen *genesis.Info) error {
 	m.genesisApplied = true
 
-	return nil
+	txs := map[tx.TxID]*tx.Tx{}
+
+	for _, t := range gen.Tx {
+		cid := m.putObj(t)
+		txs[tx.TxID(cid)] = t
+	}
+
+	return m.applyTxs(context.Background(), BlockID(cid.Undef), txs)
 }
 
 func (m *MemStore) Stop() error {

@@ -15,6 +15,7 @@ import (
 	swarmt "github.com/libp2p/go-libp2p/p2p/net/swarm/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/tcfw/didem/pkg/storage"
+	"github.com/tcfw/didem/pkg/storage/mock"
 	"github.com/tcfw/didem/pkg/tx"
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/pairing/bn256"
@@ -111,7 +112,7 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 			signingKey: sks[i],
 			memPool:    memPool,
 			store:      blockStore,
-			validator:  storage.NewTxValidator(blockStore),
+			validator:  &mock.MockValidator{},
 			state: State{
 				Height: 1,
 				Round:  1,
