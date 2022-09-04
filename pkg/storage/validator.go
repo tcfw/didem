@@ -79,7 +79,22 @@ func (v *TxValidator) IsBlockValid(ctx context.Context, b *Block, isNewBlock boo
 		return errors.Wrap(err, "getting block txs")
 	}
 
+	ogs := v.s
+	v.s, err = v.s.StartTest(ctx)
+	if err != nil {
+		v.s = ogs
+		return errors.Wrap(err, "failed to start test apply")
+	}
+	defer func() {
+		v.s = ogs
+		v.s.CompleteTest(ctx)
+	}()
+
 	for id, tx := range txs {
+		if err := v.IsTxValid(ctx, tx); err != nil {
+			return errors.Wrap(err, "invalid tx in block")
+		}
+
 		if isNewBlock {
 			block, err := v.s.GetTxBlock(ctx, id)
 			if err != nil && !errors.Is(err, ErrNotFound) {
@@ -90,8 +105,8 @@ func (v *TxValidator) IsBlockValid(ctx context.Context, b *Block, isNewBlock boo
 			}
 		}
 
-		if err := v.IsTxValid(ctx, tx); err != nil {
-			return errors.Wrap(err, "invalid tx in block")
+		if err := v.s.ApplyTx(ctx, id, tx); err != nil {
+			return errors.Wrap(err, "applying test tx")
 		}
 	}
 

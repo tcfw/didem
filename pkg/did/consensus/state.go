@@ -36,4 +36,14 @@ type State struct {
 
 	lockedValue cid.Cid
 	lockedRound uint32
+
+	pvOnce sync.Once
+	pcOnce sync.Once
+	sbOnce sync.Once
+}
+
+func (s *State) resetOnces() {
+	s.pvOnce = sync.Once{}
+	s.pcOnce = sync.Once{}
+	s.sbOnce = sync.Once{}
 }

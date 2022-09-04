@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -163,11 +164,60 @@ type IPFSStorage struct {
 	ipfsNode coreIface.CoreAPI
 	metadata *pebble.DB
 
+	pfTipApply *pebble.Batch
+
 	Close func() error
 }
 
+func (s *IPFSStorage) StartTest(ctx context.Context) (storage.Store, error) {
+	if s.pfTipApply != nil {
+		return nil, errors.New("test apply already started")
+	}
+
+	sc := &IPFSStorage{
+		ipfsNode:   s.ipfsNode,
+		metadata:   s.metadata,
+		pfTipApply: s.metadata.NewIndexedBatch(),
+		Close:      func() error { return nil },
+	}
+
+	return sc, nil
+}
+
+func (s *IPFSStorage) CompleteTest(ctx context.Context) error {
+	defer func() {
+		s.pfTipApply = nil
+	}()
+
+	return s.pfTipApply.Close()
+}
+
+func (s *IPFSStorage) metadataGet(key []byte) ([]byte, io.Closer, error) {
+	if s.pfTipApply != nil {
+		return s.pfTipApply.Get(key)
+	}
+
+	return s.metadata.Get(key)
+}
+
+func (s *IPFSStorage) metadataSet(key, value []byte, opts *pebble.WriteOptions) error {
+	if s.pfTipApply != nil {
+		return s.pfTipApply.Set(key, value, opts)
+	}
+
+	return s.metadata.Set(key, value, opts)
+}
+
+func (s *IPFSStorage) metadataNewIter(opts *pebble.IterOptions) *pebble.Iterator {
+	if s.pfTipApply != nil {
+		return s.pfTipApply.NewIter(opts)
+	}
+
+	return s.metadata.NewIter(opts)
+}
+
 func (s *IPFSStorage) UpdateLastApplied(ctx context.Context, id storage.BlockID) error {
-	if err := s.metadata.Set(typedKey(latestBlockTPrefix), []byte(id.String()), &pebble.WriteOptions{Sync: true}); err != nil {
+	if err := s.metadataSet(typedKey(latestBlockTPrefix), []byte(id.String()), &pebble.WriteOptions{Sync: true}); err != nil {
 		return errors.Wrap(err, "storing last block ref")
 	}
 
@@ -175,7 +225,7 @@ func (s *IPFSStorage) UpdateLastApplied(ctx context.Context, id storage.BlockID)
 }
 
 func (s *IPFSStorage) GetLastApplied(ctx context.Context) (*storage.Block, error) {
-	d, done, err := s.metadata.Get(typedKey(latestBlockTPrefix))
+	d, done, err := s.metadataGet(typedKey(latestBlockTPrefix))
 	if err != nil {
 		if err == pebble.ErrNotFound {
 			return nil, nil
@@ -300,7 +350,7 @@ func (s *IPFSStorage) GetSet(ctx context.Context, id cid.Cid) (*storage.TxSet, e
 }
 
 func (s *IPFSStorage) GetTxBlock(ctx context.Context, id tx.TxID) (*storage.Block, error) {
-	bcid, d, err := s.metadata.Get(typedKey(txBlockTPrefix, id.String()))
+	bcid, d, err := s.metadataGet(typedKey(txBlockTPrefix, id.String()))
 	if err != nil {
 		return nil, errors.Wrap(err, "looking up tx block")
 	}
@@ -317,7 +367,7 @@ func (s *IPFSStorage) GetTxBlock(ctx context.Context, id tx.TxID) (*storage.Bloc
 func (s *IPFSStorage) MarkBlock(ctx context.Context, id storage.BlockID, state storage.BlockState) error {
 	k := typedKey(blockStateTPrefix, id.String())
 
-	cStateB, done, err := s.metadata.Get(k)
+	cStateB, done, err := s.metadataGet(k)
 	if err != nil && err != pebble.ErrNotFound {
 		return errors.Wrap(err, "looking up block state")
 	}
@@ -331,7 +381,7 @@ func (s *IPFSStorage) MarkBlock(ctx context.Context, id storage.BlockID, state s
 
 	nStateB := make([]byte, 4)
 	binary.LittleEndian.PutUint32(nStateB, uint32(state))
-	if err := s.metadata.Set(k, nStateB, nil); err != nil {
+	if err := s.metadataSet(k, nStateB, nil); err != nil {
 		return errors.Wrap(err, "setting block state")
 	}
 
@@ -343,6 +393,8 @@ func (s *IPFSStorage) MarkBlock(ctx context.Context, id storage.BlockID, state s
 
 	return nil
 }
+
+type batchCtxKey struct{}
 
 func (s *IPFSStorage) indexBlock(ctx context.Context, bId storage.BlockID) error {
 	b, err := s.GetBlock(ctx, bId)
@@ -359,41 +411,66 @@ func (s *IPFSStorage) indexBlock(ctx context.Context, bId storage.BlockID) error
 		return errors.Wrap(err, "pinning block")
 	}
 
-	batch := s.metadata.NewBatch()
+	var batch *pebble.Batch
+	if s.pfTipApply != nil {
+		batch = s.pfTipApply
+	} else {
+		batch = s.metadata.NewBatch()
+	}
+
 	for id, t := range txs {
 		if err := batch.Set(typedKey(txBlockTPrefix, cid.Cid(id).String()), cid.Cid(bId).Bytes(), nil); err != nil {
 			return errors.Wrap(err, "a")
 		}
-
-		switch t.Type {
-		case tx.TxType_Node:
-			err = s.indexTxNode(batch, t, id)
-		case tx.TxType_DID:
-			err = s.indexTxDID(batch, t, id)
-		case tx.TxType_VC:
-			err = s.indexTxVC(batch, t, id)
-		default:
-			batch.Close()
-			return errors.New("unsupported tx type")
-		}
-		if err != nil {
-			batch.Close()
-			return errors.Wrap(err, fmt.Sprintf("indexing tx %s", id))
+		ctx := context.WithValue(ctx, batchCtxKey{}, batch)
+		if err := s.ApplyTx(ctx, id, t); err != nil {
+			defer batch.Close()
+			return errors.Wrap(err, "applying tx")
 		}
 
 		//50% chance of storing the Tx
-		if coinflip.Flip() {
+		if s.pfTipApply == nil && coinflip.Flip() {
 			if err := s.ipfsNode.Pin().Add(ctx, path.IpfsPath(cid.Cid(id))); err != nil {
 				return errors.Wrap(err, "pinning block")
 			}
 		}
 	}
 
-	if err := batch.Commit(&pebble.WriteOptions{}); err != nil {
-		return errors.Wrap(err, "applying metadata batch index")
+	if s.pfTipApply == nil {
+		if err := batch.Commit(&pebble.WriteOptions{}); err != nil {
+			return errors.Wrap(err, "applying metadata batch index")
+		}
 	}
 
 	return nil
+}
+
+func (s *IPFSStorage) ApplyTx(ctx context.Context, id tx.TxID, t *tx.Tx) error {
+	batch, ok := ctx.Value(batchCtxKey{}).(*pebble.Batch)
+	if !ok {
+		batch = s.pfTipApply
+	}
+	if batch == nil {
+		return errors.New("applying tx without batch")
+	}
+
+	var err error
+
+	switch t.Type {
+	case tx.TxType_Node:
+		err = s.indexTxNode(batch, t, id)
+	case tx.TxType_DID:
+		err = s.indexTxDID(batch, t, id)
+	case tx.TxType_VC:
+		err = s.indexTxVC(batch, t, id)
+	default:
+		return errors.New("unsupported tx type")
+	}
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("indexing tx %s", id))
+	}
+
+	return err
 }
 
 func (s *IPFSStorage) indexTxNode(b *pebble.Batch, ntx *tx.Tx, id tx.TxID) error {
@@ -408,7 +485,6 @@ func (s *IPFSStorage) indexTxNode(b *pebble.Batch, ntx *tx.Tx, id tx.TxID) error
 	default:
 		return fmt.Errorf("unsupported action %d", ntx.Action)
 	}
-
 }
 
 func (s *IPFSStorage) indexTxDID(b *pebble.Batch, dtx *tx.Tx, id tx.TxID) error {
@@ -485,7 +561,7 @@ func (s *IPFSStorage) AllTx(ctx context.Context, b *storage.Block) (map[tx.TxID]
 func (s *IPFSStorage) LookupDID(ctx context.Context, did string) (*w3cdid.Document, error) {
 	k := typedKey(didTPrefix, did)
 
-	txB, done, err := s.metadata.Get(k)
+	txB, done, err := s.metadataGet(k)
 	if err != nil {
 		if err == pebble.ErrNotFound {
 			return nil, storage.ErrNotFound
@@ -515,7 +591,7 @@ func (s *IPFSStorage) LookupDID(ctx context.Context, did string) (*w3cdid.Docume
 }
 
 func (s *IPFSStorage) DIDHistory(ctx context.Context, id string) ([]*tx.Tx, error) {
-	hIter := s.metadata.NewIter(&pebble.IterOptions{
+	hIter := s.metadataNewIter(&pebble.IterOptions{
 		LowerBound: []byte{byte(didHisoryTPrefix)},
 		UpperBound: []byte{byte(didHisoryTPrefix) + 1},
 	})
@@ -583,7 +659,7 @@ func (s *IPFSStorage) Claims(ctx context.Context, did string) ([]*tx.Tx, error) 
 
 func (s *IPFSStorage) Nodes() ([]string, error) {
 	list := []string{}
-	iter := s.metadata.NewIter(&pebble.IterOptions{
+	iter := s.metadataNewIter(&pebble.IterOptions{
 		LowerBound: []byte{byte(nodesTPrefix)},
 		UpperBound: []byte{byte(nodesTPrefix) + 1},
 	})
@@ -598,7 +674,7 @@ func (s *IPFSStorage) Nodes() ([]string, error) {
 }
 
 func (s *IPFSStorage) HasGenesisApplied() bool {
-	_, done, err := s.metadata.Get(typedKey(genesisTPrefix))
+	_, done, err := s.metadataGet(typedKey(genesisTPrefix))
 	if err != nil {
 		if err != pebble.ErrNotFound {
 			logging.Entry().Warn("failed reading genesis prefix")
@@ -612,7 +688,7 @@ func (s *IPFSStorage) HasGenesisApplied() bool {
 func (s *IPFSStorage) ApplyGenesis(g *genesis.Info) error {
 	//TODO(tcfw)
 
-	if err := s.metadata.Set(typedKey(genesisTPrefix), []byte{}, nil); err != nil {
+	if err := s.metadataSet(typedKey(genesisTPrefix), []byte{}, nil); err != nil {
 		return errors.Wrap(err, "storing genesis prefix")
 	}
 
@@ -621,7 +697,7 @@ func (s *IPFSStorage) ApplyGenesis(g *genesis.Info) error {
 
 func (s *IPFSStorage) Node(ctx context.Context, id string) (*tx.Node, error) {
 	key := typedKey(nodesTPrefix, id)
-	v, done, err := s.metadata.Get(key)
+	v, done, err := s.metadataGet(key)
 	if err != nil {
 		if err == pebble.ErrNotFound {
 			return nil, storage.ErrNotFound

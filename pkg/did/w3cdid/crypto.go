@@ -16,9 +16,9 @@ var (
 	}
 )
 
-//Signed checks if the signature provided was signed
-//by a key in the Document. If prev is provided, the signature
-//is compared to keys in the previous Document rather than the current
+// Signed checks if the signature provided was signed
+// by a key in the Document. If prev is provided, the signature
+// is compared to keys in the previous Document rather than the current
 func (d *Document) Signed(signature []byte, msg []byte) error {
 	if len(d.VerificationMethod) == 0 {
 		return errors.New("no verification method specified")

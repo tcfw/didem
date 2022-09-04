@@ -19,4 +19,9 @@ type MetadataProvider interface {
 
 	HasGenesisApplied() bool
 	ApplyGenesis(*genesis.Info) error
+
+	ApplyTx(context.Context, tx.TxID, *tx.Tx) error
+
+	StartTest(context.Context) (Store, error)
+	CompleteTest(context.Context) error
 }

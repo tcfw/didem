@@ -47,6 +47,35 @@ func NewMemStore() *MemStore {
 	}
 }
 
+func (m *MemStore) StartTest(context.Context) (Store, error) {
+	ms := NewMemStore()
+
+	for k, v := range m.objects {
+		ms.objects[k] = v
+	}
+	for k, v := range m.txbIndex {
+		ms.txbIndex[k] = v
+	}
+	for k, v := range m.bState {
+		ms.bState[k] = v
+	}
+	for k, v := range m.nodes {
+		ms.nodes[k] = v
+	}
+	for k, v := range m.dids {
+		ms.dids[k] = v
+	}
+	for k, v := range m.claims {
+		ms.claims[k] = v
+	}
+
+	return ms, nil
+}
+
+func (m *MemStore) CompleteTest(context.Context) error {
+	return nil
+}
+
 func (m *MemStore) UpdateLastApplied(_ context.Context, id BlockID) error {
 	m.lastBlock = id
 	return nil
@@ -199,27 +228,35 @@ func (m *MemStore) indexBlockTx(ctx context.Context, b BlockID) error {
 func (m *MemStore) applyTxs(ctx context.Context, b BlockID, txs map[tx.TxID]*tx.Tx) error {
 	for c, t := range txs {
 		m.txbIndex[c] = b
-
-		cid, err := cid.Parse(cid.Cid(c))
-		if err != nil {
-			return errors.Wrap(err, "parsing tx id")
+		if err := m.ApplyTx(ctx, c, t); err != nil {
+			return errors.Wrap(err, "applying tx")
 		}
+	}
 
-		switch t.Type {
-		case tx.TxType_DID:
-			did := t.Data.(*tx.DID).Document.ID
-			m.dids[did] = cid
-		case tx.TxType_VC:
-			// m.claims[]
-		case tx.TxType_Node:
-			n := t.Data.(*tx.Node)
+	return nil
+}
 
-			switch t.Action {
-			case tx.TxActionAdd:
-				m.nodes[n.Id] = cid
-			case tx.TxActionRevoke:
-				delete(m.nodes, n.Id)
-			}
+func (m *MemStore) ApplyTx(ctx context.Context, id tx.TxID, t *tx.Tx) error {
+
+	cid, err := cid.Parse(cid.Cid(id))
+	if err != nil {
+		return errors.Wrap(err, "parsing tx id")
+	}
+
+	switch t.Type {
+	case tx.TxType_DID:
+		did := t.Data.(*tx.DID).Document.ID
+		m.dids[did] = cid
+	case tx.TxType_VC:
+		// m.claims[]
+	case tx.TxType_Node:
+		n := t.Data.(*tx.Node)
+
+		switch t.Action {
+		case tx.TxActionAdd:
+			m.nodes[n.Id] = cid
+		case tx.TxActionRevoke:
+			delete(m.nodes, n.Id)
 		}
 	}
 

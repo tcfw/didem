@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"math/big"
+	"sync"
 	"time"
 
 	"github.com/ipfs/go-cid"
@@ -221,6 +222,7 @@ func (c *Consensus) StartRound(inc bool) error {
 	c.propsalState.PreCommits = make(map[peer.ID]*Msg)
 	c.propsalState.PreVotesEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
 	c.propsalState.PreCommitsEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
+	c.propsalState.resetOnces()
 
 	if inc {
 		c.propsalState.Round++
@@ -412,6 +414,9 @@ func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
 	c.propsalState.PreCommits = make(map[peer.ID]*Msg)
 	c.propsalState.PreVotesEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
 	c.propsalState.PreCommitsEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
+	c.propsalState.pvOnce = sync.Once{}
+	c.propsalState.pcOnce = sync.Once{}
+	c.propsalState.sbOnce = sync.Once{}
 
 	restartTimer(c.timerPropose, timeoutPropose)
 
@@ -441,24 +446,26 @@ func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
 		logging.WithError(err).Error("validating block")
 	}
 
-	c.propsalState.Block = bc
+	c.propsalState.pvOnce.Do(func() {
+		c.propsalState.Block = bc
 
-	stopTimer(c.timerPropose)
+		stopTimer(c.timerPropose)
 
-	if bc == cid.Undef {
-		if err := c.sendVote(VoteTypePreVote, cid.Undef.String()); err != nil {
-			logging.WithError(err).Error("sending nil prevote")
-			return
+		if bc == cid.Undef {
+			if err := c.sendVote(VoteTypePreVote, cid.Undef.String()); err != nil {
+				logging.WithError(err).Error("sending nil prevote")
+				return
+			}
+		} else {
+			if err := c.sendVote(VoteTypePreVote, msg.BlockID); err != nil {
+				logging.WithError(err).Error("sending prevote")
+				return
+			}
 		}
-	} else {
-		if err := c.sendVote(VoteTypePreVote, msg.BlockID); err != nil {
-			logging.WithError(err).Error("sending prevote")
-			return
-		}
-	}
 
-	restartTimer(c.timerPrevote, timeoutPrevote)
-	c.propsalState.Step = prevote
+		restartTimer(c.timerPrevote, timeoutPrevote)
+		c.propsalState.Step = prevote
+	})
 }
 
 func (c *Consensus) validate(value string) (cid.Cid, error) {
@@ -500,19 +507,21 @@ func (c *Consensus) onPreVote(msg *Msg) {
 	c.propsalState.PreVotes[msg.From] = msg
 
 	if uint64(len(c.propsalState.PreVotes)) > c.propsalState.f {
-		stopTimer(c.timerPrevote)
+		c.propsalState.pcOnce.Do(func() {
+			stopTimer(c.timerPrevote)
 
-		c.propsalState.Step = precommit
-		c.propsalState.lockedValue = c.propsalState.Block
-		c.propsalState.lockedRound = c.propsalState.Round
+			c.propsalState.Step = precommit
+			c.propsalState.lockedValue = c.propsalState.Block
+			c.propsalState.lockedRound = c.propsalState.Round
 
-		id := c.propsalState.Block.String()
-		if err := c.sendVote(VoteTypePreCommit, id); err != nil {
-			logging.WithError(err).Error("sending precommit")
-			return
-		}
+			id := c.propsalState.Block.String()
+			if err := c.sendVote(VoteTypePreCommit, id); err != nil {
+				logging.WithError(err).Error("sending precommit")
+				return
+			}
 
-		restartTimer(c.timerPrecommit, timeoutPrecommit)
+			restartTimer(c.timerPrecommit, timeoutPrecommit)
+		})
 	}
 }
 
@@ -528,24 +537,26 @@ func (c *Consensus) OnPreCommit(msg *Msg) {
 	c.propsalState.PreCommits[msg.From] = msg
 
 	if uint64(len(c.propsalState.PreCommits)) > c.propsalState.f {
-		stopTimer(c.timerPrecommit)
+		c.propsalState.sbOnce.Do(func() {
+			stopTimer(c.timerPrecommit)
 
-		c.propsalState.Step = block
+			c.propsalState.Step = block
 
-		if c.propsalState.AmProposer {
-			//Give some time for other nodes to collect the evidence
-			time.AfterFunc(blockVoteGracePeriod, func() {
-				msg, err := c.sendBlock()
-				if err != nil {
-					logging.WithError(err).Error("failed to send blockmsg")
-					return
-				}
+			if c.propsalState.AmProposer {
+				//Give some time for other nodes to collect the evidence
+				time.AfterFunc(blockVoteGracePeriod, func() {
+					msg, err := c.sendBlock()
+					if err != nil {
+						logging.WithError(err).Error("failed to send blockmsg")
+						return
+					}
 
-				c.onBlock(msg, c.id)
-			})
-		} else {
-			restartTimer(c.timerBlock, timeoutBlock)
-		}
+					c.onBlock(msg, c.id)
+				})
+			} else {
+				restartTimer(c.timerBlock, timeoutBlock)
+			}
+		})
 	}
 }
 
@@ -602,9 +613,11 @@ func (c *Consensus) onTimeoutProposal() {
 	}).Info("timing out proposal")
 
 	c.propsalState.Step = prevote
-	c.sendVote(VoteTypePreVote, "")
+	c.propsalState.pvOnce.Do(func() {
+		c.sendVote(VoteTypePreVote, "")
 
-	restartTimer(c.timerPrevote, timeoutPrevote)
+		restartTimer(c.timerPrevote, timeoutPrevote)
+	})
 }
 
 func (c *Consensus) onTimeoutPrevote() {
@@ -619,9 +632,12 @@ func (c *Consensus) onTimeoutPrevote() {
 	}).Info("timing out prevote")
 
 	c.propsalState.Step = precommit
-	c.sendVote(VoteTypePreCommit, "")
 
-	restartTimer(c.timerPrecommit, timeoutPrecommit)
+	c.propsalState.pcOnce.Do(func() {
+		c.sendVote(VoteTypePreCommit, "")
+
+		restartTimer(c.timerPrecommit, timeoutPrecommit)
+	})
 }
 
 func (c *Consensus) onTimeoutPrecommit() {
