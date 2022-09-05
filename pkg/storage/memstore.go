@@ -9,7 +9,6 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
-	"github.com/tcfw/didem/pkg/did/genesis"
 	"github.com/tcfw/didem/pkg/did/w3cdid"
 	"github.com/tcfw/didem/pkg/tx"
 	"github.com/vmihailenco/msgpack/v5"
@@ -389,14 +388,14 @@ func (m *MemStore) HasGenesisApplied() bool {
 	return m.genesisApplied
 }
 
-func (m *MemStore) ApplyGenesis(gen *genesis.Info) error {
+func (m *MemStore) ApplyGenesis(gen *GenesisInfo) error {
 	m.genesisApplied = true
 
 	txs := map[tx.TxID]*tx.Tx{}
 
-	for _, t := range gen.Tx {
+	for _, t := range gen.Txs {
 		cid := m.putObj(t)
-		txs[tx.TxID(cid)] = t
+		txs[tx.TxID(cid)] = &t
 	}
 
 	return m.applyTxs(context.Background(), BlockID(cid.Undef), txs)

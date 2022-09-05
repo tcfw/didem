@@ -1,7 +1,6 @@
 package consensus
 
 import (
-	"github.com/tcfw/didem/pkg/did/genesis"
 	"github.com/tcfw/didem/pkg/storage"
 	"go.dedis.ch/kyber/v3"
 )
@@ -36,7 +35,7 @@ func WithValidator(v storage.Validator) Option {
 	}
 }
 
-func WithGenesis(g *genesis.Info) Option {
+func WithGenesis(g *storage.GenesisInfo) Option {
 	return func(c *Consensus) error {
 		c.chain = []byte(g.ChainID)
 		c.genesis = g

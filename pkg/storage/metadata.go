@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 
-	"github.com/tcfw/didem/pkg/did/genesis"
 	"github.com/tcfw/didem/pkg/did/w3cdid"
 	"github.com/tcfw/didem/pkg/tx"
 )
@@ -18,7 +17,7 @@ type MetadataProvider interface {
 	Node(context.Context, string) (*tx.Node, error)
 
 	HasGenesisApplied() bool
-	ApplyGenesis(*genesis.Info) error
+	ApplyGenesis(*GenesisInfo) error
 
 	ApplyTx(context.Context, tx.TxID, *tx.Tx) error
 

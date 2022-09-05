@@ -32,7 +32,7 @@ gen-api:
 
 .PHONY: test
 test:
-	go test -cover -covermode atomic ./...
+	go test -v -cover -covermode atomic ./...
 
 .PHONY: race
 race:

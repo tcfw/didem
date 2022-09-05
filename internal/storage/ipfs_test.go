@@ -366,3 +366,52 @@ func TestDidIndex(t *testing.T) {
 	assert.Len(t, h, 2)
 
 }
+
+func TestApplyGenesis(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	//Use the mem store to calculate IDs for IPFS
+
+	mem := storage.NewMemStore()
+	ipfs := tempIPFSStorage(t, ctx)
+
+	tx1 := &tx.Tx{
+		Version: tx.Version1,
+		Ts:      time.Now().Unix(),
+		From:    "did:example:1234",
+		Type:    tx.TxType_Node,
+		Action:  tx.TxActionAdd,
+		Data: &tx.Node{
+			Id:  "tt",
+			Did: "did:example:1234",
+		},
+	}
+
+	txcid, err := mem.PutTx(ctx, tx1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	txs := []cid.Cid{txcid}
+
+	bl, err := storage.NewBlock(ctx, mem, storage.BlockID(cid.Undef), txs)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	g := &storage.GenesisInfo{
+		ChainID: "test",
+		Block:   *bl,
+		Txs:     []tx.Tx{*tx1},
+	}
+
+	err = ipfs.ApplyGenesis(g)
+	assert.NoError(t, err)
+
+	n, err := ipfs.Nodes()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Len(t, n, 1)
+}

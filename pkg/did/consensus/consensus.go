@@ -14,7 +14,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/tcfw/didem/internal/utils/logging"
-	"github.com/tcfw/didem/pkg/did/genesis"
 	"github.com/tcfw/didem/pkg/storage"
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/pairing/bn256"
@@ -39,7 +38,7 @@ type Consensus struct {
 	id         peer.ID
 	signingKey kyber.Scalar
 
-	genesis *genesis.Info
+	genesis *storage.GenesisInfo
 
 	memPool   MemPool
 	store     storage.Store

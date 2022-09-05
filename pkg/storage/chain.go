@@ -3,6 +3,7 @@ package storage
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"sort"
 	"time"
 
@@ -37,11 +38,48 @@ type Block struct {
 	Height    uint64   `msgpack:"h"`
 	CreatedAt int64    `msgpack:"t"`
 	Proposer  string   `msgpack:"w"`
-	Signers   []byte   `msgpack:"sn"`
 	Signature []byte   `msgpack:"s"`
 	Nonce     [32]byte `msgpack:"n"`
 	Bloom     []byte   `msgpack:"b"`
 	TxRoot    cid.Cid  `msgpack:"x"`
+}
+
+func NewBlock(ctx context.Context, s Store, parent BlockID, txs []cid.Cid) (*Block, error) {
+	var height uint64
+	var err error
+
+	if parent != BlockID(cid.Undef) {
+		pb, err := s.GetBlock(ctx, parent)
+		if err != nil {
+			return nil, errors.Wrap(err, "getting parent")
+		}
+		height = pb.Height + 1
+	}
+
+	b := &Block{
+		Version:   Version,
+		Parent:    parent,
+		Height:    height,
+		CreatedAt: time.Now().Unix(),
+	}
+
+	if _, err := rand.Read(b.Nonce[:]); err != nil {
+		return nil, errors.Wrap(err, "making nonce")
+	}
+
+	b.Bloom, err = MakeBloom(txs)
+	if err != nil {
+		return nil, errors.Wrap(err, "creating bloom")
+	}
+
+	rCid, err := NewTxSet(s, txs)
+	if err != nil {
+		return nil, errors.Wrap(err, "making tx set")
+	}
+
+	b.TxRoot = rCid.Cid()
+
+	return b, nil
 }
 
 type TxSet struct {

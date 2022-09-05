@@ -149,17 +149,9 @@ func TestApplyBlock(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	set, err := NewTxSet(s, []cid.Cid{c})
+	bl, err := NewBlock(context.Background(), s, BlockID(cid.Undef), []cid.Cid{c})
 	if err != nil {
 		t.Fatal(err)
-	}
-	setcid, err := s.PutSet(context.Background(), set)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	bl := &Block{
-		TxRoot: setcid,
 	}
 
 	err = v.IsBlockValid(context.Background(), bl, true)
@@ -167,6 +159,95 @@ func TestApplyBlock(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	did, err := s.LookupDID(context.Background(), "did:example:1234")
+	assert.Nil(t, did)
+	assert.ErrorIs(t, err, ErrNotFound)
+}
+
+func TestDoubleApply(t *testing.T) {
+	s := NewMemStore()
+	v := NewTxValidator(s)
+
+	pk, sk, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mb, err := multibase.Encode(multibase.Base64, pk)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	//Attempt double add of the same DID 1 second apart
+
+	tx1 := &tx.Tx{
+		Version: tx.Version1,
+		Ts:      time.Now().Unix(),
+		Action:  tx.TxActionAdd,
+		From:    "did:example:1234",
+		Type:    tx.TxType_DID,
+		Data: &tx.DID{
+			Document: &w3cdid.Document{
+				ID: "did:example:1234",
+				VerificationMethod: []cryptography.VerificationMethod{{
+					ID:                 "did:example:1234",
+					Controller:         "did:example:1234",
+					Type:               cryptography.Ed25519VerificationKey2018,
+					PublicKeyMultibase: mb,
+				}},
+			},
+		},
+	}
+
+	tx2 := &tx.Tx{
+		Version: tx.Version1,
+		Ts:      time.Now().Add(1 * time.Second).Unix(),
+		Action:  tx.TxActionAdd,
+		From:    "did:example:1234",
+		Type:    tx.TxType_DID,
+		Data: &tx.DID{
+			Document: &w3cdid.Document{
+				ID: "did:example:1234",
+				VerificationMethod: []cryptography.VerificationMethod{{
+					ID:                 "did:example:1234",
+					Controller:         "did:example:1234",
+					Type:               cryptography.Ed25519VerificationKey2018,
+					PublicKeyMultibase: mb,
+				}},
+			},
+		},
+	}
+
+	msg1, err := tx1.Marshal()
+	if err != nil {
+		t.Fatal(err)
+	}
+	tx1.Signature = ed25519.Sign(sk, msg1)
+
+	msg2, err := tx2.Marshal()
+	if err != nil {
+		t.Fatal(err)
+	}
+	tx2.Signature = ed25519.Sign(sk, msg2)
+
+	c1, err := s.PutTx(context.Background(), tx1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c2, err := s.PutTx(context.Background(), tx2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bl, err := NewBlock(context.Background(), s, BlockID(cid.Undef), []cid.Cid{c1, c2})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = v.IsBlockValid(context.Background(), bl, true)
+	assert.ErrorIs(t, err, ErrDIDAlreadyExists)
+
+	//Try look up against the active store
 	did, err := s.LookupDID(context.Background(), "did:example:1234")
 	assert.Nil(t, did)
 	assert.ErrorIs(t, err, ErrNotFound)

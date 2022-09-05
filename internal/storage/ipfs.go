@@ -32,7 +32,6 @@ import (
 
 	"github.com/tcfw/didem/internal/coinflip"
 	"github.com/tcfw/didem/internal/utils/logging"
-	"github.com/tcfw/didem/pkg/did/genesis"
 	"github.com/tcfw/didem/pkg/did/w3cdid"
 	"github.com/tcfw/didem/pkg/storage"
 	"github.com/tcfw/didem/pkg/tx"
@@ -685,11 +684,47 @@ func (s *IPFSStorage) HasGenesisApplied() bool {
 	return true
 }
 
-func (s *IPFSStorage) ApplyGenesis(g *genesis.Info) error {
-	//TODO(tcfw)
+func (s *IPFSStorage) ApplyGenesis(g *storage.GenesisInfo) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	batch := s.metadata.NewBatch()
+	ctx = context.WithValue(ctx, batchCtxKey{}, batch)
 
 	if err := s.metadataSet(typedKey(genesisTPrefix), []byte{}, nil); err != nil {
 		return errors.Wrap(err, "storing genesis prefix")
+	}
+
+	txs := []cid.Cid{}
+
+	for _, t := range g.Txs {
+		cid, err := s.PutTx(ctx, &t)
+		if err != nil {
+			return errors.Wrap(err, "storing tx")
+		}
+
+		if err := s.ApplyTx(ctx, tx.TxID(cid), &t); err != nil {
+			return errors.Wrap(err, "applying tx")
+		}
+
+		txs = append(txs, cid)
+	}
+
+	set, err := storage.NewTxSet(s, txs)
+	if err != nil {
+		return errors.Wrap(err, "storing tx set")
+	}
+
+	if !set.Cid().Equals(g.Block.TxRoot) {
+		return errors.New("calculated tx set does not match block root")
+	}
+
+	if _, err := s.PutBlock(ctx, &g.Block); err != nil {
+		return errors.Wrap(err, "putting block")
+	}
+
+	if err := batch.Commit(nil); err != nil {
+		return errors.Wrap(err, "applying batch")
 	}
 
 	return nil
