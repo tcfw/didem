@@ -54,6 +54,11 @@ func GetConfig() (*Config, error) {
 	c.IdentityStore = expandPath(viper.GetString("identityStore"))
 	c.RawRandomSource = viper.GetBool("rawRandomSource")
 
+	c.chain, err = buildChainConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "chain config")
+	}
+
 	return c, nil
 }
 
@@ -61,8 +66,13 @@ type Config struct {
 	p2p             *P2P
 	IdentityStore   string
 	RawRandomSource bool
+	chain           *Chain
 }
 
 func (c *Config) P2P() *P2P {
 	return c.p2p
+}
+
+func (c *Config) Chain() *Chain {
+	return c.chain
 }

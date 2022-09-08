@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 
+	"github.com/ipfs/go-cid"
 	"github.com/pkg/errors"
 	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/tcfw/didem/pkg/tx"
@@ -38,7 +39,7 @@ func (v *TxValidator) ApplyFromTip(ctx context.Context, id BlockID) error {
 	//Fetch all older blocks and queue up play forward
 	queue := []*Block{currentTip}
 
-	for currentTip.ID != lastApplied.ID {
+	for currentTip.ID != lastApplied.ID && currentTip.ID != BlockID(cid.Undef) {
 		currentTip, err = v.s.GetBlock(ctx, currentTip.Parent)
 		if err != nil {
 			return errors.Wrap(err, "getting block")

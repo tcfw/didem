@@ -691,10 +691,6 @@ func (s *IPFSStorage) ApplyGenesis(g *storage.GenesisInfo) error {
 	batch := s.metadata.NewBatch()
 	ctx = context.WithValue(ctx, batchCtxKey{}, batch)
 
-	if err := s.metadataSet(typedKey(genesisTPrefix), []byte{}, nil); err != nil {
-		return errors.Wrap(err, "storing genesis prefix")
-	}
-
 	txs := []cid.Cid{}
 
 	for _, t := range g.Txs {
@@ -725,6 +721,10 @@ func (s *IPFSStorage) ApplyGenesis(g *storage.GenesisInfo) error {
 
 	if err := batch.Commit(nil); err != nil {
 		return errors.Wrap(err, "applying batch")
+	}
+
+	if err := s.metadataSet(typedKey(genesisTPrefix), []byte{}, nil); err != nil {
+		return errors.Wrap(err, "storing genesis prefix")
 	}
 
 	return nil

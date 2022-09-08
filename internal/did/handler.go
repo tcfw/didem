@@ -41,11 +41,16 @@ func NewHandler(n node.Node) *Handler {
 
 	validator := storage.NewTxValidator(n.Storage())
 
+	chainCfg := n.Cfg().Chain()
+
 	opts := []consensus.Option{
 		consensus.WithBlockStore(n.Storage()),
 		consensus.WithBeaconSource(n.RandomSource()),
 		consensus.WithValidator(validator),
-		// consensus.WithGenesis(),
+	}
+
+	if chainCfg.Genesis.ChainID != "" {
+		opts = append(opts, consensus.WithGenesis(&chainCfg.Genesis))
 	}
 
 	c, err := consensus.NewConsensus(h, p, opts...)
