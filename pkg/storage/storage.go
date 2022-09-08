@@ -13,6 +13,9 @@ const (
 	CIDEncodingSet   = 0x89
 )
 
+// Store provides a means of storing individual components in the blockchain
+// such as blocks, tx, txsets and the like as well as storing the consensus
+// state for persistance between node restarts
 type Store interface {
 	MetadataProvider
 

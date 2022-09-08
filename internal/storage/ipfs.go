@@ -507,7 +507,7 @@ func (s *IPFSStorage) indexTxDID(b *pebble.Batch, dtx *tx.Tx, id tx.TxID) error 
 }
 
 func (s *IPFSStorage) indexTxVC(b *pebble.Batch, vtx *tx.Tx, id tx.TxID) error {
-	//todo append to did history
+	//TODO(tcfw)
 
 	return fmt.Errorf("not implemented")
 }

@@ -7,6 +7,11 @@ import (
 	"github.com/tcfw/didem/pkg/tx"
 )
 
+// MetadataProvider provides indexes and metadata for TXs that
+// have been successfully validates and applied in the block chain
+// The information should be maintainable and rebuildable without
+// a metadata store and should be used as a performance measure for
+// reading blockchain records
 type MetadataProvider interface {
 	LookupDID(context.Context, string) (*w3cdid.Document, error)
 	DIDHistory(context.Context, string) ([]*tx.Tx, error)

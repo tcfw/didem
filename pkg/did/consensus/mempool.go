@@ -7,6 +7,9 @@ import (
 	"github.com/tcfw/didem/pkg/tx"
 )
 
+// MemPool provides a means of storing new TXs that are NOT in the current
+// block chain. The MemPool is to provide TXs in sequental time as stated
+// by the TX, not but the time received
 type MemPool interface {
 	AddTx(*tx.Tx, int) error
 	GetTx() *tx.Tx
@@ -24,6 +27,7 @@ type TxMemPool struct {
 	mu    sync.Mutex
 }
 
+// NewTxMemPool creates a new empty MemPool
 func NewTxMemPool() *TxMemPool {
 	l := &TxMemPool{
 		plist: make([]*tx.Tx, 0),
@@ -73,6 +77,7 @@ func (m *TxMemPool) Pop() interface{} {
 	return x
 }
 
+// GetTx gets the next, most recent TX in the pool
 func (m *TxMemPool) GetTx() *tx.Tx {
 	if m.Len() > 0 {
 		t := heap.Pop(m)
@@ -82,6 +87,8 @@ func (m *TxMemPool) GetTx() *tx.Tx {
 	return nil
 }
 
+// AddTx pushes a new TX into the MemPool and updates the priorities
+// of any existing TX in the pool
 func (m *TxMemPool) AddTx(tx *tx.Tx, expires int) error {
 	heap.Push(m, tx)
 	return nil

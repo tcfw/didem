@@ -13,6 +13,7 @@ var (
 
 type Resolver struct{}
 
+// Resolve resolves a public DID ID via any supported DID method
 func (r *Resolver) Resolve(did w3cdid.URL) (*w3cdid.Document, error) {
 	return r.ResolveContext(context.Background(), did)
 }

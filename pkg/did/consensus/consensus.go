@@ -57,6 +57,9 @@ type Consensus struct {
 	stopTimerLoop  chan struct{}
 }
 
+// NewConsensus initiates a new consensus engine by checking if the genesis has been
+// fully applied to the metadata store, setting up the round timeouts and restores
+// the current consensus state from the metadata store
 func NewConsensus(h host.Host, p *pubsub.PubSub, opts ...Option) (*Consensus, error) {
 	c := &Consensus{
 		id:      h.ID(),
@@ -95,6 +98,8 @@ func (c *Consensus) Validator() storage.Validator {
 	return c.validator
 }
 
+// Start initiates watching for new proposers and timeouts as well as subscribing
+// to new messages from other nodes
 func (c *Consensus) Start() error {
 	c.setupTimers()
 
@@ -116,6 +121,7 @@ func (c *Consensus) ChainID() string {
 	return string(c.chain)
 }
 
+// proposer watches for new propsers from the given randomness beacon
 func (c *Consensus) proposer() <-chan peer.ID {
 	bCh := make(chan peer.ID)
 
@@ -211,6 +217,12 @@ func (c *Consensus) watchProposer() {
 	}
 }
 
+// StartRound begins a new round of consensus from other nodes, assuming a new height
+// and clearing out all current votes and evidence. Start round also sets the required
+// number of votes required from the round by inspecting the current number of nodes
+// still active in the metadata store. If the current proposer is the current node
+// the node will attempt to create a new proposal/block and distribute to all other
+// nodes
 func (c *Consensus) StartRound(inc bool) error {
 	c.propsalState.AmProposer = c.propsalState.Proposer == c.id
 	c.propsalState.lockedRound = 0
@@ -290,6 +302,8 @@ func (c *Consensus) StartRound(inc bool) error {
 	return nil
 }
 
+// OnMsg takes in a new message from another node, validates it's signature, and
+// forwards the message onto the specific message type handlers
 func (c *Consensus) OnMsg(msg *Msg) {
 	if !bytes.Equal(msg.Chain, c.chain) {
 		logging.Error("received msg from different chain")
@@ -363,6 +377,9 @@ func (c *Consensus) onTx(msg *TxMsg, from peer.ID) {
 	}
 }
 
+// onVote handles any new vote from another node, filtering out if the
+// current node is not the current propser. If the propser is the current
+// node, the propser sends back evidence of acceptance of the nodes vote
 func (c *Consensus) onVote(msg *Msg, from peer.ID) {
 	vote := msg.Consensus.Vote
 
@@ -393,6 +410,8 @@ func (c *Consensus) onVote(msg *Msg, from peer.ID) {
 	}
 }
 
+// onNewRound picks up on the propser starting a new round of consensus and populates
+// the propsal state based of the proposers future round values
 func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
 	if from != c.propsalState.Proposer {
 		logging.Error("ignorining new round not from current proposer")
@@ -425,6 +444,9 @@ func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
 	}).Info("waiting for proposal to start")
 }
 
+// onProposal takes in the block proposal from the current proposer and
+// validates the propsed block. If the block is found to be valid, a vote
+// is sent
 func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
 	if from != c.propsalState.Proposer {
 		logging.Error("ignorining proposal not from current proposer")
@@ -494,6 +516,8 @@ func (c *Consensus) validate(value string) (cid.Cid, error) {
 	return cv, nil
 }
 
+// onPreVote collects prevotes from other nodes. If the number of votes is above
+// the required threshold, the round state is progressed to precommit
 func (c *Consensus) onPreVote(msg *Msg) {
 	if c.propsalState.Step != prevote {
 		return
@@ -524,6 +548,9 @@ func (c *Consensus) onPreVote(msg *Msg) {
 	}
 }
 
+// OnPreCommit collects precommit votes from other nodes. If the number of precommit
+// votes collected is above the required threshold, the consensus state is progressed
+// to the block state
 func (c *Consensus) OnPreCommit(msg *Msg) {
 	if c.propsalState.Step != precommit {
 		return
@@ -559,6 +586,7 @@ func (c *Consensus) OnPreCommit(msg *Msg) {
 	}
 }
 
+// onEvidence collects evidence from the proposer node
 func (c *Consensus) onEvidence(msg *ConsensusMsgEvidence, from peer.ID) {
 	if from != c.propsalState.Proposer {
 		return
@@ -575,6 +603,8 @@ func (c *Consensus) onEvidence(msg *ConsensusMsgEvidence, from peer.ID) {
 	}
 }
 
+// onBlock collects block completion messages sent by the propser and
+// updates the final current consensus state
 func (c *Consensus) onBlock(msg *ConsensusMsgBlock, from peer.ID) {
 	if from != c.propsalState.Proposer ||
 		c.propsalState.Step != block ||
@@ -591,6 +621,8 @@ func (c *Consensus) onBlock(msg *ConsensusMsgBlock, from peer.ID) {
 
 	stopTimer(c.timerBlock)
 
+	//TODO(tcfw) validate the final signature from the propser
+
 	if err := c.store.UpdateLastApplied(context.Background(), storage.BlockID(c.propsalState.lockedValue)); err != nil {
 		logging.WithError(err).Error("marking block as latest")
 	}
@@ -600,6 +632,8 @@ func (c *Consensus) onBlock(msg *ConsensusMsgBlock, from peer.ID) {
 	c.state.Block = c.propsalState.lockedValue
 }
 
+// onTimeoutProposal sends an empty prevote when the propser node doesn't
+// send a valid proposal message in the alloted time
 func (c *Consensus) onTimeoutProposal() {
 	if c.propsalState.Height != c.state.Height &&
 		c.propsalState.Step != propose {
@@ -619,6 +653,8 @@ func (c *Consensus) onTimeoutProposal() {
 	})
 }
 
+// onTimeoutPrevote sents an empty precommit when the propser node doesn't
+// send a valid prevote evidence message
 func (c *Consensus) onTimeoutPrevote() {
 	if c.propsalState.Height != c.state.Height &&
 		c.propsalState.Step != prevote {
@@ -639,10 +675,14 @@ func (c *Consensus) onTimeoutPrevote() {
 	})
 }
 
+// onTimeoutPrecommit assumes a new round is to be started when the
+// propser does not send precommit evidence for the current round
 func (c *Consensus) onTimeoutPrecommit() {
 	c.StartRound(true)
 }
 
+// onTimeoutBlock assumes the propser failed to create a block/signature
+// confirmation message for the currnet round and the round has failed
 func (c *Consensus) onTimeoutBlock() {
 	if c.propsalState.Height != c.state.Height &&
 		c.propsalState.Step != precommit {
@@ -654,7 +694,7 @@ func (c *Consensus) onTimeoutBlock() {
 		"Round":  c.propsalState.Round,
 	}).Info("timing out block")
 
-	//TODO(tcfw): what to do waiting for signatures?
+	//TODO(tcfw): when waiting for signatures?
 }
 
 func (c *Consensus) sendEvidence(m *ConsensusMsgVote) error {

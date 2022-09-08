@@ -99,6 +99,8 @@ func (cl cidList) Len() int           { return len(cl) }
 func (cl cidList) Less(i, j int) bool { return bytes.Compare(cl[i].Bytes(), cl[j].Bytes()) == -1 }
 func (cl cidList) Swap(i, j int)      { cl[i], cl[j] = cl[j], cl[i] }
 
+// NewTxSet constructs a new Merkle tree of TX CIDs and stores the TxSet in the
+// provided store as the Merkle tree reduces to its root node
 func NewTxSet(s Store, txs []cid.Cid) (*TxSet, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

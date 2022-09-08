@@ -18,6 +18,8 @@ var (
 	_ Store = (*MemStore)(nil)
 )
 
+// MemStore implements an in-memory store and metadata store
+// primarily used for testing
 type MemStore struct {
 	mu     sync.RWMutex
 	metaMu sync.RWMutex
@@ -34,6 +36,7 @@ type MemStore struct {
 	genesisApplied bool
 }
 
+// NewMemStore constructs a new blank MemStore
 func NewMemStore() *MemStore {
 	return &MemStore{
 		objects:   make(map[cid.Cid][]byte),

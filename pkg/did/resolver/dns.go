@@ -13,6 +13,7 @@ import (
 
 // based on draft-mayrhofer-did-dns-03
 
+// resolveDNS resolves a DID by comparing against well known DNS entries 
 func (r *Resolver) resolveDNS(ctx context.Context, did w3cdid.URL, depth int) (*w3cdid.Document, error) {
 	if depth > 5 {
 		return nil, errors.New("notFound")

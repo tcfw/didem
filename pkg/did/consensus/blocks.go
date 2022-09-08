@@ -11,6 +11,8 @@ import (
 	"github.com/tcfw/didem/pkg/tx"
 )
 
+// makeBlock attempts to create a new block from the mempool assuming the current node
+// is the current proposer to be sent to other nodes
 func (c *Consensus) makeBlock() (*storage.Block, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
@@ -46,6 +48,8 @@ func (c *Consensus) makeBlock() (*storage.Block, error) {
 		txs = append(txs, tx)
 		n--
 	}
+
+	//TODO(tcfw): confirm if the txs are valid if applied sequently in the same block
 
 	txCids := make([]cid.Cid, 0, len(txs))
 
