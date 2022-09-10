@@ -3,7 +3,7 @@ name: build and push
 on:
   push:
     branches:
-      - main
+      - not-main
 
 env:
   REGISTRY: ghcr.io
