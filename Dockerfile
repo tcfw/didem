@@ -1,5 +1,5 @@
 #builder
-FROM docker.io/golang:1.17-bullseye as build
+FROM docker.io/golang:1.18-bullseye as build
 
 WORKDIR /go/src/app
 ADD go.mod /go/src/app
