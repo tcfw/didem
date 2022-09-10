@@ -64,6 +64,9 @@ jobs:
       packages: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
@@ -86,13 +89,14 @@ jobs:
       - name: Download
         uses: actions/download-artifact@v3
         with:
-          path: app
+          path: build
 
-      # - name: Build and push Docker image
-      #   uses: docker/build-push-action@v3
-      #   with:
-      #     context: .
-      #     push: true
-      #     platforms: linux/amd64,linux/arm64
-      #     tags: ${{ steps.meta.outputs.tags }}
-      #     labels: ${{ steps.meta.outputs.labels }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: Dockerfile.x
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
