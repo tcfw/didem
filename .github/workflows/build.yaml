@@ -39,13 +39,20 @@ jobs:
           cache: true
 
       - name: Build
+        id: build
         run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} make build
 
-      - name: Upload Build
-        if: matrix.os != 'windows'
+      - name: Compress
+        uses: svenstaro/upx-action@v2
+        with:
+          file: ./build/didem
+          strip: false
+
+      - name: Upload
+        if: ${{ always() && steps.build.conclusion == 'success' }} # Ignore compression failures
         uses: actions/upload-artifact@v3
         with:
-          name: didem.${{ matrix.os }}.${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}
+          name: didem_${{ matrix.os }}_${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}
           path: ./build/didem
 
   docker:
@@ -76,7 +83,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      - name: Download Build
+      - name: Download
         uses: actions/download-artifact@v3
         with:
           path: app
