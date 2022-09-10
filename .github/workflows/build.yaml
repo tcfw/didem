@@ -11,10 +11,18 @@ env:
 
 jobs:
   build:
+    continue-on-error: ${{ matrix.experimental && true || false }}
+
     strategy:
+      fail-fast: true
       matrix:
         arch: [amd64, arm64]
         os: [linux, windows, darwin]
+        include:
+          - os: windows
+            experimental: true
+          - os: darwin
+            experimental: true
 
     runs-on: ubuntu-latest
 
