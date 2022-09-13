@@ -3,6 +3,7 @@ package did
 import (
 	"context"
 	"math/rand"
+	"strings"
 	"sync"
 	"time"
 
@@ -68,14 +69,21 @@ func (h *Handler) Start() error {
 		Max: 5 * time.Minute,
 	}
 
+	requiredPeers := tipSetPeerCountStartThreshold
+
+	if strings.HasPrefix(h.consensus.ChainID(), "test") {
+		//allow peer threshold for all testnets
+		requiredPeers = 1
+	}
+
 	for {
 		peers = h.n.P2P().Peers()
-		if len(peers) < tipSetPeerCountStartThreshold {
+		if len(peers) < requiredPeers {
 			d := bo.Duration()
 			logging.Entry().
 				WithField("waiting", d).
 				WithField("have", len(peers)).
-				WithField("need", tipSetPeerCountStartThreshold).
+				WithField("need", requiredPeers).
 				Info("waiting for more peers")
 			time.Sleep(d)
 			continue
@@ -113,12 +121,12 @@ func (h *Handler) Start() error {
 
 	bcid, err := cid.Parse(tip)
 	if err != nil {
-		logging.Entry().WithError(err).Info("parsing chain tip cid")
+		logging.WithError(err).Info("parsing chain tip cid")
 		return h.consensus.Start()
 	}
 
 	if err := h.validator.ApplyFromTip(context.Background(), storage.BlockID(bcid)); err != nil {
-		logging.Entry().WithError(err).Info("applying updated tip")
+		logging.WithError(err).Info("applying updated tip")
 		return h.consensus.Start()
 	}
 
@@ -149,7 +157,7 @@ func (h *Handler) askForTip(ctx context.Context, peers []peer.ID) (map[string]in
 			for p := range pch {
 				t, err := h.ReqTip(ctx, p)
 				if err != nil {
-					logging.Entry().WithError(err).Error("requesting tip")
+					logging.WithError(err).Error("requesting tip")
 					continue
 				}
 
@@ -221,13 +229,13 @@ func (h *Handler) Handle(nstream network.Stream) {
 	s := stream.NewRW(nstream)
 	msg, err := s.Read()
 	if err != nil {
-		logging.Entry().WithError(err).Error("reading did stream msg req")
+		logging.WithError(err).Error("reading did stream msg req")
 		return
 	}
 
 	req := &api.ConsensusRequest{}
 	if err := proto.Unmarshal(msg, req); err != nil {
-		logging.Entry().WithError(err).Error("decoding did stream msg req")
+		logging.WithError(err).Error("decoding did stream msg req")
 		return
 	}
 
@@ -254,11 +262,11 @@ func (h *Handler) handleTipReq(ctx context.Context, s *stream.RW, req *api.TipRe
 
 	b, err := proto.Marshal(resp)
 	if err != nil {
-		logging.Entry().WithError(err).Error("marshalling tip resp")
+		logging.WithError(err).Error("marshalling tip resp")
 		return
 	}
 
 	if err := s.Write(b); err != nil {
-		logging.Entry().WithError(err).Error("writing tip resp")
+		logging.WithError(err).Error("writing tip resp")
 	}
 }

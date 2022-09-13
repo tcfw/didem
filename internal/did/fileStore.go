@@ -140,7 +140,10 @@ func (fs *FileStore) write() error {
 		return errors.Wrap(err, "marshalling identity data")
 	}
 
-	f.Truncate(0)
+	if err := f.Truncate(0); err != nil {
+		return err
+	}
+
 	_, err = f.Write(d)
 	return err
 }

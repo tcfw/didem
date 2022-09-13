@@ -31,16 +31,20 @@ func verify(pk crypto.PublicKey, b []byte, sig []byte) error {
 	h := sha3.Sum512(b)
 
 	var valid bool
+	var err error
 
 	switch t := pk.(type) {
 	case *rsa.PublicKey:
-		rsa.VerifyPKCS1v15(pk.(*rsa.PublicKey), crypto.SHA3_512, h[:], sig)
+		err = rsa.VerifyPKCS1v15(pk.(*rsa.PublicKey), crypto.SHA3_512, h[:], sig)
 	case ed25519.PublicKey:
 		valid = ed25519.Verify(pk.(ed25519.PublicKey), b, sig)
 	case *ecdsa.PublicKey:
 		valid = ecdsa.VerifyASN1(pk.(*ecdsa.PublicKey), h[:], sig)
 	default:
 		return errors.Errorf("unknown public key type: %T", t)
+	}
+	if err != nil {
+		return err
 	}
 
 	if !valid {

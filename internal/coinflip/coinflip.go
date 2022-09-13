@@ -10,6 +10,7 @@ func init() {
 }
 
 func Flip() bool {
+	/* #nosec G404 -- coinflip not used for cryptographic functions */
 	if flipint := rand.Intn(2); flipint == 0 {
 		return true
 	}

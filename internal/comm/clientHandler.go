@@ -50,7 +50,9 @@ func (c *ClientHandler) handle(ctx context.Context) error {
 	}
 
 	c.email.CreatedTime = time.Now().Unix()
-	rand.Read(c.email.Nonce[:])
+	if _, err := rand.Read(c.email.Nonce[:]); err != nil {
+		return errors.Wrap(err, "reading nonce")
+	}
 
 	ss, err := c.connectEndProviders(ctx)
 	if err != nil {
@@ -111,7 +113,10 @@ func (cs *ClientStream) handshake() error {
 }
 
 func (cs *ClientStream) sendHello() error {
-	hello := cs.makeHello()
+	hello, err := cs.makeHello()
+	if err != nil {
+		return errors.Wrap(err, "creating new hello")
+	}
 	if err := cs.sign(hello); err != nil {
 		return errors.Wrap(err, "signing client hello")
 	}
@@ -218,7 +223,7 @@ func (cs *ClientStream) sign(e *comm.Message) error {
 	return nil
 }
 
-func (cs *ClientStream) makeHello() *comm.Message {
+func (cs *ClientStream) makeHello() (*comm.Message, error) {
 	e := &comm.Message{
 		CreatedTime: cs.ch.email.CreatedTime,
 		From:        cs.ch.email.From,
@@ -226,9 +231,11 @@ func (cs *ClientStream) makeHello() *comm.Message {
 		Nonce:       cs.ch.email.Nonce,
 	}
 
-	rand.Read(e.Nonce[:])
+	if _, err := rand.Read(e.Nonce[:]); err != nil {
+		return nil, errors.Wrap(err, "reading nonce")
+	}
 
-	return e
+	return e, nil
 }
 
 func (cs *ClientStream) send() error {

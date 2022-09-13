@@ -173,12 +173,13 @@ func (m *MemStore) allTxCids(ctx context.Context, b *Block) (map[tx.TxID]*tx.Tx,
 		}
 
 		if set.Tx != nil {
-			t, err := m.GetTx(ctx, tx.TxID(*set.Tx))
+			txid := *set.Tx
+			t, err := m.GetTx(ctx, tx.TxID(txid))
 			if err != nil {
 				return nil, errors.Wrap(err, "getting root tx")
 			}
 
-			txSeen[tx.TxID(*set.Tx)] = t
+			txSeen[tx.TxID(txid)] = t
 
 			//max check
 			if len(txSeen) > MaxBlockTxCount {
@@ -398,7 +399,7 @@ func (m *MemStore) ApplyGenesis(gen *GenesisInfo) error {
 
 	for _, t := range gen.Txs {
 		cid := m.putObj(t)
-		txs[tx.TxID(cid)] = &t
+		txs[tx.TxID(cid)] = t
 	}
 
 	return m.applyTxs(context.Background(), BlockID(cid.Undef), txs)

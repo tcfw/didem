@@ -25,7 +25,9 @@ var (
 
 func init() {
 	daemonCmd.Flags().IntP("api-port", "p", 8080, "api port")
-	viper.BindPFlag("api_port", daemonCmd.Flags().Lookup("api-port"))
+	if err := viper.BindPFlag("api_port", daemonCmd.Flags().Lookup("api-port")); err != nil {
+		panic(err)
+	}
 }
 
 func runDaemon(cmd *cobra.Command, args []string) error {

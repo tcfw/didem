@@ -12,7 +12,7 @@ Very much NOT production ready.
 
 ### Storage
 
-The underlying storage mechanism for the blockchain data is [IPFS (Interplanetary File System)](https://ipfs.io/). IPFS has been chosen for it's content based addressing which is perfect for storing blockchain components.
+The underlying storage mechanism for the blockchain data is [IPFS (Interplanetary File System)](https://ipfs.io/). IPFS has been chosen for its content-based addressing which is perfect for storing blockchain components.
 
 ### Node Communication
 
@@ -20,7 +20,7 @@ The underlying storage mechanism for the blockchain data is [IPFS (Interplanetar
 
 ### Blockchain
 
-The blockchain is loosely based on the TenderMint cosensus algorithm to provide a simple and efficient agreement on top of permissioned nodes. The blockchain provides a simple storage agreement protocol for recording DID and VC's within IPFS as well as maintaining active or revoked state of the records. 
+The blockchain is loosely based on the TenderMint consensus algorithm to provide a simple and efficient agreement on top of permissioned nodes. The blockchain provides a simple storage agreement protocol for recording DID and VC's within IPFS as well as maintaining the active or revoked state of the records. 
 
 Each consensus round only has 1 proposer. The round proposers are selected via an external randomness beacon provided by [drand](https://drand.love/).
 

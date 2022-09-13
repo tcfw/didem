@@ -7,6 +7,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/protocol"
 	"github.com/pkg/errors"
+	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/tcfw/didem/pkg/comm"
 	"github.com/tcfw/didem/pkg/node"
 )
@@ -33,7 +34,9 @@ func (h *Handler) Handle(stream network.Stream) {
 	ctx, cancel := context.WithTimeout(context.Background(), h.receiveTimeout)
 	defer cancel()
 
-	srv.handle(ctx)
+	if err := srv.handle(ctx); err != nil {
+		logging.WithError(err).Error("handling comm stream")
+	}
 }
 
 func (h *Handler) Send(ctx context.Context, email *comm.Message, opts ...comm.SendOption) error {

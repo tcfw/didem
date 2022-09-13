@@ -131,7 +131,11 @@ func (s *ServerHandler) validateClientHello() error {
 }
 
 func (s *ServerHandler) sendHello() error {
-	hello := s.makeHello()
+	hello, err := s.makeHello()
+	if err != nil {
+		return err
+	}
+
 	if err := s.sign(hello); err != nil {
 		return errors.Wrap(err, "signing client hello")
 	}
@@ -144,7 +148,7 @@ func (s *ServerHandler) sendHello() error {
 	return s.rw.Write(b)
 }
 
-func (c *ServerHandler) makeHello() *comm.Message {
+func (c *ServerHandler) makeHello() (*comm.Message, error) {
 	//swap from/to
 	e := &comm.Message{
 		CreatedTime: c.clientHello.CreatedTime,
@@ -153,9 +157,11 @@ func (c *ServerHandler) makeHello() *comm.Message {
 		Nonce:       c.clientHello.Nonce,
 	}
 
-	rand.Read(e.Nonce[:])
+	if _, err := rand.Read(e.Nonce[:]); err != nil {
+		return nil, errors.Wrap(err, "reading nonce")
+	}
 
-	return e
+	return e, nil
 }
 
 func (s *ServerHandler) readEmail() error {

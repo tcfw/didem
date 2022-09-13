@@ -113,7 +113,7 @@ func NewNode(ctx context.Context, opts ...NodeOption) (*Node, error) {
 func (n *Node) watchEvents() {
 	sub, err := n.p2p.host.EventBus().Subscribe(event.WildcardSubscription)
 	if err != nil {
-		logging.Entry().WithError(err).Error("subscribing to p2p events")
+		logging.WithError(err).Error("subscribing to p2p events")
 		return
 	}
 
@@ -148,7 +148,7 @@ func (n *Node) Stop() error {
 	logging.Entry().Warn("Shutting down")
 
 	if err := n.storage.Stop(); err != nil {
-		logging.Entry().WithError(err).Error("closing storage")
+		logging.WithError(err).Error("closing storage")
 	}
 
 	return nil

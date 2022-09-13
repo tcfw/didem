@@ -88,7 +88,7 @@ func newP2PHost(ctx context.Context, n *Node, cfg *config.Config) (*p2pHost, err
 	go func() {
 		time.Sleep(2 * time.Second)
 		if err := h.dht.Bootstrap(context.Background()); err != nil {
-			logging.Entry().WithError(err).Error("bootstrapping DHT")
+			logging.WithError(err).Error("bootstrapping DHT")
 		}
 	}()
 
@@ -184,7 +184,7 @@ func (p *p2pHost) doAdvertise(ctx context.Context) {
 
 	ids, err := p.n.advertisableIdentities(ctx)
 	if err != nil {
-		logging.Entry().WithError(err).Error("getting ids to advertise")
+		logging.WithError(err).Error("getting ids to advertise")
 		return
 	}
 
@@ -197,7 +197,7 @@ func (p *p2pHost) doAdvertise(ctx context.Context) {
 			defer wg.Done()
 
 			if err := p.provideIdentity(ctx, id); err != nil {
-				logging.Entry().WithError(err).Error("failed to advertise identity")
+				logging.WithError(err).Error("failed to advertise identity")
 			}
 		}(id)
 	}

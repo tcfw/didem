@@ -213,7 +213,9 @@ func (c *Consensus) watchProposer() {
 		c.propsalState.Step = propose
 		c.propsalState.Proposer = id
 
-		c.StartRound(false)
+		if err := c.StartRound(false); err != nil {
+			logging.WithError(err).Error("starting round")
+		}
 	}
 }
 
@@ -647,7 +649,9 @@ func (c *Consensus) onTimeoutProposal() {
 
 	c.propsalState.Step = prevote
 	c.propsalState.pvOnce.Do(func() {
-		c.sendVote(VoteTypePreVote, "")
+		if err := c.sendVote(VoteTypePreVote, ""); err != nil {
+			logging.Error(err)
+		}
 
 		restartTimer(c.timerPrevote, timeoutPrevote)
 	})
@@ -669,7 +673,9 @@ func (c *Consensus) onTimeoutPrevote() {
 	c.propsalState.Step = precommit
 
 	c.propsalState.pcOnce.Do(func() {
-		c.sendVote(VoteTypePreCommit, "")
+		if err := c.sendVote(VoteTypePreCommit, ""); err != nil {
+			logging.Error(err)
+		}
 
 		restartTimer(c.timerPrecommit, timeoutPrecommit)
 	})
@@ -678,7 +684,9 @@ func (c *Consensus) onTimeoutPrevote() {
 // onTimeoutPrecommit assumes a new round is to be started when the
 // propser does not send precommit evidence for the current round
 func (c *Consensus) onTimeoutPrecommit() {
-	c.StartRound(true)
+	if err := c.StartRound(true); err != nil {
+		logging.WithError(err).Error("starting new round after timeout")
+	}
 }
 
 // onTimeoutBlock assumes the propser failed to create a block/signature

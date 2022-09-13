@@ -403,7 +403,7 @@ func TestApplyGenesis(t *testing.T) {
 	g := &storage.GenesisInfo{
 		ChainID: "test",
 		Block:   *bl,
-		Txs:     []tx.Tx{*tx1},
+		Txs:     []*tx.Tx{tx1},
 	}
 
 	err = ipfs.ApplyGenesis(g)

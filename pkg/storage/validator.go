@@ -88,7 +88,9 @@ func (v *TxValidator) IsBlockValid(ctx context.Context, b *Block, isNewBlock boo
 	}
 	defer func() {
 		v.s = ogs
-		v.s.CompleteTest(ctx)
+		if err := v.s.CompleteTest(ctx); err != nil {
+			logging.WithError(err).Error("completing test")
+		}
 	}()
 
 	for id, tx := range txs {

@@ -41,7 +41,7 @@ func newDidStreamHandler(n *Node) (network.StreamHandler, interface{}, error) {
 	go func() {
 		for {
 			if err := did.Start(); err != nil {
-				logging.Entry().WithError(err).Error("running did handler")
+				logging.WithError(err).Error("running did handler")
 				time.Sleep(10 * time.Second)
 			}
 		}

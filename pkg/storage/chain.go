@@ -84,7 +84,7 @@ func NewBlock(ctx context.Context, s Store, parent BlockID, txs []cid.Cid) (*Blo
 
 type TxSet struct {
 	Children []cid.Cid `msgpack:"c"`
-	Tx       *cid.Cid  `msgpack:"t,omitempty"`
+	Tx       *cid.Cid  `msgpack:"t"`
 
 	cid cid.Cid
 }
@@ -116,7 +116,8 @@ func NewTxSet(s Store, txs []cid.Cid) (*TxSet, error) {
 	nodes := []*TxSet{}
 
 	for _, t := range txs {
-		ttx := &TxSet{Tx: &t}
+		cid := t
+		ttx := &TxSet{Tx: &cid}
 
 		c, err := s.PutSet(ctx, ttx)
 		if err != nil {

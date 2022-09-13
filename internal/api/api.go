@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 
+	"github.com/pkg/errors"
 	"github.com/tcfw/didem/internal/node"
 	"google.golang.org/grpc"
 )
@@ -39,7 +40,9 @@ func NewAPI(n *node.Node) (*Api, error) {
 
 	for _, s := range reg {
 		a.g.RegisterService(s.Desc(), s)
-		s.Setup(a)
+		if err := s.Setup(a); err != nil {
+			return nil, errors.Wrap(err, "registering service")
+		}
 	}
 
 	return a, nil

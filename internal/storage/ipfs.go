@@ -128,7 +128,9 @@ func ipfsStore(ctx context.Context, id config.Identity, repo string) (coreIface.
 	}
 
 	go func() {
-		connectToPeers(ctx, iface, bootstrapNodes)
+		if err := connectToPeers(ctx, iface, bootstrapNodes); err != nil {
+			logging.WithError(err).Error("connecting bootstrap peers")
+		}
 	}()
 
 	return iface, node.Close, nil
@@ -535,12 +537,13 @@ func (s *IPFSStorage) AllTx(ctx context.Context, b *storage.Block) (map[tx.TxID]
 		}
 
 		if set.Tx != nil {
-			t, err := s.GetTx(ctx, tx.TxID(*set.Tx))
+			txid := *set.Tx
+			t, err := s.GetTx(ctx, tx.TxID(txid))
 			if err != nil {
 				return nil, errors.Wrap(err, "getting root tx")
 			}
 
-			txSeen[tx.TxID(*set.Tx)] = t
+			txSeen[tx.TxID(txid)] = t
 
 			//max check
 			if len(txSeen) > storage.MaxBlockTxCount {
@@ -694,12 +697,12 @@ func (s *IPFSStorage) ApplyGenesis(g *storage.GenesisInfo) error {
 	txs := []cid.Cid{}
 
 	for _, t := range g.Txs {
-		cid, err := s.PutTx(ctx, &t)
+		cid, err := s.PutTx(ctx, t)
 		if err != nil {
 			return errors.Wrap(err, "storing tx")
 		}
 
-		if err := s.ApplyTx(ctx, tx.TxID(cid), &t); err != nil {
+		if err := s.ApplyTx(ctx, tx.TxID(cid), t); err != nil {
 			return errors.Wrap(err, "applying tx")
 		}
 
