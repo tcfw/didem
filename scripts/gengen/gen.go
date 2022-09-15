@@ -7,6 +7,9 @@ import (
 	"time"
 
 	"github.com/ipfs/go-cid"
+	"github.com/tcfw/didem/pkg/cryptography"
+	"github.com/tcfw/didem/pkg/did"
+	"github.com/tcfw/didem/pkg/did/w3cdid"
 	"github.com/tcfw/didem/pkg/storage"
 	"github.com/tcfw/didem/pkg/tx"
 	"github.com/vmihailenco/msgpack/v5"
@@ -20,16 +23,52 @@ func main() {
 		ChainID: "testnet",
 	}
 
+	sk, err := did.GenerateBls12381G2Identity()
+	if err != nil {
+		panic(err)
+	}
+	blsSk := sk.PrivateKey().(*cryptography.Bls12381PrivateKey)
+
+	pk, err := sk.PublicIdentity()
+	if err != nil {
+		panic(err)
+	}
+
+	pkmb, err := pk.PublicKeys[0].AsMultibase()
+	if err != nil {
+		panic(err)
+	}
+
 	txs := []*tx.Tx{
 		{
 			Version: tx.Version1,
 			Ts:      time.Now().Unix(),
-			From:    "",
+			From:    pk.ID,
+			Type:    tx.TxType_DID,
+			Action:  tx.TxActionAdd,
+			Data: &tx.DID{
+				Document: &w3cdid.Document{
+					ID: "did:didem:" + pk.ID,
+					Authentication: []cryptography.VerificationMethod{
+						{
+							ID:                 "did:didem:" + pk.ID,
+							Type:               cryptography.Bls12381G2Key2020,
+							PublicKeyMultibase: pkmb,
+						},
+					},
+				},
+			},
+		},
+		{
+			Version: tx.Version1,
+			Ts:      time.Now().Unix(),
+			From:    pk.ID,
 			Type:    tx.TxType_Node,
 			Action:  tx.TxActionAdd,
 			Data: &tx.Node{
-				Id:  "",
-				Did: "",
+				Id:  pk.ID,
+				Did: "did:didem:" + pk.ID,
+				Key: []byte(pkmb),
 			},
 		},
 	}
@@ -38,6 +77,15 @@ func main() {
 	memstore := storage.NewMemStore()
 
 	for _, t := range txs {
+		msg, err := t.Marshal()
+		if err != nil {
+			panic(err)
+		}
+		t.Signature, err = blsSk.Sign(nil, msg, nil)
+		if err != nil {
+			panic(err)
+		}
+
 		cid, err := memstore.PutTx(ctx, t)
 		if err != nil {
 			panic(err)
@@ -46,6 +94,15 @@ func main() {
 	}
 
 	block, err := storage.NewBlock(ctx, memstore, storage.BlockID(cid.Undef), txCids)
+	if err != nil {
+		panic(err)
+	}
+
+	blMsg, err := msgpack.Marshal(block)
+	if err != nil {
+		panic(err)
+	}
+	block.Signature, err = blsSk.Sign(nil, blMsg, nil)
 	if err != nil {
 		panic(err)
 	}

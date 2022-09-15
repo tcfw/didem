@@ -2,7 +2,7 @@ package w3cdid
 
 import (
 	"github.com/pkg/errors"
-	"github.com/tcfw/didem/pkg/did/w3cdid/cryptography"
+	"github.com/tcfw/didem/pkg/cryptography"
 )
 
 var (

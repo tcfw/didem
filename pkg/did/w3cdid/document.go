@@ -1,6 +1,6 @@
 package w3cdid
 
-import "github.com/tcfw/didem/pkg/did/w3cdid/cryptography"
+import "github.com/tcfw/didem/pkg/cryptography"
 
 type Document struct {
 	Context              []string                          `json:"@context"`

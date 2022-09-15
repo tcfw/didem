@@ -6,6 +6,8 @@ require (
 	github.com/bits-and-blooms/bloom/v3 v3.2.0
 	github.com/cockroachdb/pebble v0.0.0-20220907220441-20a40b515be9
 	github.com/drand/drand v1.3.2
+	github.com/drand/kyber v1.1.10
+	github.com/drand/kyber-bls12381 v0.2.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/ipfs/go-cid v0.2.0
 	github.com/ipfs/interface-go-ipfs-core v0.7.0
@@ -70,8 +72,6 @@ require (
 	github.com/dgraph-io/ristretto v0.0.3-0.20200630154024-f66de99634de // indirect
 	github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
-	github.com/drand/kyber v1.1.10 // indirect
-	github.com/drand/kyber-bls12381 v0.2.1 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/elastic/gosigar v0.14.2 // indirect
 	github.com/facebookgo/atomicfile v0.0.0-20151019160806-2de1f203e7d5 // indirect

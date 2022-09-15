@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/multiformats/go-multihash"
+	"github.com/tcfw/didem/pkg/cryptography"
 )
 
 // PrivateIdentity contains the secret identity whilst providing a means
@@ -13,6 +14,41 @@ import (
 type PrivateIdentity interface {
 	PrivateKey() crypto.PrivateKey
 	PublicIdentity() (*PublicIdentity, error)
+}
+
+type Bls12381G2Identity struct {
+	sk *cryptography.Bls12381PrivateKey
+}
+
+func GenerateBls12381G2Identity() (PrivateIdentity, error) {
+	b := &Bls12381G2Identity{
+		sk: cryptography.NewBls12381PrivateKey(),
+	}
+
+	return b, nil
+}
+
+func (b *Bls12381G2Identity) PrivateKey() crypto.PrivateKey {
+	return b.sk
+}
+
+func (b *Bls12381G2Identity) PublicIdentity() (*PublicIdentity, error) {
+	pk := b.sk.Public().(*cryptography.Bls12381PublicKey)
+
+	pkraw, err := pk.Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	mh, err := multihash.Sum(pkraw, multihash.SHA3_384, multihash.DefaultLengths[multihash.SHA3_384])
+	if err != nil {
+		return nil, err
+	}
+
+	id := mh.B58String()
+
+	pub := &PublicIdentity{ID: id, PublicKeys: []PublicKey{{Key: pk}}}
+	return pub, nil
 }
 
 type Ed25519Identity struct {

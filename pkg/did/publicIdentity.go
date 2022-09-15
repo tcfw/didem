@@ -1,6 +1,10 @@
 package did
 
-import "crypto"
+import (
+	"crypto"
+
+	"github.com/tcfw/didem/pkg/cryptography"
+)
 
 // PublicIdentity holds the publicly available form of any secret key
 type PublicIdentity struct {
@@ -11,6 +15,10 @@ type PublicIdentity struct {
 // PublicKey a public key identity
 type PublicKey struct {
 	Key crypto.PublicKey `msgpack:"k"`
+}
+
+func (pk *PublicKey) AsMultibase() (string, error) {
+	return cryptography.EncodeMultibase(pk.Key)
 }
 
 // Matches checks if a public identity matches another public identity by

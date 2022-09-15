@@ -3,7 +3,7 @@ package w3cdid
 import (
 	"github.com/pkg/errors"
 	"github.com/tcfw/didem/internal/utils/logging"
-	"github.com/tcfw/didem/pkg/did/w3cdid/cryptography"
+	"github.com/tcfw/didem/pkg/cryptography"
 )
 
 type SignatureValidator func(vm cryptography.VerificationMethod, sig []byte, msg []byte) (bool, error)
@@ -13,6 +13,7 @@ var (
 
 	validators = map[cryptography.VerificationMethodType]SignatureValidator{
 		cryptography.Ed25519VerificationKey2018: cryptography.ValidateEd25519,
+		cryptography.Bls12381G2Key2020:          cryptography.ValidateBls12381,
 	}
 )
 

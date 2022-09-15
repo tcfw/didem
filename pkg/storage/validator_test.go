@@ -10,8 +10,8 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/multiformats/go-multibase"
 	"github.com/stretchr/testify/assert"
+	"github.com/tcfw/didem/pkg/cryptography"
 	"github.com/tcfw/didem/pkg/did/w3cdid"
-	"github.com/tcfw/didem/pkg/did/w3cdid/cryptography"
 	"github.com/tcfw/didem/pkg/tx"
 )
 
