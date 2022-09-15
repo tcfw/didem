@@ -1,11 +1,12 @@
 package config
 
 import (
-	"encoding/json"
+	"encoding/base64"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"github.com/tcfw/didem/pkg/storage"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 type Chain struct {
@@ -21,7 +22,12 @@ func buildChainConfig() (*Chain, error) {
 
 	gcfg := viper.GetString(Cfg_chain_genesisInfo)
 
-	if err := json.Unmarshal([]byte(gcfg), &c.Genesis); err != nil {
+	gcfg_raw, err := base64.StdEncoding.DecodeString(gcfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "b64 decoding genesis config")
+	}
+
+	if err := msgpack.Unmarshal(gcfg_raw, &c.Genesis); err != nil {
 		return nil, errors.Wrap(err, "unmarshaling genesis info")
 	}
 

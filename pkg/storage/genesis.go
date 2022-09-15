@@ -9,7 +9,7 @@ import "github.com/tcfw/didem/pkg/tx"
 // TXs with a metadata store.
 // A ChainID is also provided
 type GenesisInfo struct {
-	ChainID string
-	Block   Block
-	Txs     []*tx.Tx
+	ChainID string   `msgpack:"chain"`
+	Block   Block    `magpack:"block"`
+	Txs     []*tx.Tx `msgpack:"txs"`
 }
