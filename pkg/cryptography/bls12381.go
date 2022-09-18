@@ -34,7 +34,7 @@ func (b *Bls12381PrivateKey) Sign(_ io.Reader, digest []byte, _ crypto.SignerOpt
 }
 
 func (b *Bls12381PrivateKey) Public() crypto.PublicKey {
-	pk := pairing.G2().Point().Mul(b.sk, nil)
+	pk := pairing.G1().Point().Mul(b.sk, nil)
 	return &Bls12381PublicKey{pk}
 }
 
@@ -42,17 +42,27 @@ func (b *Bls12381PrivateKey) Equal(obls crypto.PrivateKey) bool {
 	return b.sk.Equal(obls.(*Bls12381PrivateKey).sk)
 }
 
+func NewBls12381PublicKey(d []byte) (*Bls12381PublicKey, error) {
+	pk := &Bls12381PublicKey{pairing.G1().Point()}
+	if err := pk.UnmarshalBinary(d); err != nil {
+		return nil, err
+	}
+
+	return pk, nil
+
+}
+
 type Bls12381PublicKey struct {
 	kyber.Point
 }
 
 func (b *Bls12381PublicKey) Bytes() ([]byte, error) {
-	return b.Point.MarshalBinary()
+	return b.MarshalBinary()
 }
 
 func (b *Bls12381PublicKey) Verify(signature, msg []byte) (bool, error) {
 	scheme := sig.NewSchemeOnG2(pairing)
-	if err := scheme.Verify(b, msg, signature); err != nil {
+	if err := scheme.Verify(b.Point, msg, signature); err != nil {
 		return false, err
 	}
 
@@ -65,10 +75,27 @@ func ValidateBls12381(vm VerificationMethod, signature []byte, msg []byte) (bool
 		return false, errors.Wrap(err, "decoding multibase")
 	}
 
-	pk := &Bls12381PublicKey{pairing.G2().Point()}
-	if pk.UnmarshalBinary(pkbytes); err != nil {
+	pk := &Bls12381PublicKey{pairing.G1().Point()}
+	if err := pk.UnmarshalBinary(pkbytes); err != nil {
 		return false, err
 	}
 
 	return pk.Verify(signature, msg)
+}
+
+func AggregateBls12381Signatures(sigs ...[]byte) ([]byte, error) {
+	scheme := sig.NewSchemeOnG2(pairing)
+	return scheme.AggregateSignatures(sigs...)
+}
+
+func AggregateBls12381PublicKeys(pk ...*Bls12381PublicKey) kyber.Point {
+	scheme := sig.NewSchemeOnG2(pairing)
+
+	points := make([]kyber.Point, len(pk))
+
+	for i, p := range pk {
+		points[i] = p.Point
+	}
+
+	return scheme.AggregatePublicKeys(points...)
 }

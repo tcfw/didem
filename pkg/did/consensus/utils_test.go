@@ -14,10 +14,10 @@ import (
 	bhost "github.com/libp2p/go-libp2p/p2p/host/blank"
 	swarmt "github.com/libp2p/go-libp2p/p2p/net/swarm/testing"
 	"github.com/stretchr/testify/assert"
+	"github.com/tcfw/didem/pkg/cryptography"
 	"github.com/tcfw/didem/pkg/storage"
 	"github.com/tcfw/didem/pkg/storage/mock"
 	"github.com/tcfw/didem/pkg/tx"
-	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/pairing/bn256"
 	"go.dedis.ch/kyber/v3/sign/bls"
 	"go.dedis.ch/kyber/v3/util/random"
@@ -44,11 +44,12 @@ func newConsensusPubSubNet(t *testing.T, ctx context.Context, n int) ([]host.Hos
 
 	instances := []*Consensus{}
 
-	sks := make([]kyber.Scalar, 0, n)
-	pks := make([]kyber.Point, 0, n)
+	sks := make([]*cryptography.Bls12381PrivateKey, 0, n)
+	pks := make([]*cryptography.Bls12381PublicKey, 0, n)
 
 	for i := 0; i < n; i++ {
-		sk, pk := bls.NewKeyPair(bn256.NewSuite(), random.New())
+		sk := cryptography.NewBls12381PrivateKey()
+		pk := sk.Public().(*cryptography.Bls12381PublicKey)
 		sks = append(sks, sk)
 		pks = append(pks, pk)
 	}

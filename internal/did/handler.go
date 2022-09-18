@@ -48,6 +48,7 @@ func NewHandler(n node.Node) *Handler {
 		consensus.WithBlockStore(n.Storage()),
 		consensus.WithBeaconSource(n.RandomSource()),
 		consensus.WithValidator(validator),
+		// consensus.WithSigningKey(nil),
 	}
 
 	if chainCfg.Genesis.ChainID != "" {

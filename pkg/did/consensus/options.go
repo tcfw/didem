@@ -1,13 +1,13 @@
 package consensus
 
 import (
+	"github.com/tcfw/didem/pkg/cryptography"
 	"github.com/tcfw/didem/pkg/storage"
-	"go.dedis.ch/kyber/v3"
 )
 
 type Option func(*Consensus) error
 
-func WithSigningKey(priv kyber.Scalar) Option {
+func WithSigningKey(priv *cryptography.Bls12381PrivateKey) Option {
 	return func(c *Consensus) error {
 		c.signingKey = priv
 		return nil

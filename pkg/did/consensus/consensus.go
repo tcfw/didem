@@ -14,10 +14,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/tcfw/didem/internal/utils/logging"
+	"github.com/tcfw/didem/pkg/cryptography"
 	"github.com/tcfw/didem/pkg/storage"
-	"go.dedis.ch/kyber/v3"
-	"go.dedis.ch/kyber/v3/pairing/bn256"
-	"go.dedis.ch/kyber/v3/sign/bls"
 )
 
 const (
@@ -36,7 +34,7 @@ var (
 type Consensus struct {
 	chain      []byte
 	id         peer.ID
-	signingKey kyber.Scalar
+	signingKey *cryptography.Bls12381PrivateKey
 
 	genesis *storage.GenesisInfo
 
@@ -338,13 +336,12 @@ func (c *Consensus) OnMsg(msg *Msg) {
 
 	sd = append(sd, signData...)
 
-	suite := bn256.NewSuite()
-	pub := suite.G2().Point()
-	if err := pub.UnmarshalBinary(node.Key); err != nil {
-		logging.WithError(err).Error("unmarshaling key")
-		return
+	pk, err := cryptography.NewBls12381PublicKey(node.Key)
+	if err != nil {
+		logging.WithError(err).Error("unmarshalling node pk")
 	}
-	if err := bls.Verify(suite, pub, sd, msg.Signature); err != nil {
+
+	if ok, err := pk.Verify(msg.Signature, sd); !ok || err != nil {
 		logging.Error("invalid signature")
 		return
 	}
@@ -752,7 +749,7 @@ func (c *Consensus) sendBlock() (*ConsensusMsgBlock, error) {
 		CID:    c.propsalState.lockedValue.String(),
 	}
 
-	pks := make([]kyber.Point, 0, len(c.propsalState.PreCommits))
+	pks := make([]*cryptography.Bls12381PublicKey, 0, len(c.propsalState.PreCommits))
 	sigs := make([][]byte, 0, len(c.propsalState.PreCommits))
 
 	for p, vote := range c.propsalState.PreCommits {
@@ -760,22 +757,25 @@ func (c *Consensus) sendBlock() (*ConsensusMsgBlock, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "finding node")
 		}
-		pub := bn256.NewSuite().G2().Point()
-		if err := pub.UnmarshalBinary(n.Key); err != nil {
+
+		pk, err := cryptography.NewBls12381PublicKey(n.Key)
+		if err != nil {
 			return nil, errors.Wrap(err, "unmarshalling node key")
 		}
-		pks = append(pks, pub)
+
+		pks = append(pks, pk)
 
 		sigs = append(sigs, vote.Signature)
 	}
-	k := bls.AggregatePublicKeys(bn256.NewSuite(), pks...)
+
+	k := AggregatePublicKeys(pks...)
 	v, err := k.MarshalBinary()
 	if err != nil {
 		return nil, errors.Wrap(err, "aggregating public keys")
 	}
 	msg.Validators = v
 
-	s, err := bls.AggregateSignatures(bn256.NewSuite(), sigs...)
+	s, err := AggregateSignatures(sigs...)
 	if err != nil {
 		return nil, errors.Wrap(err, "aggregating signatures")
 	}
@@ -836,7 +836,7 @@ func (c *Consensus) sendMsg(msg interface{}) error {
 
 	d = append(d, signData...)
 
-	sig, err := bls.Sign(bn256.NewSuite(), c.signingKey, d)
+	sig, err := c.signingKey.Sign(nil, d, nil)
 	if err != nil {
 		return errors.Wrap(err, "signing vote data")
 	}
