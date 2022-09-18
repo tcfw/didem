@@ -2,6 +2,7 @@ package did
 
 import (
 	"context"
+	"encoding/base64"
 	"math/rand"
 	"strings"
 	"sync"
@@ -16,6 +17,7 @@ import (
 	"github.com/tcfw/didem/api"
 	"github.com/tcfw/didem/internal/stream"
 	"github.com/tcfw/didem/internal/utils/logging"
+	"github.com/tcfw/didem/pkg/cryptography"
 	"github.com/tcfw/didem/pkg/did/consensus"
 	"github.com/tcfw/didem/pkg/node"
 	"github.com/tcfw/didem/pkg/storage"
@@ -44,11 +46,21 @@ func NewHandler(n node.Node) *Handler {
 
 	chainCfg := n.Cfg().Chain()
 
+	keyRaw, err := base64.StdEncoding.DecodeString(chainCfg.Key)
+	if err != nil {
+		logging.WithError(err).Fatal("unable to decode chain key")
+	}
+
+	key, err := cryptography.NewBls12391PrivateKeyFromBytes(keyRaw)
+	if err != nil {
+		logging.WithError(err).Fatal("unable to decode BLS12381 key")
+	}
+
 	opts := []consensus.Option{
+		consensus.WithSigningKey(key),
 		consensus.WithBlockStore(n.Storage()),
 		consensus.WithBeaconSource(n.RandomSource()),
 		consensus.WithValidator(validator),
-		// consensus.WithSigningKey(nil),
 	}
 
 	if chainCfg.Genesis.ChainID != "" {

@@ -24,6 +24,18 @@ func NewBls12381PrivateKey() *Bls12381PrivateKey {
 	}
 }
 
+func NewBls12391PrivateKeyFromBytes(b []byte) (*Bls12381PrivateKey, error) {
+	k := &Bls12381PrivateKey{
+		pairing.G1().Scalar().One(),
+	}
+
+	if err := k.sk.UnmarshalBinary(b); err != nil {
+		return nil, err
+	}
+
+	return k, nil
+}
+
 type Bls12381PrivateKey struct {
 	sk kyber.Scalar
 }

@@ -11,10 +11,12 @@ import (
 
 type Chain struct {
 	Genesis storage.GenesisInfo
+	Key     string
 }
 
 const (
 	Cfg_chain_genesisInfo = "chain.genesis"
+	Cfg_chain_key         = "chain.key"
 )
 
 func buildChainConfig() (*Chain, error) {
@@ -30,6 +32,8 @@ func buildChainConfig() (*Chain, error) {
 	if err := msgpack.Unmarshal(gcfg_raw, &c.Genesis); err != nil {
 		return nil, errors.Wrap(err, "unmarshaling genesis info")
 	}
+
+	c.Key = viper.GetString(Cfg_chain_key)
 
 	return c, nil
 }
