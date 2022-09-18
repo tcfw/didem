@@ -88,7 +88,7 @@ func (fs *FileStore) buildIdx() error {
 func (fs *FileStore) decodeType(t string, data string) (did.PrivateIdentity, error) {
 	_, raw, err := multibase.Decode(data)
 	if err != nil {
-		return nil, errors.Wrap(err, "decoding b64 identity data")
+		return nil, errors.Wrap(err, "decoding identity data")
 	}
 
 	switch t {

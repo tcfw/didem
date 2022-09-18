@@ -32,6 +32,17 @@ func buildChainConfig() (*Chain, error) {
 		return nil, errors.Wrap(err, "unmarshaling genesis info")
 	}
 
+	for _, t := range c.Genesis.Txs {
+		//remarshal Tx just in case the unmarshalling set the data to a map
+		b, err := t.Marshal()
+		if err != nil {
+			return nil, errors.Wrap(err, "remarshal tx")
+		}
+		if err := t.Unmarshal(b); err != nil {
+			return nil, errors.Wrap(err, "remarshal tx")
+		}
+	}
+
 	c.Key = viper.GetString(Cfg_chain_key)
 
 	return c, nil

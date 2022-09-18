@@ -10,6 +10,7 @@ require (
 	github.com/drand/kyber-bls12381 v0.2.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/ipfs/go-cid v0.2.0
+	github.com/ipfs/go-ipfs-config v0.19.0
 	github.com/ipfs/interface-go-ipfs-core v0.7.0
 	github.com/ipfs/kubo v0.15.0
 	github.com/jpillora/backoff v1.0.0

@@ -69,7 +69,7 @@ func NewHandler(n node.Node) *Handler {
 
 	c, err := consensus.NewConsensus(h, p, opts...)
 	if err != nil {
-		logging.Entry().Panic(err)
+		logging.Entry().Fatal(err)
 	}
 
 	return &Handler{n: n, consensus: c}

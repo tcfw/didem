@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/cockroachdb/pebble"
 	"github.com/ipfs/go-cid"
@@ -251,7 +252,7 @@ func (s *IPFSStorage) putRaw(ctx context.Context, d []byte) (cid.Cid, error) {
 		return cid.Undef, err
 	}
 
-	logging.Entry().WithField("ipfs", n.Path().String()).Info("stored in IPFS")
+	logging.Entry().WithField("ipfs", n.Path().String()).Debug("stored in IPFS")
 
 	return n.Path().Cid(), nil
 }
@@ -446,7 +447,13 @@ func (s *IPFSStorage) indexBlock(ctx context.Context, bId storage.BlockID) error
 	return nil
 }
 
-func (s *IPFSStorage) ApplyTx(ctx context.Context, id tx.TxID, t *tx.Tx) error {
+func (s *IPFSStorage) ApplyTx(ctx context.Context, id tx.TxID, t *tx.Tx) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.Errorf("failed to apply tx: %s", r)
+		}
+	}()
+
 	batch, ok := ctx.Value(batchCtxKey{}).(*pebble.Batch)
 	if !ok {
 		batch = s.pfTipApply
@@ -454,8 +461,6 @@ func (s *IPFSStorage) ApplyTx(ctx context.Context, id tx.TxID, t *tx.Tx) error {
 	if batch == nil {
 		return errors.New("applying tx without batch")
 	}
-
-	var err error
 
 	switch t.Type {
 	case tx.TxType_Node:
@@ -476,6 +481,12 @@ func (s *IPFSStorage) ApplyTx(ctx context.Context, id tx.TxID, t *tx.Tx) error {
 
 func (s *IPFSStorage) indexTxNode(b *pebble.Batch, ntx *tx.Tx, id tx.TxID) error {
 	c := ntx.Data.(*tx.Node)
+
+	logging.Entry().WithFields(logrus.Fields{
+		"NID":    c.Id,
+		"Action": ntx.Action,
+	}).Debug("adding Node")
+
 	k := typedKey(nodesTPrefix, c.Id)
 
 	switch ntx.Action {
@@ -490,6 +501,12 @@ func (s *IPFSStorage) indexTxNode(b *pebble.Batch, ntx *tx.Tx, id tx.TxID) error
 
 func (s *IPFSStorage) indexTxDID(b *pebble.Batch, dtx *tx.Tx, id tx.TxID) error {
 	c := dtx.Data.(*tx.DID)
+
+	logging.Entry().WithFields(logrus.Fields{
+		"DID":    c.Document.ID,
+		"Action": dtx.Action,
+	}).Debug("adding DID")
+
 	k := typedKey(didTPrefix, c.Document.ID)
 
 	//append to did history
