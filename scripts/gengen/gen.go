@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"time"
 
 	"github.com/ipfs/go-cid"
+	"github.com/multiformats/go-multibase"
 	"github.com/tcfw/didem/pkg/cryptography"
 	"github.com/tcfw/didem/pkg/did"
 	"github.com/tcfw/didem/pkg/did/w3cdid"
@@ -115,7 +115,22 @@ func main() {
 		panic(err)
 	}
 
-	b64 := base64.StdEncoding.EncodeToString(b)
+	b64, err := multibase.Encode(multibase.Base58BTC, b)
+	if err != nil {
+		panic(err)
+	}
+
+	blsSkB, err := blsSk.Bytes()
+	if err != nil {
+		panic(err)
+	}
+
+	s, err := multibase.Encode(multibase.Base58BTC, blsSkB)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("SK: %s\n", s)
 
 	fmt.Printf("Genesis Config:\n%s", b64)
 }

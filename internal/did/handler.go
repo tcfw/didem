@@ -2,7 +2,6 @@ package did
 
 import (
 	"context"
-	"encoding/base64"
 	"math/rand"
 	"strings"
 	"sync"
@@ -13,6 +12,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/protocol"
+	"github.com/multiformats/go-multibase"
 	"github.com/pkg/errors"
 	"github.com/tcfw/didem/api"
 	"github.com/tcfw/didem/internal/stream"
@@ -46,7 +46,7 @@ func NewHandler(n node.Node) *Handler {
 
 	chainCfg := n.Cfg().Chain()
 
-	keyRaw, err := base64.StdEncoding.DecodeString(chainCfg.Key)
+	_, keyRaw, err := multibase.Decode(chainCfg.Key)
 	if err != nil {
 		logging.WithError(err).Fatal("unable to decode chain key")
 	}

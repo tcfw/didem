@@ -2,12 +2,12 @@ package did
 
 import (
 	"crypto/ed25519"
-	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"sync"
 
+	"github.com/multiformats/go-multibase"
 	"github.com/pkg/errors"
 	"github.com/tcfw/didem/pkg/did"
 	"gopkg.in/yaml.v3"
@@ -86,7 +86,7 @@ func (fs *FileStore) buildIdx() error {
 }
 
 func (fs *FileStore) decodeType(t string, data string) (did.PrivateIdentity, error) {
-	raw, err := base64.StdEncoding.DecodeString(data)
+	_, raw, err := multibase.Decode(data)
 	if err != nil {
 		return nil, errors.Wrap(err, "decoding b64 identity data")
 	}
@@ -117,7 +117,11 @@ func (fs *FileStore) Add(id did.PrivateIdentity) error {
 	case *did.Ed25519Identity:
 		id := id.(*did.Ed25519Identity)
 		pk := id.PrivateKey().(ed25519.PrivateKey)
-		raw := base64.StdEncoding.EncodeToString([]byte(pk))
+		raw, err := multibase.Encode(multibase.Base64, []byte(pk))
+		if err != nil {
+			return errors.Wrap(err, "encoding private key to multibase")
+		}
+
 		f := IdentityFileStoreId{Type: "ed25519", Data: raw}
 		fs.ids.Ids = append(fs.ids.Ids, f)
 	default:

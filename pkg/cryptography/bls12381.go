@@ -40,6 +40,10 @@ type Bls12381PrivateKey struct {
 	sk kyber.Scalar
 }
 
+func (b *Bls12381PrivateKey) Bytes() ([]byte, error) {
+	return b.sk.MarshalBinary()
+}
+
 func (b *Bls12381PrivateKey) Sign(_ io.Reader, digest []byte, _ crypto.SignerOpts) (signature []byte, err error) {
 	scheme := sig.NewSchemeOnG2(pairing)
 	return scheme.Sign(b.sk, digest)

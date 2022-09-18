@@ -1,8 +1,7 @@
 package config
 
 import (
-	"encoding/base64"
-
+	"github.com/multiformats/go-multibase"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"github.com/tcfw/didem/pkg/storage"
@@ -24,7 +23,7 @@ func buildChainConfig() (*Chain, error) {
 
 	gcfg := viper.GetString(Cfg_chain_genesisInfo)
 
-	gcfg_raw, err := base64.StdEncoding.DecodeString(gcfg)
+	_, gcfg_raw, err := multibase.Decode(gcfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "b64 decoding genesis config")
 	}
