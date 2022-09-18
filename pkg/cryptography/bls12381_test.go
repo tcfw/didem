@@ -34,3 +34,35 @@ func TestVerifyBls12381(t *testing.T) {
 	}
 	assert.True(t, ok)
 }
+
+func TestBls12381Aggregates(t *testing.T) {
+	msg := []byte("abc")
+	sigs := [][]byte{}
+
+	pks := []*Bls12381PublicKey{}
+
+	for i := 0; i < 10; i++ {
+		sk := NewBls12381PrivateKey()
+		pk := sk.Public()
+		pks = append(pks, pk.(*Bls12381PublicKey))
+
+		sig, err := sk.Sign(nil, msg, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sigs = append(sigs, sig)
+	}
+
+	aggPubP := AggregateBls12381PublicKeys(pks...)
+	aggSig, err := AggregateBls12381Signatures(sigs...)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pub := &Bls12381PublicKey{aggPubP}
+	ok, err := pub.Verify(aggSig, msg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.True(t, ok)
+}
