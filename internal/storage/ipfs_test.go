@@ -373,7 +373,6 @@ func TestApplyGenesis(t *testing.T) {
 
 	//Use the mem store to calculate IDs for IPFS
 
-	mem := storage.NewMemStore()
 	ipfs := tempIPFSStorage(t, ctx)
 
 	tx1 := &tx.Tx{
@@ -388,14 +387,14 @@ func TestApplyGenesis(t *testing.T) {
 		},
 	}
 
-	txcid, err := mem.PutTx(ctx, tx1)
+	txcid, err := ipfs.PutTx(ctx, tx1)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	txs := []cid.Cid{txcid}
 
-	bl, err := storage.NewBlock(ctx, mem, storage.BlockID(cid.Undef), txs)
+	bl, err := storage.NewBlock(ctx, ipfs, storage.BlockID(cid.Undef), txs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -407,11 +406,12 @@ func TestApplyGenesis(t *testing.T) {
 	}
 
 	err = ipfs.ApplyGenesis(g)
-	assert.NoError(t, err)
+	if assert.NoError(t, err) {
 
-	n, err := ipfs.Nodes()
-	if err != nil {
-		t.Fatal(err)
+		n, err := ipfs.Nodes()
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Len(t, n, 1)
 	}
-	assert.Len(t, n, 1)
 }

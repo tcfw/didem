@@ -715,7 +715,7 @@ func (s *IPFSStorage) ApplyGenesis(g *storage.GenesisInfo) error {
 	}
 
 	if !set.Cid().Equals(g.Block.TxRoot) {
-		return errors.New("calculated tx set does not match block root")
+		return errors.Errorf("calculated tx set does not match block root: got %s wanted %s", set.Cid().String(), g.Block.TxRoot.String())
 	}
 
 	if _, err := s.PutBlock(ctx, &g.Block); err != nil {
