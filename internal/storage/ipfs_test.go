@@ -22,6 +22,10 @@ func TestTypedKey(t *testing.T) {
 	k := typedKey(txBlockTPrefix, "a", "a")
 	e := []byte{byte(txBlockTPrefix), 'a', tableSep, 'a'}
 	assert.Equal(t, e, k)
+
+	k = typedKey(latestBlockTPrefix)
+	e = []byte{byte(latestBlockTPrefix)}
+	assert.Equal(t, e, k)
 }
 
 func tempIPFSStorage(t *testing.T, ctx context.Context) *IPFSStorage {

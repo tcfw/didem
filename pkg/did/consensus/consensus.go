@@ -84,6 +84,12 @@ func NewConsensus(h host.Host, p *pubsub.PubSub, opts ...Option) (*Consensus, er
 		return nil, errors.Wrap(err, "fetching last applied block")
 	}
 	if b != nil {
+		logging.Entry().WithFields(logrus.Fields{
+			"Height": b.Height,
+			"Parent": b.Parent.String(),
+			"Block":  b.ID.String(),
+		}).Info("loaded last block as")
+
 		c.state.Block = cid.Cid(b.ID)
 		c.state.Height = b.Height
 		c.state.ParentBlock = cid.Cid(b.Parent)

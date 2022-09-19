@@ -31,6 +31,10 @@ func (b BlockID) String() string {
 	return cid.Cid(b).String()
 }
 
+func (b BlockID) Bytes() []byte {
+	return cid.Cid(b).Bytes()
+}
+
 type Block struct {
 	Version   uint32   `msgpack:"v"`
 	ID        BlockID  `magpack:"i"`

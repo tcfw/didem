@@ -68,8 +68,8 @@ const (
 	didHisoryTPrefix
 	activeClaimTPrefix
 	nodesTPrefix
-	genesisTPrefix
 	latestBlockTPrefix
+	genesisTPrefix
 )
 
 func NewIPFSStorage(ctx context.Context, id config.Identity, repo string) (*IPFSStorage, error) {
@@ -314,6 +314,8 @@ func (s *IPFSStorage) GetBlock(ctx context.Context, id storage.BlockID) (*storag
 		return nil, errors.Wrap(err, "unmarshalling block")
 	}
 
+	b.ID = id
+
 	return b, nil
 }
 
@@ -390,6 +392,10 @@ func (s *IPFSStorage) MarkBlock(ctx context.Context, id storage.BlockID, state s
 	if cState == storage.BlockStateValidated && state == storage.BlockStateAccepted {
 		if err := s.indexBlock(ctx, id); err != nil {
 			return errors.Wrap(err, "indexing block")
+		}
+
+		if err := s.metadataSet(typedKey(latestBlockTPrefix), id.Bytes(), nil); err != nil {
+			return errors.Wrap(err, "setting block as last prefix")
 		}
 	}
 
@@ -735,17 +741,24 @@ func (s *IPFSStorage) ApplyGenesis(g *storage.GenesisInfo) error {
 		return errors.Errorf("calculated tx set does not match block root: got %s wanted %s", set.Cid().String(), g.Block.TxRoot.String())
 	}
 
-	if _, err := s.PutBlock(ctx, &g.Block); err != nil {
+	bcid, err := s.PutBlock(ctx, &g.Block)
+	if err != nil {
 		return errors.Wrap(err, "putting block")
 	}
 
-	if err := batch.Commit(nil); err != nil {
+	if err := batch.Set(typedKey(latestBlockTPrefix), bcid.Bytes(), nil); err != nil {
+		return errors.Wrap(err, "setting genesis as last block")
+	}
+
+	if err := batch.Set(typedKey(genesisTPrefix), []byte{}, nil); err != nil {
+		return errors.Wrap(err, "storing genesis prefix")
+	}
+
+	if err := batch.Commit(&pebble.WriteOptions{Sync: true}); err != nil {
 		return errors.Wrap(err, "applying batch")
 	}
 
-	if err := s.metadataSet(typedKey(genesisTPrefix), []byte{}, nil); err != nil {
-		return errors.Wrap(err, "storing genesis prefix")
-	}
+	logging.Entry().WithField("block", bcid.String()).Info("Setting last block after genesis apply")
 
 	return nil
 }
@@ -787,6 +800,10 @@ func (s *IPFSStorage) Stop() error {
 }
 
 func typedKey(kType metadataKeyType, parts ...string) []byte {
+	if len(parts) == 0 {
+		return []byte{byte(kType)}
+	}
+
 	n := 1
 	for _, p := range parts {
 		n += len(p) + 1 //add sep as well

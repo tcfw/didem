@@ -98,6 +98,7 @@ func (h *Handler) Start() error {
 				WithField("have", len(peers)).
 				WithField("need", requiredPeers).
 				Info("waiting for more peers")
+
 			time.Sleep(d)
 			continue
 		}
@@ -107,14 +108,19 @@ func (h *Handler) Start() error {
 
 	rand.Shuffle(len(peers), func(i, j int) { peers[i], peers[j] = peers[j], peers[i] })
 
-	vPeers := peers[:tipSetPeerCount]
+	vPeers := peers[:requiredPeers]
 
-	tips, err := h.askForTip(context.Background(), vPeers)
+	logging.Entry().Info("got enough peers to check tip")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	tips, err := h.askForTip(ctx, vPeers)
 	if err != nil {
 		return errors.Wrap(err, "requesting tips")
 	}
 
-	if len(tips) != tipSetPeerCount || len(tips) != 1 {
+	if len(tips) != requiredPeers || len(tips) != 1 {
 		logging.Entry().Warn("failed to get unanimous required tips, trying again in 10s")
 		time.Sleep(10 * time.Second)
 		return h.Start()
@@ -143,13 +149,12 @@ func (h *Handler) Start() error {
 		return h.consensus.Start()
 	}
 
+	logging.Entry().Info("Finished checking tip")
+
 	return nil
 }
 
 func (h *Handler) askForTip(ctx context.Context, peers []peer.ID) (map[string]int, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
@@ -163,11 +168,13 @@ func (h *Handler) askForTip(ctx context.Context, peers []peer.ID) (map[string]in
 		}
 	}()
 
+	defer close(pch)
+
 	for i := 0; i < 3; i++ {
 		go func() {
-			defer wg.Done()
-
 			for p := range pch {
+				logging.Entry().WithField("peer", p.String()).Debug("asking peer for tip")
+
 				t, err := h.ReqTip(ctx, p)
 				if err != nil {
 					logging.WithError(err).Error("requesting tip")
@@ -182,12 +189,24 @@ func (h *Handler) askForTip(ctx context.Context, peers []peer.ID) (map[string]in
 				tc++
 				tips[t] = tc
 				mu.Unlock()
+
+				wg.Done()
 			}
 		}()
 	}
 
-	wg.Wait()
-	close(pch)
+	done := make(chan struct{})
+
+	go func() {
+		wg.Wait()
+		done <- struct{}{}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, errors.New("ctx timeout")
+	case <-done:
+	}
 
 	return tips, nil
 }
