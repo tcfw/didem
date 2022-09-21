@@ -27,6 +27,9 @@ func (n *Node) setupStreamHandlers() error {
 		if err != nil {
 			return err
 		}
+		if inst == nil {
+			continue
+		}
 
 		p2p.SetStreamHandler(id, handler)
 		n.handlers[id] = inst
@@ -37,6 +40,11 @@ func (n *Node) setupStreamHandlers() error {
 
 func newDidStreamHandler(n *Node) (network.StreamHandler, interface{}, error) {
 	did := did.NewHandler(n)
+
+	if did == nil {
+		logging.Entry().Warn("skipping did consensus handler")
+		return nil, nil, nil
+	}
 
 	go func() {
 		for {

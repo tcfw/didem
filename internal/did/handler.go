@@ -46,6 +46,11 @@ func NewHandler(n node.Node) *Handler {
 
 	chainCfg := n.Cfg().Chain()
 
+	if chainCfg.Genesis.ChainID == "" {
+		logging.Entry().Warn("no chain genesis loaded")
+		return nil
+	}
+
 	_, keyRaw, err := multibase.Decode(chainCfg.Key)
 	if err != nil {
 		logging.WithError(err).Fatal("unable to decode chain key")
