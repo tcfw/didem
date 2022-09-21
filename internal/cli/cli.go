@@ -9,7 +9,7 @@ import (
 var (
 	rootCmd = &cobra.Command{
 		Use:   "didem",
-		Short: "Distributed identity and email",
+		Short: "Distributed identity and messaging",
 	}
 )
 

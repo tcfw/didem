@@ -4,6 +4,8 @@ ARG TARGETARCH
 
 WORKDIR /didem
 
-COPY "build/didem_${TARGETOS}_${TARGETARCH}" ./app
+COPY "build/didem_${TARGETOS}_${TARGETARCH}/didem" .
 
-CMD [ "/didem/app" ]
+RUN chmod +x /didem/didem
+
+CMD [ "/didem/didem" ]
