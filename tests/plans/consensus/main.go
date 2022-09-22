@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"time"
 
+	"github.com/spf13/viper"
 	"github.com/testground/sdk-go/network"
 	"github.com/testground/sdk-go/run"
 	"github.com/testground/sdk-go/runtime"
@@ -42,6 +44,15 @@ func runTipset(runenv *runtime.RunEnv) error {
 	seq := client.MustSignalEntry(ctx, enrolledState)
 
 	runenv.RecordMessage("my sequence ID: %d", seq)
+
+	ip, err := netclient.GetDataNetworkIP()
+	if err != nil {
+		return err
+	}
+
+	port := rand.Int()%1000 + 8712
+
+	viper.Set("p2p.listeningAddrs", fmt.Sprintf("/ip4/%s/udp/%d/quic", ip.String(), port))
 
 	node, err := iNode.NewNode(ctx)
 	if err != nil {

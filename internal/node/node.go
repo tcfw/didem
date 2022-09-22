@@ -147,8 +147,10 @@ func (n *Node) ListenAndServe() error {
 func (n *Node) Stop() error {
 	logging.Entry().Warn("Shutting down")
 
-	if err := n.storage.Stop(); err != nil {
-		logging.WithError(err).Error("closing storage")
+	if n.storage != nil {
+		if err := n.storage.Stop(); err != nil {
+			logging.WithError(err).Error("closing storage")
+		}
 	}
 
 	return nil
