@@ -1,0 +1,28 @@
+name = "consensus"
+
+[defaults]
+builder = "exec:go"
+runner = "local:exec"
+
+[builders."docker:go"]
+enabled = true
+go_version = "1.18"
+module_path = "github.com/tcfw/didem/tests/plan/consensus"
+exec_pkg = "."
+
+[builders."exec:go"]
+enabled = true
+module_path = "github.com/tcfw/didem/tests/plan/consensus"
+
+[runners."local:docker"]
+enabled = true
+
+[runners."local:exec"]
+enabled = true
+
+[runners."cluster:k8s"]
+enabled = true
+
+[[testcases]]
+name = "tipset"
+instances = { min = 1, max = 5, default = 1 }

@@ -42,14 +42,14 @@ func NewHandler(n node.Node) *Handler {
 	h := n.P2P().Host()
 	p := n.P2P().PubSub()
 
-	validator := storage.NewTxValidator(n.Storage())
-
 	chainCfg := n.Cfg().Chain()
 
 	if chainCfg.Genesis.ChainID == "" {
 		logging.Entry().Warn("no chain genesis loaded")
 		return nil
 	}
+
+	validator := storage.NewTxValidator(n.Storage())
 
 	_, keyRaw, err := multibase.Decode(chainCfg.Key)
 	if err != nil {
