@@ -2,8 +2,10 @@ module github.com/tcfw/didem/tests/plan/consensus
 
 go 1.18
 
+// replace github.com/tcfw/didem => ../../../../../../
+
 require (
-	github.com/tcfw/didem v0.0.0-20220921140156-85e868a3c4f5
+	github.com/tcfw/didem v0.0.0-20220922121319-68c85773e3f3
 	github.com/testground/sdk-go v0.3.0
 )
 

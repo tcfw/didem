@@ -9,6 +9,8 @@ enabled = true
 go_version = "1.18"
 module_path = "github.com/tcfw/didem/tests/plan/consensus"
 exec_pkg = "."
+build_base_image="golang:1.18-buster"
+runtime_image="ubuntu:latest"
 
 [builders."exec:go"]
 enabled = true

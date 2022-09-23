@@ -3,7 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
+	"os"
+	"os/user"
+	"reflect"
 	"time"
 
 	"github.com/spf13/viper"
@@ -26,6 +30,8 @@ func runTipset(runenv *runtime.RunEnv) error {
 		enrolledState = sync.State("enrolled")
 		readyState    = sync.State("ready")
 		releasedState = sync.State("released")
+
+		bootstrapperAddr = sync.NewTopic("bootstrap", reflect.TypeOf(""))
 	)
 
 	rand.Seed(time.Now().UnixNano())
@@ -53,19 +59,46 @@ func runTipset(runenv *runtime.RunEnv) error {
 	port := rand.Int()%1000 + 8712
 
 	viper.Set("p2p.listeningAddrs", fmt.Sprintf("/ip4/%s/udp/%d/quic", ip.String(), port))
+	viper.Set("p2p.bootstartPeers", []string{})
 
-	node, err := iNode.NewNode(ctx)
-	if err != nil {
+	usr, _ := user.Current()
+	dir := usr.HomeDir
+	dir = fmt.Sprintf("%s/.didem", dir)
+
+	if err := os.MkdirAll(dir, 0644); err != nil {
 		return err
 	}
 
-	go node.ListenAndServe()
-	defer node.Stop()
+	if err := ioutil.WriteFile(fmt.Sprintf("%s/identities.yaml", dir), []byte{}, 0600); err != nil {
+		return err
+	}
+
+	if err := ioutil.WriteFile(fmt.Sprintf("%s/didem.yaml", dir), []byte{}, 0600); err != nil {
+		return err
+	}
+
+	var node *iNode.Node
 
 	// if we're the first instance to signal, we'll become the LEADER.
 	if seq == 1 {
 		runenv.RecordMessage("i'm the leader.")
 		numFollowers := runenv.TestInstanceCount - 1
+
+		node, err = iNode.NewNode(ctx)
+		if err != nil {
+			return err
+		}
+
+		go node.ListenAndServe()
+		defer node.Stop()
+
+		h := node.P2P().Host()
+
+		bootAddr := fmt.Sprintf("%s/p2p/%s", h.Addrs()[0].String(), h.ID().String())
+
+		client.Publish(ctx, bootstrapperAddr, bootAddr)
+
+		runenv.RecordMessage("bootstrap addr %s", bootAddr)
 
 		// let's wait for the followers to signal.
 		runenv.RecordMessage("waiting for %d instances to become ready", numFollowers)
@@ -84,6 +117,22 @@ func runTipset(runenv *runtime.RunEnv) error {
 		// signal on the 'released' state.
 		client.MustSignalEntry(ctx, releasedState)
 		return nil
+	} else {
+		ch := make(chan string)
+		client.MustSubscribe(ctx, bootstrapperAddr, ch)
+		peer := <-ch
+
+		runenv.RecordMessage("got bootstrap peer addr %s", peer)
+
+		viper.Set("p2p.bootstartPeers", []string{peer})
+
+		node, err = iNode.NewNode(ctx)
+		if err != nil {
+			return err
+		}
+
+		go node.ListenAndServe()
+		defer node.Stop()
 	}
 
 	client.MustSignalEntry(ctx, readyState)

@@ -1804,6 +1804,8 @@ github.com/syndtr/goleveldb v1.0.0/go.mod h1:ZVVdQEZoIme9iO1Ch2Jdy24qqXrMMOU6lpP
 github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07/go.mod h1:kDXzergiv9cbyO7IOYJZWg1U88JhDg3PB6klq9Hg2pA=
 github.com/tcfw/didem v0.0.0-20220921140156-85e868a3c4f5 h1:a7OZK/Jy0Qc+E/ojNqtuktAwSjt8EZF/K/gXuEcK14s=
 github.com/tcfw/didem v0.0.0-20220921140156-85e868a3c4f5/go.mod h1:MIgo07l7ZDeXA3WI8o0nun27/xKFpRCHT+05LXRWmeU=
+github.com/tcfw/didem v0.0.0-20220922121319-68c85773e3f3 h1:vtG7KyqhNC2zVc/2kBelMWqS0hs/0/eNPPh5TXBf7mw=
+github.com/tcfw/didem v0.0.0-20220922121319-68c85773e3f3/go.mod h1:wmfEu0CFkTQoIBMYHQEgYzUGrWc548N9kEayjiDEWy4=
 github.com/testground/plan-templates/templates v0.0.0-20200429051153-b24fdc73e401/go.mod h1:MT3F6oeXhaO0bwhclY7dbOxKVfuDuWuO9YHy+TZvgNc=
 github.com/testground/sdk-go v0.2.4/go.mod h1:3ewI3dydDseP7eCO1MHGh+67simvbkcUnguPYssFqiA=
 github.com/testground/sdk-go v0.3.0 h1:tmFRZilWmYW5nHikd4RNN9IBKpvHRsg16MzvWQgYjiE=
