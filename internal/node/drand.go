@@ -5,13 +5,16 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"strings"
+	"time"
 
 	"github.com/drand/drand/chain"
 	"github.com/drand/drand/client"
 	"github.com/drand/drand/client/http"
 	"github.com/drand/drand/log"
 	pubsubClient "github.com/drand/drand/lp2p/client"
-	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/multiformats/go-multiaddr"
+	dnsaddr "github.com/multiformats/go-multiaddr-dns"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/tcfw/didem/internal/utils/logging"
@@ -34,13 +37,19 @@ var (
 	}`
 
 	drandHash, _ = hex.DecodeString("8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce")
+
+	drandGSBootstrapPeers = []string{
+		"/dnsaddr/api.drand.sh",
+		"/dnsaddr/api2.drand.sh",
+		"/dnsaddr/api3.drand.sh",
+	}
 )
 
 const (
 	nthTick = 10 //10*30s=ever 5 minutes
 )
 
-func newDrandClient(ps *pubsub.PubSub) (client.Client, error) {
+func newDrandClient(h *p2pHost, raw bool) (client.Client, error) {
 	logger := log.NewKitLoggerFrom(log.LoggerTo(logging.Entry().WithField("component", "drand").WriterLevel(logrus.DebugLevel)))
 
 	cinfo, err := chain.InfoFromJSON(strings.NewReader(drandChainInfo))
@@ -48,14 +57,49 @@ func newDrandClient(ps *pubsub.PubSub) (client.Client, error) {
 		return nil, errors.Wrap(err, "reading chain info")
 	}
 
-	logging.Entry().Debugf("drand chain info %+v", cinfo)
-
-	c, err := client.New(
+	opts := []client.Option{
 		client.WithChainInfo(cinfo),
 		client.WithAutoWatch(),
 		client.WithLogger(logger),
-		pubsubClient.WithPubsub(ps),
-		client.From(http.ForURLs(urls, drandHash)...),
+		pubsubClient.WithPubsub(h.pubsub),
+	}
+
+	if raw {
+		opts = append(opts, client.From(http.ForURLs(urls, drandHash)...))
+	} else {
+		logging.Entry().Warn("pubsub beacon source is experimental")
+
+		for _, p := range drandGSBootstrapPeers {
+			go func(p string) {
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+
+				mas, err := dnsaddr.Resolve(ctx, multiaddr.StringCast(p))
+				if err != nil {
+					logging.WithError(err).Error(err)
+					return
+				}
+
+				for _, ma := range mas {
+					pi, err := peer.AddrInfoFromP2pAddr(ma)
+					if err != nil {
+						logging.WithError(err).Error(err)
+						return
+					}
+
+					h.connMgr.TagPeer(pi.ID, "drand", 0)
+
+					if err := h.Connect(context.Background(), *pi); err != nil {
+						logging.WithError(err).Error(err)
+						return
+					}
+				}
+			}(p)
+		}
+	}
+
+	c, err := client.New(
+		opts...,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "constructing drand client")
@@ -68,16 +112,57 @@ func newDrandClient(ps *pubsub.PubSub) (client.Client, error) {
 
 func (n *Node) RandomSource() <-chan int64 {
 	dstCh := make(chan int64)
-	srcCh := make(<-chan client.Result)
+	srcCh := make(chan client.Result)
 
-	if n.drand == nil {
-		logging.Entry().Fatal("network beacon source not implemented yet")
+	if n.drand != nil {
+		logging.Entry().Debug("Using drand as beacon source")
+
+		go func() {
+			for b := range n.drand.Watch(context.Background()) {
+				srcCh <- b
+			}
+		}()
+		// } else {
+		// 	logging.Entry().Warn("Pubsub drand beacons are experimental")
+
+		// 	go func() {
+		// 		pubsubTopic := fmt.Sprintf("/drand/pubsub/v0.0.0/%s", hex.EncodeToString(drandHash))
+
+		// 		t, err := n.p2p.pubsub.Join(pubsubTopic)
+		// 		if err != nil {
+		// 			logging.WithError(err).Error("getting drand topic")
+		// 			return
+		// 		}
+
+		// 		sub, err := t.Subscribe()
+		// 		if err != nil {
+		// 			logging.WithError(err).Error("subbing to drand")
+		// 		}
+
+		// 		for {
+		// 			msg, err := sub.Next(context.Background())
+		// 			if err != nil {
+		// 				logging.WithError(err).Error("pubsub drand msg")
+		// 			}
+
+		// 			var rand drand.PublicRandResponse
+		// 			err = proto.Unmarshal(msg.Data, &rand)
+		// 			if err != nil {
+		// 				logging.WithError(err).Warn("gossip client", "unmarshal random error", "err", err)
+		// 				continue
+		// 			}
+
+		// 			logging.Entry().Warn("got successful pubsub drand beacon")
+
+		// 			srcCh <- &client.RandomData{
+		// 				Rnd:               rand.Round,
+		// 				Random:            rand.Randomness,
+		// 				Sig:               rand.Signature,
+		// 				PreviousSignature: rand.PreviousSignature,
+		// 			}
+		// 		}
+		// 	}()
 	}
-	//TODO(tcfw) support random beacon from pubsub directly
-
-	logging.Entry().Debug("Using drand as beacon source")
-
-	srcCh = n.drand.Watch(context.Background())
 
 	go func() {
 		logging.Entry().Debug("starting random source")

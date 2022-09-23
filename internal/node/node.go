@@ -91,13 +91,11 @@ func NewNode(ctx context.Context, opts ...NodeOption) (*Node, error) {
 
 	go n.watchEvents()
 
-	if cfg.RawRandomSource {
-		drs, err := newDrandClient(n.p2p.pubsub)
-		if err != nil {
-			return nil, errors.Wrap(err, "constructing randomness source")
-		}
-		n.drand = drs
+	drs, err := newDrandClient(n.p2p, cfg.RawRandomSource)
+	if err != nil {
+		return nil, errors.Wrap(err, "constructing randomness source")
 	}
+	n.drand = drs
 
 	if err := n.setupStreamHandlers(); err != nil {
 		return nil, errors.Wrap(err, "attaching stream handlers")

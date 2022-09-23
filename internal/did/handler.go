@@ -99,7 +99,16 @@ func (h *Handler) Start() error {
 	}
 
 	for {
-		peers = h.n.P2P().Peers()
+		cm_peers := h.n.P2P().Peers()
+
+		//filter peers with drand tags since they won't implement the didem protocols
+		for _, p := range cm_peers {
+			info := h.n.P2P().Host().ConnManager().GetTagInfo(p)
+			if _, ok := info.Tags["drand"]; !ok {
+				peers = append(peers, p)
+			}
+		}
+
 		if len(peers) < requiredPeers {
 			d := bo.Duration()
 			logging.Entry().
