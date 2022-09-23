@@ -1,0 +1,17 @@
+# Chains
+
+## How to use 
+
+Add the base64 encoded msgpack chain info into your ~/.didem/didem.yaml file in `.chain.genesis` 
+
+Example
+```yaml
+p2p:
+chain:
+  key: z4fN...
+  genesis: z2TcZXA8mABVD2DkuueHgNnfWkvrsEpj563DTXyK38Zn6dTTyQJtdiG6kR8gqmdiMdsSPxiJxR6dWiqakvZF7KxVdi7siefaX8k4bskMkQ8pbWNcUJZPBy3yBwPscuEEJrpkx8vhnn6PQHRs37i92aA3L4Sd2r7gfKtNRxHTnAsydjSpdN3FXPtLGVy7JLuFBqupLqxuTeQBfU8Z6qDnCQhkScbQJXbNfmeMZmunZegbw8b3oUo3SJ4NaHEUWrHmcnBS2jMpSQseYnRZTm1amZcfaBZmHdDvNjA8BNJNxeb9jB2MaV7nfKSr7mNyCfcHwSY3Pn2oaPSthsBaxoBycR1YsGiEhFgUC4X2Yw44KdTArbjSXdsCVRAsLpxc8CtxvJNQN3aoXob6HhzBSHhoBm31anDFejAJQtfdBox8mBjubVtErLRJ5PnhEoTCGo1De5un4JzKqeSKppzncJ2FCW98pZKvRXXcz5ehfs1UfZHafn9rfrpJ5RA6gDkNEqLq9qGMhh64y96trqJTbAArPQWWojRp2eo5UUDvt7sYj1nHmfJvpy17zrvYB1ATnwcb3bxd36MH4zo2CYCmrgiqDcHPFqJzgPwtdArUvEMYR7FtaSb9dkRL77Kzi4xht75gdBEj6MYPHf2Pyoca4shfzEjqtiAcwmfCVep34ppJNPi68d8vpvj3vfrwkZtTAjR5MPkuu44cPTTrd9HxBNWoHKxis8FNwbH9Stb6kPQZHc1XYx2XqcqpwRzvKeiJnGsTHrr...
+```
+
+## Chains
+
+- Testnet: ./testnet
