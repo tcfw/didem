@@ -5,7 +5,7 @@ go 1.18
 // replace github.com/tcfw/didem => ../../../../../../
 
 require (
-	github.com/tcfw/didem v0.0.0-20220922121319-68c85773e3f3
+	github.com/tcfw/didem v0.0.0-20220922123839-0ce105fd3a92
 	github.com/testground/sdk-go v0.3.0
 )
 

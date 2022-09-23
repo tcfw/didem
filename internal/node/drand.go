@@ -44,8 +44,8 @@ func newDrandClient(ps *pubsub.PubSub) (client.Client, error) {
 
 	c, err := client.New(
 		client.WithChainInfo(cinfo),
-		pubsubClient.WithPubsub(ps),
 		client.WithLogger(logger),
+		pubsubClient.WithPubsub(ps),
 		client.From(http.ForURLs(urls, cinfo.Hash())...),
 	)
 	if err != nil {

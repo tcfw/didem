@@ -182,7 +182,7 @@ func (h *Handler) askForTip(ctx context.Context, peers []peer.ID) (map[string]in
 
 				t, err := h.ReqTip(ctx, p)
 				if err != nil {
-					logging.WithError(err).Error("requesting tip")
+					logging.WithError(err).WithField("peer", p.String()).Error("requesting tip")
 					continue
 				}
 
