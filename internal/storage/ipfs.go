@@ -13,7 +13,6 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 
 	"github.com/cockroachdb/pebble"
 	"github.com/ipfs/go-cid"
@@ -488,7 +487,7 @@ func (s *IPFSStorage) ApplyTx(ctx context.Context, id tx.TxID, t *tx.Tx) (err er
 func (s *IPFSStorage) indexTxNode(b *pebble.Batch, ntx *tx.Tx, id tx.TxID) error {
 	c := ntx.Data.(*tx.Node)
 
-	logging.Entry().WithFields(logrus.Fields{
+	logging.Entry().WithFields(logging.Fields{
 		"NID":    c.Id,
 		"Action": ntx.Action,
 	}).Debug("adding Node")
@@ -508,7 +507,7 @@ func (s *IPFSStorage) indexTxNode(b *pebble.Batch, ntx *tx.Tx, id tx.TxID) error
 func (s *IPFSStorage) indexTxDID(b *pebble.Batch, dtx *tx.Tx, id tx.TxID) error {
 	c := dtx.Data.(*tx.DID)
 
-	logging.Entry().WithFields(logrus.Fields{
+	logging.Entry().WithFields(logging.Fields{
 		"DID":    c.Document.ID,
 		"Action": dtx.Action,
 	}).Debug("adding DID")

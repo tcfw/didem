@@ -12,7 +12,6 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/tcfw/didem/pkg/cryptography"
 	"github.com/tcfw/didem/pkg/storage"
@@ -84,7 +83,7 @@ func NewConsensus(h host.Host, p *pubsub.PubSub, opts ...Option) (*Consensus, er
 		return nil, errors.Wrap(err, "fetching last applied block")
 	}
 	if b != nil {
-		logging.Entry().WithFields(logrus.Fields{
+		logging.Entry().WithFields(logging.Fields{
 			"Height": b.Height,
 			"Parent": b.Parent.String(),
 			"Block":  b.ID.String(),
@@ -249,7 +248,7 @@ func (c *Consensus) StartRound(inc bool) error {
 		c.propsalState.Block = cid.Undef
 	}
 
-	logging.Entry().WithFields(logrus.Fields{
+	logging.Entry().WithFields(logging.Fields{
 		"Height":   c.propsalState.Height,
 		"Round":    c.propsalState.Round,
 		"Proposer": c.propsalState.AmProposer,
@@ -423,7 +422,7 @@ func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
 		return
 	}
 
-	logging.Entry().WithFields(logrus.Fields{
+	logging.Entry().WithFields(logging.Fields{
 		"Height": msg.Height,
 		"Round":  msg.Round,
 	}).Info("new round starting")
@@ -443,7 +442,7 @@ func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
 
 	restartTimer(c.timerPropose, timeoutPropose)
 
-	logging.Entry().WithFields(logrus.Fields{
+	logging.Entry().WithFields(logging.Fields{
 		"Height": msg.Height,
 		"Round":  msg.Round,
 	}).Info("waiting for proposal to start")
@@ -461,7 +460,7 @@ func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
 		return
 	}
 
-	logging.Entry().WithFields(logrus.Fields{
+	logging.Entry().WithFields(logging.Fields{
 		"Height": msg.Height,
 		"Round":  msg.Round,
 		"Value":  msg.BlockID,
@@ -645,7 +644,7 @@ func (c *Consensus) onTimeoutProposal() {
 		return
 	}
 
-	logging.Entry().WithFields(logrus.Fields{
+	logging.Entry().WithFields(logging.Fields{
 		"Height": c.propsalState.Height,
 		"Round":  c.propsalState.Round,
 	}).Info("timing out proposal")
@@ -668,7 +667,7 @@ func (c *Consensus) onTimeoutPrevote() {
 		return
 	}
 
-	logging.Entry().WithFields(logrus.Fields{
+	logging.Entry().WithFields(logging.Fields{
 		"Height": c.propsalState.Height,
 		"Round":  c.propsalState.Round,
 	}).Info("timing out prevote")
@@ -700,7 +699,7 @@ func (c *Consensus) onTimeoutBlock() {
 		return
 	}
 
-	logging.Entry().WithFields(logrus.Fields{
+	logging.Entry().WithFields(logging.Fields{
 		"Height": c.propsalState.Height,
 		"Round":  c.propsalState.Round,
 	}).Info("timing out block")
@@ -820,6 +819,14 @@ func (c *Consensus) sendMsg(msg interface{}) error {
 	case *ConsensusMsgBlock:
 		wrapper.Type = ConsensusMsgTypeBlock
 		wrapper.Block = msg
+	}
+
+	if c.signingKey == nil {
+		logging.Entry().WithFields(logging.Fields{
+			"Type": wrapper.Type,
+		}).Warn("unable to send msg without signing key")
+
+		return nil
 	}
 
 	hl := &Msg{

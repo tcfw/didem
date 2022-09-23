@@ -51,14 +51,18 @@ func NewHandler(n node.Node) *Handler {
 
 	validator := storage.NewTxValidator(n.Storage())
 
-	_, keyRaw, err := multibase.Decode(chainCfg.Key)
-	if err != nil {
-		logging.WithError(err).Fatal("unable to decode chain key")
-	}
+	var key *cryptography.Bls12381PrivateKey
 
-	key, err := cryptography.NewBls12391PrivateKeyFromBytes(keyRaw)
-	if err != nil {
-		logging.WithError(err).Fatal("unable to decode BLS12381 key")
+	if chainCfg.Key != "" {
+		_, keyRaw, err := multibase.Decode(chainCfg.Key)
+		if err != nil {
+			logging.WithError(err).Fatal("unable to decode chain key")
+		}
+
+		key, err = cryptography.NewBls12391PrivateKeyFromBytes(keyRaw)
+		if err != nil {
+			logging.WithError(err).Fatal("unable to decode BLS12381 key")
+		}
 	}
 
 	opts := []consensus.Option{

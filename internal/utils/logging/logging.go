@@ -6,6 +6,8 @@ var (
 	logger *logrus.Entry
 )
 
+type Fields = logrus.Fields
+
 func SetLevel(l logrus.Level) {
 	logger.Logger.SetLevel(l)
 }

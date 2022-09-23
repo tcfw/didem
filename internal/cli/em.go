@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	apipb "github.com/tcfw/didem/api"
@@ -123,7 +122,7 @@ func runEmSend(cmd *cobra.Command, args []string) {
 	}
 
 	if viper.GetBool("verbose") {
-		logging.Entry().WithFields(logrus.Fields{
+		logging.Entry().WithFields(logging.Fields{
 			"to":      req.To,
 			"headers": req.Headers,
 			"from":    req.From,
