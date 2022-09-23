@@ -119,7 +119,7 @@ func (h *Handler) Start() error {
 
 	vPeers := peers[:requiredPeers]
 
-	logging.Entry().Info("got enough peers to check tip")
+	logging.Entry().Debug("got enough peers to check tip")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -140,25 +140,34 @@ func (h *Handler) Start() error {
 		tip = t
 	}
 
-	logging.Entry().Info("Got tip as ", tip)
+	logging.Entry().Debug("Got tip as ", tip)
 
 	if tip == h.consensus.State().Block.String() {
 		logging.Entry().Info("Starting consensus as matching tip")
-		return h.consensus.Start()
+
+		if err := h.consensus.Start(); err != nil {
+			return errors.Wrap(err, "starting consensus")
+		}
+
+		return nil
 	}
 
 	bcid, err := cid.Parse(tip)
 	if err != nil {
-		logging.WithError(err).Info("parsing chain tip cid")
-		return h.consensus.Start()
+		logging.WithError(err).Error("parsing chain tip cid")
+		return err
 	}
 
 	if err := h.validator.ApplyFromTip(context.Background(), storage.BlockID(bcid)); err != nil {
-		logging.WithError(err).Info("applying updated tip")
-		return h.consensus.Start()
+		logging.WithError(err).Error("applying updated tip")
+		return err
 	}
 
 	logging.Entry().Info("Finished checking tip")
+
+	if err := h.consensus.Start(); err != nil {
+		return errors.Wrap(err, "starting consensus")
+	}
 
 	return nil
 }

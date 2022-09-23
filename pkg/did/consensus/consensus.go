@@ -113,7 +113,13 @@ func (c *Consensus) Start() error {
 		return errors.Wrap(err, "watching msgs")
 	}
 
-	return c.subscribeTx()
+	if err := c.subscribeTx(); err != nil {
+		return errors.Wrap(err, "watching tx")
+	}
+
+	logging.Entry().Info("successfully started consensus")
+
+	return nil
 }
 
 func (c *Consensus) State() *State {
@@ -252,7 +258,7 @@ func (c *Consensus) StartRound(inc bool) error {
 		"Height":   c.propsalState.Height,
 		"Round":    c.propsalState.Round,
 		"Proposer": c.propsalState.AmProposer,
-	}).Info("starting a new round")
+	}).Info("starting new round")
 
 	if !c.propsalState.AmProposer {
 		if c.propsalState.Block == cid.Undef && c.propsalState.Round > 1 {
