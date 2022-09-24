@@ -26,7 +26,8 @@ type State struct {
 	Block       cid.Cid
 	ParentBlock cid.Cid
 
-	f uint64
+	f  uint64
+	mu sync.Mutex
 
 	voteMu     sync.Mutex
 	PreVotes   map[peer.ID]*Msg
@@ -43,8 +44,15 @@ type State struct {
 	sbOnce resync.Once
 }
 
+func (s *State) setStep(st Step) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.Step = st
+}
+
 func (s *State) resetOnces() {
-	s.pvOnce = resync.Once{}
-	s.pcOnce = resync.Once{}
-	s.sbOnce = resync.Once{}
+	s.pvOnce.Reset()
+	s.pcOnce.Reset()
+	s.sbOnce.Reset()
 }

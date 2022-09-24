@@ -218,7 +218,7 @@ func (c *Consensus) subscribeTx() error {
 
 func (c *Consensus) watchProposer() {
 	for id := range c.proposer() {
-		c.propsalState.Step = propose
+		c.propsalState.setStep(propose)
 		c.propsalState.Proposer = id
 
 		if err := c.StartRound(false); err != nil {
@@ -237,7 +237,7 @@ func (c *Consensus) StartRound(inc bool) error {
 	c.propsalState.AmProposer = c.propsalState.Proposer == c.id
 	c.propsalState.lockedRound = 0
 	c.propsalState.lockedValue = cid.Undef
-	c.propsalState.Step = propose
+	c.propsalState.setStep(propose)
 	c.propsalState.Height = c.state.Height + 1
 	c.propsalState.PreVotes = make(map[peer.ID]*Msg)
 	c.propsalState.PreCommits = make(map[peer.ID]*Msg)
@@ -247,7 +247,7 @@ func (c *Consensus) StartRound(inc bool) error {
 
 	if inc {
 		c.propsalState.Round++
-		c.propsalState.Step = prevote
+		c.propsalState.setStep(prevote)
 	} else {
 		c.propsalState.Round = 1
 		c.propsalState.Block = cid.Undef
@@ -262,7 +262,7 @@ func (c *Consensus) StartRound(inc bool) error {
 	if !c.propsalState.AmProposer {
 		if c.propsalState.Block == cid.Undef && c.propsalState.Round > 1 {
 			//still waiting for a proposal
-			c.propsalState.Step = propose
+			c.propsalState.setStep(propose)
 		}
 		restartTimer(c.timerPropose, timeoutPropose)
 		return nil
@@ -307,7 +307,7 @@ func (c *Consensus) StartRound(inc bool) error {
 		return errors.Wrap(err, "sending proposal")
 	}
 
-	c.propsalState.Step = prevote
+	c.propsalState.setStep(prevote)
 
 	return nil
 }
@@ -434,16 +434,14 @@ func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
 
 	c.propsalState.lockedRound = 0
 	c.propsalState.lockedValue = cid.Undef
-	c.propsalState.Step = propose
+	c.propsalState.setStep(propose)
 	c.propsalState.Height = msg.Height
 	c.propsalState.Round = msg.Round
 	c.propsalState.PreVotes = make(map[peer.ID]*Msg)
 	c.propsalState.PreCommits = make(map[peer.ID]*Msg)
 	c.propsalState.PreVotesEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
 	c.propsalState.PreCommitsEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
-	c.propsalState.pvOnce.Reset()
-	c.propsalState.pcOnce.Reset()
-	c.propsalState.sbOnce.Reset()
+	c.propsalState.resetOnces()
 
 	restartTimer(c.timerPropose, timeoutPropose)
 
@@ -494,7 +492,7 @@ func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
 		}
 
 		restartTimer(c.timerPrevote, timeoutPrevote)
-		c.propsalState.Step = prevote
+		c.propsalState.setStep(prevote)
 	})
 }
 
@@ -542,7 +540,7 @@ func (c *Consensus) onPreVote(msg *Msg) {
 		c.propsalState.pcOnce.Do(func() {
 			stopTimer(c.timerPrevote)
 
-			c.propsalState.Step = precommit
+			c.propsalState.setStep(precommit)
 			c.propsalState.lockedValue = c.propsalState.Block
 			c.propsalState.lockedRound = c.propsalState.Round
 
@@ -575,7 +573,7 @@ func (c *Consensus) OnPreCommit(msg *Msg) {
 		c.propsalState.sbOnce.Do(func() {
 			stopTimer(c.timerPrecommit)
 
-			c.propsalState.Step = block
+			c.propsalState.setStep(block)
 
 			if c.propsalState.AmProposer {
 				//Give some time for other nodes to collect the evidence
@@ -654,7 +652,7 @@ func (c *Consensus) onTimeoutProposal() {
 		"Round":  c.propsalState.Round,
 	}).Info("timing out proposal")
 
-	c.propsalState.Step = prevote
+	c.propsalState.setStep(prevote)
 	c.propsalState.pvOnce.Do(func() {
 		if err := c.sendVote(VoteTypePreVote, ""); err != nil {
 			logging.Error(err)
@@ -677,7 +675,7 @@ func (c *Consensus) onTimeoutPrevote() {
 		"Round":  c.propsalState.Round,
 	}).Info("timing out prevote")
 
-	c.propsalState.Step = precommit
+	c.propsalState.setStep(precommit)
 
 	c.propsalState.pcOnce.Do(func() {
 		if err := c.sendVote(VoteTypePreCommit, ""); err != nil {
