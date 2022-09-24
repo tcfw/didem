@@ -2,9 +2,13 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/user"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/ipfs/go-cid"
@@ -18,6 +22,10 @@ import (
 	"github.com/tcfw/didem/pkg/storage"
 	"github.com/tcfw/didem/pkg/tx"
 	"github.com/vmihailenco/msgpack/v5"
+)
+
+var (
+	p2pIDfile = flag.String("id file", "~/.didem/p2p_identity", "p2p identiy file for nodes")
 )
 
 func tempIPFSStorage(ctx context.Context) (*istorage.IPFSStorage, func(), error) {
@@ -45,8 +53,27 @@ func tempIPFSStorage(ctx context.Context) (*istorage.IPFSStorage, func(), error)
 }
 
 func main() {
+	flag.Parse()
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
+
+	// p2pidFile := expandPath(*p2pIDfile)
+
+	// idB, err := ioutil.ReadFile(p2pidFile)
+	// if err != nil {
+	// 	panic(errors.Wrap(err, "reading identity file"))
+	// }
+
+	// p2ppriv, err := crypto.UnmarshalPrivateKey(idB)
+	// if err != nil {
+	// 	panic(errors.Wrap(err, "unmarshaling private key"))
+	// }
+
+	// nid, err := peer.IDFromPrivateKey(p2ppriv)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	config := &storage.GenesisInfo{
 		ChainID: "testnet",
@@ -95,7 +122,7 @@ func main() {
 			Type:    tx.TxType_Node,
 			Action:  tx.TxActionAdd,
 			Data: &tx.Node{
-				Id:  pk.ID,
+				Id:  "12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3",
 				Did: "did:didem:" + pk.ID,
 				Key: []byte(pkmb),
 			},
@@ -166,4 +193,19 @@ func main() {
 	fmt.Printf("SK: %s\n", s)
 
 	fmt.Printf("Genesis Config:\n%s", b64)
+}
+
+func expandPath(path string) string {
+	usr, _ := user.Current()
+	dir := usr.HomeDir
+	if path == "~" {
+		// In case of "~", which won't be caught by the "else if"
+		path = dir
+	} else if strings.HasPrefix(path, "~/") {
+		// Use strings.HasPrefix so we don't match paths like
+		// "/something/~/something/"
+		path = filepath.Join(dir, path[2:])
+	}
+
+	return path
 }

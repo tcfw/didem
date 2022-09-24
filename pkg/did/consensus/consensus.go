@@ -10,6 +10,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/multiformats/go-multibase"
 	"github.com/pkg/errors"
 	"github.com/tcfw/didem/internal/utils/logging"
 	"github.com/tcfw/didem/pkg/cryptography"
@@ -146,7 +147,14 @@ func (c *Consensus) proposer() <-chan peer.ID {
 			mn := m.Mod(m, big.NewInt(int64(len(nodes)))).Int64()
 
 			p := nodes[mn]
-			bCh <- peer.ID(p)
+
+			id, err := peer.IDFromString(p)
+			if err != nil {
+				logging.WithError(err).Error("casting proposer id")
+				continue
+			}
+
+			bCh <- id
 		}
 	}()
 
@@ -218,8 +226,9 @@ func (c *Consensus) subscribeTx() error {
 
 func (c *Consensus) watchProposer() {
 	for id := range c.proposer() {
+
 		c.propsalState.setStep(propose)
-		c.propsalState.Proposer = id
+		c.state.Proposer = id
 
 		if err := c.StartRound(false); err != nil {
 			logging.WithError(err).Error("starting round")
@@ -234,7 +243,7 @@ func (c *Consensus) watchProposer() {
 // the node will attempt to create a new proposal/block and distribute to all other
 // nodes
 func (c *Consensus) StartRound(inc bool) error {
-	c.propsalState.AmProposer = c.propsalState.Proposer == c.id
+	c.propsalState.AmProposer = c.state.Proposer == peer.ID(c.id.String())
 	c.propsalState.lockedRound = 0
 	c.propsalState.lockedValue = cid.Undef
 	c.propsalState.setStep(propose)
@@ -346,7 +355,13 @@ func (c *Consensus) OnMsg(msg *Msg) {
 
 	sd = append(sd, signData...)
 
-	pk, err := cryptography.NewBls12381PublicKey(node.Key)
+	_, rawPk, err := multibase.Decode(string(node.Key))
+	if err != nil {
+		logging.WithError(err).Error("decoding node key")
+		return
+	}
+
+	pk, err := cryptography.NewBls12381PublicKey(rawPk)
 	if err != nil {
 		logging.WithError(err).Error("unmarshalling node pk")
 	}
@@ -392,7 +407,7 @@ func (c *Consensus) onTx(msg *TxMsg, from peer.ID) {
 func (c *Consensus) onVote(msg *Msg, from peer.ID) {
 	vote := msg.Consensus.Vote
 
-	if from == c.propsalState.Proposer {
+	if from == c.state.Proposer {
 		logging.Error("ignoring vote from proposer")
 		return
 	} else if vote.Height != c.propsalState.Height ||
@@ -422,7 +437,7 @@ func (c *Consensus) onVote(msg *Msg, from peer.ID) {
 // onNewRound picks up on the propser starting a new round of consensus and populates
 // the propsal state based of the proposers future round values
 func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
-	if from != c.propsalState.Proposer {
+	if from != c.state.Proposer {
 		logging.Error("ignorining new round not from current proposer")
 		return
 	}
@@ -455,7 +470,7 @@ func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
 // validates the propsed block. If the block is found to be valid, a vote
 // is sent
 func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
-	if from != c.propsalState.Proposer {
+	if from != c.state.Proposer {
 		logging.Error("ignorining proposal not from current proposer")
 		return
 	} else if c.propsalState.Step != propose {
@@ -595,7 +610,7 @@ func (c *Consensus) OnPreCommit(msg *Msg) {
 
 // onEvidence collects evidence from the proposer node
 func (c *Consensus) onEvidence(msg *ConsensusMsgEvidence, from peer.ID) {
-	if from != c.propsalState.Proposer {
+	if from != c.state.Proposer {
 		return
 	}
 
@@ -613,7 +628,7 @@ func (c *Consensus) onEvidence(msg *ConsensusMsgEvidence, from peer.ID) {
 // onBlock collects block completion messages sent by the propser and
 // updates the final current consensus state
 func (c *Consensus) onBlock(msg *ConsensusMsgBlock, from peer.ID) {
-	if from != c.propsalState.Proposer ||
+	if from != c.state.Proposer ||
 		c.propsalState.Step != block ||
 		msg.CID != c.propsalState.lockedValue.String() ||
 		c.propsalState.lockedRound != msg.Round {
