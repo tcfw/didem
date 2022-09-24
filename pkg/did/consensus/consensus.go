@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"math/big"
-	"sync"
 	"time"
 
 	"github.com/ipfs/go-cid"
@@ -442,9 +441,9 @@ func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
 	c.propsalState.PreCommits = make(map[peer.ID]*Msg)
 	c.propsalState.PreVotesEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
 	c.propsalState.PreCommitsEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
-	c.propsalState.pvOnce = sync.Once{}
-	c.propsalState.pcOnce = sync.Once{}
-	c.propsalState.sbOnce = sync.Once{}
+	c.propsalState.pvOnce.Reset()
+	c.propsalState.pcOnce.Reset()
+	c.propsalState.sbOnce.Reset()
 
 	restartTimer(c.timerPropose, timeoutPropose)
 

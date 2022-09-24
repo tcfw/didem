@@ -1,0 +1,682 @@
+2022/09/24 09:38:17 proto: duplicate proto type registered: pb.NoiseHandshakePayload
+time="2022-09-24T09:38:17+10:00" level=info msg="Booting IPFS storage" repo=/home/tom/.didem/data
+2022/09/24 09:38:18 failed to sufficiently increase receive buffer size (was: 208 kiB, wanted: 2048 kiB, got: 416 kiB). See https://github.com/lucas-clemente/quic-go/wiki/UDP-Receive-Buffer-Size for details.
+time="2022-09-24T09:38:18+10:00" level=debug msg="using existing Ed25519 identity"
+time="2022-09-24T09:38:18+10:00" level=warning msg="pubsub beacon source is experimental"
+time="2022-09-24T09:38:18+10:00" level=info msg="drand client initiated successfully"
+time="2022-09-24T09:38:18+10:00" level=debug msg="Using drand as beacon source"
+time="2022-09-24T09:38:18+10:00" level=info msg="loaded last block as" Block=bafkreiaavj76dpkjhdgj5fc7fx7bwd3hx5kbscwhjk3i6it7lhbsgqyxkq Height=0 Parent=b
+time="2022-09-24T09:38:18+10:00" level=debug msg="bootstrapping P2P host"
+time="2022-09-24T09:38:18+10:00" level=info msg="waiting for more peers" have=0 need=1 waiting=5s
+time="2022-09-24T09:38:18+10:00" level=debug msg="starting random source"
+time="2022-09-24T09:38:18+10:00" level=debug msg="unknown event event.EvtLocalProtocolsUpdated" event="{[/tcfw/did/0.0.1] []}"
+time="2022-09-24T09:38:18+10:00" level=debug msg="unknown event event.EvtLocalProtocolsUpdated" event="{[/did/comm/0.0.1] []}"
+time="2022-09-24T09:38:18+10:00" level=info msg="updated reachability" action=added addr=/ip4/192.168.1.101/udp/8712/quic
+time="2022-09-24T09:38:18+10:00" level=info msg="updated reachability" action=added addr=/ip4/127.0.0.1/udp/8712/quic
+time="2022-09-24T09:38:18+10:00" level=info msg="updated reachability" action=added addr="/ip6/2403:5807:72:9e01::4ff/udp/8712/quic"
+time="2022-09-24T09:38:18+10:00" level=info msg="updated reachability" action=added addr="/ip6/::1/udp/8712/quic"
+time="2022-09-24T09:38:18+10:00" level=debug msg="unknown event event.EvtPeerConnectednessChanged" event="{12D3KooWBaKMRyqvN4VKKggSW9up159ugtEYYSTry1wtZKEzyHcX Connected}"
+time="2022-09-24T09:38:18+10:00" level=debug msg="unknown event event.EvtPeerIdentificationCompleted" event="{12D3KooWBaKMRyqvN4VKKggSW9up159ugtEYYSTry1wtZKEzyHcX}"
+time="2022-09-24T09:38:18+10:00" level=debug msg="Connection established with bootstrap peer:{12D3KooWBaKMRyqvN4VKKggSW9up159ugtEYYSTry1wtZKEzyHcX: [/dnsaddr/bootstrap.didem.tcfw.com.au]}"
+time="2022-09-24T09:38:18+10:00" level=info msg="Starting CLI API on port 8081"
+time="2022-09-24T09:38:18+10:00" level=info msg="Starting listening" addrs="[/ip4/192.168.1.101/udp/8712/quic /ip4/127.0.0.1/udp/8712/quic /ip6/2403:5807:72:9e01::4ff/udp/8712/quic /ip6/::1/udp/8712/quic]" id=12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3
+time="2022-09-24T09:38:19+10:00" level=debug msg="unknown event event.EvtPeerConnectednessChanged" event="{12D3KooWRaZ5xYCRL3Aw8QTDgzqvcZJ7RyXRd6Ao2gGXyazD5hVF Connected}"
+time="2022-09-24T09:38:19+10:00" level=debug msg="unknown event event.EvtPeerIdentificationCompleted" event="{12D3KooWRaZ5xYCRL3Aw8QTDgzqvcZJ7RyXRd6Ao2gGXyazD5hVF}"
+time="2022-09-24T09:38:19+10:00" level=debug msg="unknown event event.EvtPeerConnectednessChanged" event="{12D3KooWBhAkxEn3XE7QanogjGrhyKBMC5GeM3JUTqz54HqS6VHG Connected}"
+time="2022-09-24T09:38:19+10:00" level=debug msg="unknown event event.EvtPeerIdentificationCompleted" event="{12D3KooWBhAkxEn3XE7QanogjGrhyKBMC5GeM3JUTqz54HqS6VHG}"
+time="2022-09-24T09:38:19+10:00" level=debug msg="unknown event event.EvtPeerConnectednessChanged" event="{12D3KooWRUaVDaw5Kt2zVGEkSnXep3D9aiQzyktbS1BHCbfe7qbW Connected}"
+time="2022-09-24T09:38:19+10:00" level=debug msg="unknown event event.EvtPeerIdentificationCompleted" event="{12D3KooWRUaVDaw5Kt2zVGEkSnXep3D9aiQzyktbS1BHCbfe7qbW}"
+time="2022-09-24T09:38:19+10:00" level=debug msg="unknown event event.EvtPeerConnectednessChanged" event="{12D3KooWFxHBhBYtmXPBVzekG8hcJkaLpKVbsXisJ1B9C83qLkxy Connected}"
+time="2022-09-24T09:38:19+10:00" level=debug msg="unknown event event.EvtPeerIdentificationCompleted" event="{12D3KooWFxHBhBYtmXPBVzekG8hcJkaLpKVbsXisJ1B9C83qLkxy}"
+time="2022-09-24T09:38:20+10:00" level=debug msg="unknown event event.EvtPeerConnectednessChanged" event="{12D3KooWQqDi3D3KLfDjWATQUUE4o5aSshwBFi9JM36wqEPMPD5y Connected}"
+time="2022-09-24T09:38:20+10:00" level=debug msg="unknown event event.EvtPeerIdentificationCompleted" event="{12D3KooWQqDi3D3KLfDjWATQUUE4o5aSshwBFi9JM36wqEPMPD5y}"
+time="2022-09-24T09:38:20+10:00" level=debug msg="unknown event event.EvtPeerConnectednessChanged" event="{12D3KooWCy7rp8TKsi2tmdK1kzQYNgqKVDtgzwcRyiqTZW8ykNxz Connected}"
+time="2022-09-24T09:38:21+10:00" level=debug msg="unknown event event.EvtPeerIdentificationCompleted" event="{12D3KooWCy7rp8TKsi2tmdK1kzQYNgqKVDtgzwcRyiqTZW8ykNxz}"
+time="2022-09-24T09:38:21+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:38:21+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:38:21+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:38:23+10:00" level=debug msg="got enough peers to check tip"
+time="2022-09-24T09:38:23+10:00" level=debug msg="asking peer for tip" peer=12D3KooWBaKMRyqvN4VKKggSW9up159ugtEYYSTry1wtZKEzyHcX
+time="2022-09-24T09:38:23+10:00" level=debug msg="Got tip as bafkreiaavj76dpkjhdgj5fc7fx7bwd3hx5kbscwhjk3i6it7lhbsgqyxkq"
+time="2022-09-24T09:38:23+10:00" level=info msg="Starting consensus as matching tip"
+time="2022-09-24T09:38:23+10:00" level=info msg="successfully started consensus"
+time="2022-09-24T09:38:28+10:00" level=info msg="updated reachability" action=added addr=/ip4/203.129.23.4/udp/65349/quic
+time="2022-09-24T09:38:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T09:39:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T09:39:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:39:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:39:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:39:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T09:40:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T09:40:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:40:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:40:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:40:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T09:41:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T09:41:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:41:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:41:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:41:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T09:42:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T09:42:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T09:42:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:42:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:42:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:42:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T09:43:01+10:00" level=info msg="timing out proposal" Height=1 Round=1
+time="2022-09-24T09:43:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00a49f0e0 2022-09-24 09:43:01.148788307 +1000 AEST m=+283.183527061 [168 177 45 104 67 140 60 50 118 239 18 157 48 26 49 133 128 116 209 254 82 91 171 191 204 180 97 11 61 188 133 193 89 254 108 85 80 154 67 174 21 228 106 110 68 139 97 212 25 52 206 64 9 80 225 184 196 203 143 214 44 2 234 92 38 6 143 169 109 178 125 254 215 189 80 168 174 54 207 28 27 6 10 95 67 251 244 24 77 89 177 22 68 194 122 51] []}"
+time="2022-09-24T09:43:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T09:43:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:43:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:43:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:43:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T09:44:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T09:44:01+10:00" level=info msg="timing out prevote" Height=1 Round=1
+time="2022-09-24T09:44:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00c417260 2022-09-24 09:44:01.154879259 +1000 AEST m=+343.189618018 [163 188 237 18 27 7 94 5 42 183 237 133 141 108 234 165 42 191 171 165 253 216 0 147 120 87 11 140 196 223 154 61 42 63 121 165 241 3 44 245 223 113 139 118 29 110 216 83 20 147 44 42 62 167 31 131 105 157 224 49 134 37 74 146 236 36 100 62 160 78 97 230 4 67 239 233 224 215 40 210 153 158 176 87 176 100 225 96 35 250 179 49 148 132 7 13] []}"
+time="2022-09-24T09:44:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:44:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:44:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:44:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T09:45:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T09:45:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T09:45:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:45:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:45:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:45:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T09:46:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T09:46:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc009aba4e0 2022-09-24 09:46:01.15997243 +1000 AEST m=+463.194711238 [132 252 30 154 161 197 92 111 215 244 107 141 112 249 248 133 28 232 206 3 204 103 80 118 27 140 202 26 209 154 168 211 114 125 159 155 133 250 74 10 152 142 196 207 86 38 248 238 21 100 60 242 42 140 104 144 23 209 16 126 193 18 70 23 97 77 56 128 143 204 55 175 62 107 103 204 49 75 13 52 55 92 109 104 87 199 97 63 89 176 40 1 75 230 208 128] []}"
+time="2022-09-24T09:46:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T09:46:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:46:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:46:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:46:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T09:47:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T09:47:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T09:47:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:47:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:47:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:47:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T09:48:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T09:48:01+10:00" level=info msg="timing out proposal" Height=1 Round=1
+time="2022-09-24T09:48:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc0095e9d40 2022-09-24 09:48:01.15373521 +1000 AEST m=+583.188474004 [167 48 143 38 2 218 135 80 240 165 239 227 122 185 142 192 46 124 160 119 27 249 221 149 213 106 112 124 133 109 146 202 24 217 192 206 105 72 167 169 69 21 210 7 134 237 73 124 8 182 227 216 126 46 80 42 114 115 196 247 149 9 125 166 114 91 137 141 31 101 246 253 48 82 4 144 212 16 88 161 111 150 99 67 163 209 137 187 228 241 250 228 47 5 191 195] []}"
+time="2022-09-24T09:48:03+10:00" level=info msg="updated reachability" action=added addr=/ip4/192.168.1.226/udp/8712/quic
+time="2022-09-24T09:48:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:48:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:48:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:48:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T09:49:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T09:49:01+10:00" level=info msg="timing out prevote" Height=1 Round=1
+time="2022-09-24T09:49:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00d82d230 2022-09-24 09:49:01.160048023 +1000 AEST m=+643.194786830 [168 109 115 142 249 200 45 155 95 184 194 104 101 126 13 166 62 190 14 170 144 161 150 226 98 206 245 157 134 207 52 145 89 129 179 212 153 249 177 230 194 60 176 91 62 27 22 121 2 54 87 198 198 30 60 0 179 156 14 198 141 48 79 193 195 90 83 13 0 255 204 18 197 118 97 232 52 168 211 225 51 209 57 225 120 15 229 183 94 131 203 228 98 58 94 150] []}"
+time="2022-09-24T09:49:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:49:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:49:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:49:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T09:49:53+10:00" level=info msg="updated reachability" action=added addr=/ip4/192.168.1.101/udp/8712/quic
+time="2022-09-24T09:50:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T09:50:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T09:50:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:50:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:50:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:50:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T09:51:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T09:51:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T09:51:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc005d602d0 2022-09-24 09:51:01.170227746 +1000 AEST m=+763.204966550 [146 238 72 224 4 10 115 194 31 68 228 107 12 250 47 14 255 239 109 188 90 114 146 252 41 63 217 40 20 0 143 68 141 210 23 68 20 25 136 211 85 97 25 205 162 133 138 148 22 218 33 23 21 192 60 8 182 246 196 26 21 21 242 25 9 113 253 67 245 216 17 201 177 247 131 162 224 34 236 67 13 18 91 54 57 191 94 50 211 222 254 73 146 222 213 22] []}"
+time="2022-09-24T09:51:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:51:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:51:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:51:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T09:52:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T09:52:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T09:52:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:52:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:52:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:52:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T09:53:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T09:53:01+10:00" level=info msg="timing out proposal" Height=1 Round=1
+time="2022-09-24T09:53:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00379d230 2022-09-24 09:53:01.136906907 +1000 AEST m=+883.171645713 [142 136 241 40 49 198 164 198 149 66 124 244 126 117 198 96 66 117 110 67 25 91 250 142 192 218 228 56 47 250 85 203 230 5 239 88 217 145 12 52 29 84 79 28 89 253 45 230 16 88 51 94 45 134 60 6 82 28 154 156 70 16 43 143 55 167 154 229 105 215 204 255 84 142 77 165 115 38 84 191 79 105 112 72 226 52 17 10 73 200 94 106 255 41 40 27] []}"
+time="2022-09-24T09:53:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:53:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:53:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:53:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T09:54:01+10:00" level=info msg="timing out prevote" Height=1 Round=1
+time="2022-09-24T09:54:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T09:54:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00857a300 2022-09-24 09:54:01.14626628 +1000 AEST m=+943.181005102 [152 242 236 43 185 127 67 233 140 139 209 154 144 206 180 18 203 44 219 45 50 205 126 250 139 190 152 173 125 230 3 55 220 41 198 56 222 92 3 139 71 20 152 252 17 95 121 176 12 115 113 211 245 182 94 52 211 108 127 75 37 5 206 21 24 12 58 182 108 1 229 196 131 35 89 231 48 247 167 76 234 110 158 164 249 9 21 110 223 253 10 170 228 114 212 44] []}"
+time="2022-09-24T09:54:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:54:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:54:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:54:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T09:55:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T09:55:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T09:55:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:55:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:55:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:55:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T09:56:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T09:56:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc004d0dc50 2022-09-24 09:56:01.15622411 +1000 AEST m=+1063.190962952 [150 43 242 159 153 116 198 61 238 92 10 79 62 70 200 228 191 98 207 245 121 201 101 138 26 223 182 193 163 152 119 250 48 56 213 136 64 92 194 50 85 233 190 46 127 239 20 169 13 249 69 212 157 153 77 237 12 234 12 242 29 84 47 71 164 101 157 242 69 255 116 187 204 215 73 143 109 44 189 51 243 40 223 15 25 166 201 86 183 206 131 237 81 179 253 244] []}"
+time="2022-09-24T09:56:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T09:56:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:56:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:56:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:56:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T09:57:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T09:57:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T09:57:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:57:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:57:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:57:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T09:58:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T09:58:01+10:00" level=info msg="timing out proposal" Height=1 Round=1
+time="2022-09-24T09:58:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00d060720 2022-09-24 09:58:01.144579557 +1000 AEST m=+1183.179318367 [149 40 53 166 81 42 179 255 146 239 5 80 53 85 217 136 66 61 48 48 24 13 56 60 106 69 72 225 40 169 241 205 245 139 37 99 90 73 65 100 37 108 216 205 42 197 126 24 16 163 6 147 144 91 19 67 166 94 112 229 138 178 164 47 45 44 35 251 76 227 178 218 53 16 173 226 114 251 52 168 49 225 85 64 83 185 77 218 102 48 165 55 154 104 2 117] []}"
+time="2022-09-24T09:58:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:58:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:58:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:58:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T09:59:01+10:00" level=info msg="timing out prevote" Height=1 Round=1
+time="2022-09-24T09:59:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T09:59:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc0091f9f20 2022-09-24 09:59:01.154071034 +1000 AEST m=+1243.188809869 [142 241 34 34 103 57 17 57 221 117 121 242 159 92 40 71 132 40 9 36 28 227 29 186 249 20 98 232 175 36 45 206 106 224 193 210 185 228 234 123 94 185 167 96 98 109 145 233 15 88 107 138 67 108 8 44 151 86 213 140 36 14 100 40 55 225 175 135 223 239 113 120 250 221 85 190 251 46 193 160 242 203 116 197 151 154 185 102 63 20 41 176 231 137 64 131] []}"
+time="2022-09-24T09:59:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T09:59:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T09:59:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T09:59:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T10:00:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T10:00:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T10:00:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:00:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:00:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:00:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T10:01:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T10:01:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T10:01:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc0093ba5d0 2022-09-24 10:01:01.165199401 +1000 AEST m=+1363.199938237 [149 5 148 153 6 224 115 186 21 149 127 104 241 115 195 27 116 26 66 118 192 143 116 212 249 207 136 215 136 149 82 121 39 91 129 17 100 240 99 104 237 35 160 234 132 54 250 225 21 54 115 59 101 164 114 42 239 13 209 192 179 136 194 107 197 17 209 24 16 166 220 204 203 6 178 47 75 142 148 128 54 13 242 29 124 59 49 244 123 221 131 255 160 3 127 166] []}"
+time="2022-09-24T10:01:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:01:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:01:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:01:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T10:02:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T10:02:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T10:02:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:02:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:02:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:02:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T10:03:01+10:00" level=info msg="timing out proposal" Height=1 Round=1
+time="2022-09-24T10:03:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc009ae3ce0 2022-09-24 10:03:01.153375501 +1000 AEST m=+1483.188114301 [160 42 207 141 58 13 135 235 117 116 64 27 13 112 28 216 174 78 161 140 7 146 27 182 168 42 35 141 157 198 33 34 160 240 227 173 82 229 85 85 111 112 38 127 62 114 72 229 8 47 73 181 247 193 178 195 234 224 252 219 67 165 235 38 216 32 93 182 31 141 18 185 73 31 72 149 159 62 222 70 186 125 138 192 113 226 144 210 183 32 247 231 92 142 116 157] []}"
+time="2022-09-24T10:03:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T10:03:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:03:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:03:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:03:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T10:04:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T10:04:01+10:00" level=info msg="timing out prevote" Height=1 Round=1
+time="2022-09-24T10:04:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00754f410 2022-09-24 10:04:01.169041476 +1000 AEST m=+1543.203780266 [142 164 175 139 156 86 67 141 166 238 209 44 5 208 104 137 71 24 66 164 86 160 146 171 138 0 102 233 59 166 83 57 182 183 186 73 156 98 136 234 227 208 142 177 189 70 187 186 21 94 148 250 66 118 107 5 141 171 241 156 221 172 1 224 18 109 67 68 123 186 176 193 30 181 86 217 46 49 2 157 9 86 126 248 153 162 143 192 49 189 17 170 107 196 206 203] []}"
+time="2022-09-24T10:04:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:04:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:04:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:04:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T10:05:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T10:05:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T10:05:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:05:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:05:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:05:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T10:06:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T10:06:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T10:06:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc009750780 2022-09-24 10:06:01.18102781 +1000 AEST m=+1663.215766627 [146 137 108 222 165 182 233 139 98 123 22 203 219 25 96 11 71 103 109 222 187 78 184 50 64 229 183 30 43 121 150 145 77 103 169 30 82 245 14 91 158 190 195 63 148 226 236 137 1 151 49 128 148 214 242 96 132 67 14 164 38 205 167 74 245 90 214 4 44 80 81 115 222 132 193 43 70 218 209 41 1 165 168 216 70 20 170 180 93 170 202 191 207 144 196 33] []}"
+time="2022-09-24T10:06:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:06:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:06:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:06:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T10:07:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T10:07:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T10:07:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:07:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:07:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:07:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T10:08:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T10:08:01+10:00" level=info msg="timing out proposal" Height=1 Round=1
+time="2022-09-24T10:08:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00a58f1a0 2022-09-24 10:08:01.186276742 +1000 AEST m=+1783.221015532 [142 17 252 129 155 199 191 45 246 154 71 45 21 87 47 87 81 23 44 8 27 28 142 17 127 155 66 64 50 83 164 56 188 19 77 112 28 52 14 79 192 115 7 36 109 65 110 36 2 117 83 229 180 192 197 241 159 237 124 188 33 221 148 19 242 214 12 160 74 190 70 238 39 75 13 42 88 187 112 65 98 125 73 69 211 175 74 69 182 201 94 126 74 218 38 139] []}"
+time="2022-09-24T10:08:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:08:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:08:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:08:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T10:09:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T10:09:01+10:00" level=info msg="timing out prevote" Height=1 Round=1
+time="2022-09-24T10:09:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00ac76cf0 2022-09-24 10:09:01.196288919 +1000 AEST m=+1843.231027759 [133 71 26 113 234 82 209 108 242 48 62 135 54 63 122 140 4 25 50 98 35 12 58 189 118 2 173 253 171 177 38 247 238 195 249 181 143 108 128 132 46 235 196 168 240 113 46 109 5 68 241 45 156 116 31 141 40 82 236 61 154 255 76 89 162 108 122 127 245 41 181 78 171 201 29 124 125 170 240 34 117 23 109 170 111 106 29 187 150 211 93 49 108 147 201 104] []}"
+time="2022-09-24T10:09:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:09:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:09:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:09:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T10:10:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T10:10:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T10:10:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:10:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:10:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:10:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T10:11:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T10:11:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T10:11:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00a58ee70 2022-09-24 10:11:01.208140819 +1000 AEST m=+1963.242879640 [185 105 213 140 148 219 141 45 7 156 29 150 185 214 2 60 225 83 231 212 57 81 37 234 40 133 21 78 142 25 38 169 14 75 32 52 169 15 68 118 48 142 104 230 219 150 68 61 8 63 64 184 101 177 98 89 93 182 221 136 232 171 118 121 195 98 102 0 164 142 85 87 145 159 40 210 218 125 114 207 164 120 219 153 8 204 82 107 164 146 126 26 109 25 244 0] []}"
+time="2022-09-24T10:11:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:11:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:11:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:11:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T10:12:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T10:12:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T10:12:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:12:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:12:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:12:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T10:13:01+10:00" level=info msg="timing out proposal" Height=1 Round=1
+time="2022-09-24T10:13:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00a0c2450 2022-09-24 10:13:01.156140067 +1000 AEST m=+2083.190878909 [151 30 44 211 95 226 251 113 203 124 107 195 121 246 118 107 109 242 31 40 31 216 245 65 31 190 205 13 230 242 148 83 203 3 49 191 220 9 223 4 190 135 249 14 38 12 155 226 7 239 111 61 88 176 27 72 237 141 250 12 77 94 101 15 130 124 250 115 7 126 31 67 139 57 47 128 4 212 179 202 40 124 183 50 123 47 151 101 59 111 23 199 139 121 227 3] []}"
+time="2022-09-24T10:13:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T10:13:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:13:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:13:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:13:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T10:14:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T10:14:01+10:00" level=info msg="timing out prevote" Height=1 Round=1
+time="2022-09-24T10:14:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00f30ccf0 2022-09-24 10:14:01.169839729 +1000 AEST m=+2143.204578530 [131 79 80 93 231 223 104 38 1 155 177 238 99 21 203 128 13 169 95 183 206 92 49 229 228 121 204 88 2 107 100 125 159 99 242 221 55 160 30 219 42 0 17 210 223 243 242 147 15 203 1 72 30 174 217 55 93 242 1 168 244 35 166 76 14 202 162 4 78 101 229 120 29 50 239 233 36 105 245 211 159 190 71 4 223 189 192 139 102 20 39 83 225 17 147 119] []}"
+time="2022-09-24T10:14:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:14:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:14:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:14:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T10:15:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T10:15:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T10:15:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:15:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:15:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:15:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T10:16:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T10:16:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T10:16:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc0065e00f0 2022-09-24 10:16:01.181856405 +1000 AEST m=+2263.216595194 [164 44 148 174 253 65 157 187 245 38 180 196 128 158 244 20 144 112 210 71 170 246 1 202 255 237 216 221 106 8 15 33 41 8 156 179 149 233 67 18 101 15 203 231 139 161 94 167 14 92 2 232 64 215 191 185 239 228 107 81 46 249 4 119 85 175 63 102 161 115 234 110 102 168 99 180 86 132 2 159 237 151 184 173 143 185 220 177 137 168 225 108 127 41 135 92] []}"
+time="2022-09-24T10:16:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:16:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:16:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:16:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T10:17:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T10:17:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T10:17:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:17:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:17:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:17:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T10:18:01+10:00" level=info msg="timing out proposal" Height=1 Round=1
+time="2022-09-24T10:18:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00d658f90 2022-09-24 10:18:01.125946933 +1000 AEST m=+2383.160685739 [134 158 109 200 3 139 89 169 45 250 70 74 244 10 35 112 210 91 158 248 141 148 102 157 63 111 99 11 226 123 80 184 227 140 22 130 196 94 81 84 51 108 158 208 92 109 29 185 16 220 143 143 245 172 59 169 221 65 103 142 106 226 39 19 38 97 232 18 231 27 232 243 88 124 54 189 116 39 10 3 192 175 42 110 177 105 250 241 228 134 106 144 37 77 235 89] []}"
+time="2022-09-24T10:18:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T10:18:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:18:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:18:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:18:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T10:19:01+10:00" level=info msg="timing out prevote" Height=1 Round=1
+time="2022-09-24T10:19:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00ef66b10 2022-09-24 10:19:01.135651036 +1000 AEST m=+2443.170389837 [128 239 129 206 131 137 158 63 185 219 94 99 30 146 207 109 124 165 204 80 121 3 20 112 82 88 224 96 208 32 133 223 84 16 126 66 197 175 93 72 193 232 135 47 198 102 151 127 3 243 4 150 75 148 147 205 145 27 181 40 117 182 63 246 123 201 115 78 129 43 185 181 25 91 213 34 11 143 20 16 57 190 45 38 56 226 211 100 247 245 241 51 235 141 92 33] []}"
+time="2022-09-24T10:19:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T10:19:08+10:00" level=info msg="updated reachability" action=added addr=/ip4/192.168.1.226/udp/8712/quic
+time="2022-09-24T10:19:13+10:00" level=info msg="updated reachability" action=added addr=/ip4/192.168.1.101/udp/8712/quic
+time="2022-09-24T10:19:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:19:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:19:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:19:23+10:00" level=info msg="updated reachability" action=added addr=/ip4/192.168.1.226/udp/8712/quic
+time="2022-09-24T10:19:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T10:20:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T10:20:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T10:20:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:20:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:20:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:20:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T10:21:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T10:21:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T10:21:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00acd58f0 2022-09-24 10:21:01.14516337 +1000 AEST m=+2563.179902186 [185 28 192 9 77 119 201 201 191 99 26 42 20 150 119 11 48 221 157 153 149 12 236 239 239 188 175 12 248 176 112 92 7 140 44 168 200 21 10 157 32 29 136 174 165 194 104 87 0 82 55 161 65 39 113 147 45 112 197 197 14 248 14 138 76 120 199 190 209 145 211 225 202 93 161 165 131 95 27 248 93 106 107 28 40 215 106 90 50 54 252 13 53 178 138 35] []}"
+time="2022-09-24T10:21:13+10:00" level=info msg="updated reachability" action=added addr=/ip4/192.168.1.101/udp/8712/quic
+time="2022-09-24T10:21:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:21:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:21:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:21:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T10:22:01+10:00" level=info msg="timing out prevote" Height=1 Round=2
+time="2022-09-24T10:22:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00a101da0 2022-09-24 10:22:01.154446496 +1000 AEST m=+2623.189185323 [131 101 79 204 130 85 109 111 28 149 151 206 26 115 33 176 18 153 100 240 127 50 131 55 17 116 221 194 23 190 61 206 29 220 2 139 90 163 65 155 152 247 122 165 229 243 207 104 3 29 9 92 27 31 47 176 178 207 185 145 228 235 199 255 205 189 7 183 16 248 36 81 154 48 218 241 184 235 123 175 176 151 165 253 122 59 186 89 205 103 106 47 17 111 241 160] []}"
+time="2022-09-24T10:22:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T10:22:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T10:22:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:22:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:22:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:22:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T10:23:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T10:23:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T10:23:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:23:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:23:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:23:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T10:24:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T10:24:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T10:24:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00de35ad0 2022-09-24 10:24:01.168933981 +1000 AEST m=+2743.203672781 [149 228 74 81 178 248 45 67 203 68 223 37 132 111 81 123 172 253 116 104 59 34 160 160 80 167 235 4 45 130 86 252 45 231 195 251 26 250 255 195 192 187 23 27 68 201 58 102 17 60 120 148 64 224 179 90 171 24 215 173 160 183 242 89 102 146 48 76 87 10 106 49 62 109 96 195 209 144 180 82 255 76 245 74 17 243 86 62 234 9 104 224 40 242 126 12] []}"
+time="2022-09-24T10:24:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:24:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:24:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:24:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T10:25:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T10:25:01+10:00" level=info msg="timing out prevote" Height=1 Round=2
+time="2022-09-24T10:25:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00b930750 2022-09-24 10:25:01.178842223 +1000 AEST m=+2803.213581024 [174 28 89 121 83 184 91 44 238 91 226 6 36 169 153 112 10 18 160 164 117 224 240 94 92 184 101 0 201 93 86 141 210 162 163 192 0 123 113 9 102 44 61 153 114 95 155 218 1 139 63 112 145 45 230 13 173 248 228 191 191 255 107 81 184 223 11 103 21 35 72 246 224 195 86 251 80 52 226 122 125 211 156 154 56 200 223 193 65 15 79 124 250 14 4 9] []}"
+time="2022-09-24T10:25:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:25:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:25:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:25:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T10:26:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T10:26:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=3
+time="2022-09-24T10:26:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:26:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:26:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:26:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T10:27:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T10:27:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T10:27:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:27:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:27:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:27:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T10:28:01+10:00" level=info msg="timing out proposal" Height=1 Round=1
+time="2022-09-24T10:28:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00a67db00 2022-09-24 10:28:01.102362638 +1000 AEST m=+2983.137101439 [173 9 200 47 33 36 180 187 229 251 162 186 201 141 171 241 45 80 164 112 172 64 36 26 177 109 13 85 182 139 132 250 136 139 214 251 167 67 213 213 249 170 33 109 185 8 131 173 1 75 159 139 167 67 15 195 35 216 199 151 198 125 224 105 161 69 195 123 244 10 49 88 13 8 128 251 228 130 210 8 45 230 157 166 221 168 140 74 31 76 0 128 146 117 155 252] []}"
+time="2022-09-24T10:28:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T10:28:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:28:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:28:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:28:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T10:29:01+10:00" level=info msg="timing out prevote" Height=1 Round=1
+time="2022-09-24T10:29:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc011396c90 2022-09-24 10:29:01.113106308 +1000 AEST m=+3043.147845113 [169 136 194 94 12 109 178 83 178 128 133 99 12 120 190 111 191 15 30 192 56 242 190 186 243 236 18 83 70 174 9 253 81 90 21 165 244 0 253 126 42 116 190 125 219 254 248 113 25 167 5 239 215 71 40 74 216 244 29 95 114 39 118 124 93 93 9 8 153 162 224 208 189 100 47 103 81 187 189 133 133 213 159 202 53 219 138 81 176 174 181 2 225 131 239 227] []}"
+time="2022-09-24T10:29:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T10:29:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:29:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:29:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:29:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T10:30:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T10:30:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T10:30:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:30:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:30:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:30:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T10:31:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T10:31:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc0089760c0 2022-09-24 10:31:01.125049833 +1000 AEST m=+3163.159788620 [141 136 63 167 49 194 156 220 255 88 216 30 161 192 146 254 254 123 168 231 129 163 116 26 121 102 84 87 82 6 144 103 47 25 243 198 67 64 83 78 204 73 17 157 32 149 149 52 16 57 185 191 63 87 17 9 153 65 150 76 169 187 143 100 253 158 204 225 166 156 95 158 177 181 152 240 235 190 241 217 66 101 227 166 77 11 84 26 230 245 233 133 36 105 198 181] []}"
+time="2022-09-24T10:31:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T10:31:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:31:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:31:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:31:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T10:32:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T10:32:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T10:32:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:32:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:32:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:32:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T10:33:01+10:00" level=info msg="timing out proposal" Height=1 Round=1
+time="2022-09-24T10:33:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc009674d80 2022-09-24 10:33:01.128813735 +1000 AEST m=+3283.163552564 [175 246 141 224 116 130 144 110 24 246 223 164 231 238 201 228 121 166 77 151 137 244 127 105 16 162 236 69 20 133 196 65 55 114 162 65 122 193 253 193 131 196 53 93 4 171 250 109 15 172 14 61 206 26 88 6 115 248 95 158 109 242 131 46 158 110 154 49 125 152 103 28 220 6 149 47 76 36 118 178 51 214 31 95 187 189 47 99 52 33 197 31 4 178 104 201] []}"
+time="2022-09-24T10:33:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T10:33:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:33:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:33:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:33:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T10:34:01+10:00" level=info msg="timing out prevote" Height=1 Round=1
+time="2022-09-24T10:34:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc0113319e0 2022-09-24 10:34:01.143281709 +1000 AEST m=+3343.178020518 [137 132 126 129 104 9 67 60 250 146 118 32 173 78 144 93 185 39 75 7 237 223 221 70 239 14 115 71 209 248 99 167 211 15 226 98 191 42 13 55 115 207 222 17 79 99 191 19 14 160 19 236 231 239 128 235 31 21 247 146 161 5 97 7 209 115 172 171 147 128 78 149 46 76 108 107 129 46 246 34 251 236 208 145 87 225 86 112 203 56 35 2 77 207 6 129] []}"
+time="2022-09-24T10:34:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T10:34:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:34:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:34:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:34:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T10:35:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T10:35:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T10:35:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:35:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:35:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:35:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T10:36:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T10:36:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T10:36:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00765dd40 2022-09-24 10:36:01.154000769 +1000 AEST m=+3463.188739596 [137 255 22 77 4 225 4 167 61 83 95 144 111 24 218 190 39 88 25 178 69 255 59 227 110 191 4 60 144 253 228 240 164 30 51 42 42 84 155 33 170 46 22 166 84 53 204 187 1 191 52 98 161 178 133 171 229 186 184 94 155 140 119 75 105 83 150 226 240 135 179 201 220 66 241 222 167 77 187 1 83 84 237 68 246 247 121 53 180 87 77 191 70 29 236 32] []}"
+time="2022-09-24T10:36:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:36:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:36:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:36:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T10:37:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T10:37:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T10:37:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:37:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:37:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:37:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T10:38:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T10:38:01+10:00" level=info msg="timing out proposal" Height=1 Round=1
+time="2022-09-24T10:38:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc011dcc780 2022-09-24 10:38:01.158668403 +1000 AEST m=+3583.193407231 [163 245 6 61 136 67 149 197 110 195 52 13 158 88 31 143 76 51 178 3 131 60 208 179 96 141 26 58 164 192 122 186 232 6 18 138 8 121 203 181 108 19 227 199 176 118 78 222 9 121 71 56 22 53 81 103 78 44 43 199 88 54 157 37 113 1 145 179 227 32 182 80 159 86 239 178 3 86 229 170 224 19 30 206 171 114 233 36 232 210 100 26 72 79 239 130] []}"
+time="2022-09-24T10:38:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:38:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:38:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:38:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T10:39:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T10:39:01+10:00" level=info msg="timing out prevote" Height=1 Round=1
+time="2022-09-24T10:39:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc007bc38f0 2022-09-24 10:39:01.168059188 +1000 AEST m=+3643.202798009 [166 243 0 205 100 44 50 176 81 128 74 6 8 156 225 58 116 10 114 88 145 19 201 247 200 42 73 143 27 253 224 1 115 168 83 80 151 252 22 139 97 218 15 93 228 227 37 115 12 155 146 186 203 192 39 186 222 214 161 121 1 107 82 167 100 104 172 64 107 140 142 159 58 185 178 33 188 132 73 3 171 26 244 27 47 31 223 66 56 143 164 129 5 143 42 164] []}"
+time="2022-09-24T10:39:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:39:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:39:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:39:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T10:40:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T10:40:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T10:40:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:40:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:40:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:40:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T10:41:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T10:41:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T10:41:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00a324f60 2022-09-24 10:41:01.178565624 +1000 AEST m=+3763.213304429 [185 30 17 203 96 244 21 1 233 134 174 224 11 9 127 152 116 38 77 72 36 204 199 181 68 33 65 180 205 174 17 82 177 234 218 171 125 121 189 238 67 166 107 165 120 192 23 230 6 161 240 6 59 142 142 249 200 112 64 142 180 74 98 20 103 192 244 10 217 20 204 190 55 176 179 26 73 4 163 156 222 106 175 92 163 93 119 203 163 250 160 152 253 165 29 188] []}"
+time="2022-09-24T10:41:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:41:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:41:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:41:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T10:42:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T10:42:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T10:42:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:42:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:42:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:42:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T10:43:01+10:00" level=info msg="timing out proposal" Height=1 Round=1
+time="2022-09-24T10:43:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T10:43:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc0110e86f0 2022-09-24 10:43:01.154126308 +1000 AEST m=+3883.188865098 [130 176 0 101 124 104 0 21 191 208 59 90 202 236 95 232 41 180 15 178 102 182 75 180 228 252 27 187 207 23 57 2 212 109 248 28 70 145 53 216 37 98 244 76 192 218 94 106 10 23 67 227 72 68 36 244 176 145 104 193 97 61 108 211 173 118 226 15 31 70 41 165 20 192 115 171 38 218 232 155 105 125 173 236 113 67 201 59 40 56 66 61 79 196 134 104] []}"
+time="2022-09-24T10:43:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:43:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:43:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:43:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T10:44:01+10:00" level=info msg="timing out prevote" Height=1 Round=1
+time="2022-09-24T10:44:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00436c3f0 2022-09-24 10:44:01.164030477 +1000 AEST m=+3943.198769307 [153 131 37 163 193 175 168 31 76 17 202 243 27 255 13 207 57 255 193 71 174 88 4 37 166 248 22 22 198 118 22 102 71 83 247 129 13 73 67 79 37 10 130 214 160 55 225 151 15 82 188 129 52 98 156 235 231 210 11 211 36 238 66 225 169 93 236 234 19 232 158 67 107 150 13 119 57 172 114 43 140 83 13 70 215 0 191 240 139 97 246 33 137 51 24 133] []}"
+time="2022-09-24T10:44:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T10:44:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:44:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:44:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:44:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T10:45:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T10:45:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T10:45:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:45:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:45:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:45:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T10:46:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T10:46:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T10:46:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00921a150 2022-09-24 10:46:01.175709379 +1000 AEST m=+4063.210448186 [141 5 112 68 9 157 117 167 216 76 228 176 45 199 249 183 88 230 185 198 130 253 192 161 160 53 119 3 139 64 45 56 133 222 231 66 208 219 252 186 203 207 118 110 39 5 3 207 4 164 175 176 77 34 144 184 185 161 130 226 162 221 158 149 44 38 69 94 30 183 130 75 76 116 6 96 75 28 125 122 14 242 50 175 179 169 64 51 52 240 236 218 182 37 124 44] []}"
+time="2022-09-24T10:46:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:46:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:46:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:46:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T10:47:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T10:47:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T10:47:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:47:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:47:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:47:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T10:48:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T10:48:01+10:00" level=info msg="timing out proposal" Height=1 Round=1
+time="2022-09-24T10:48:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc004331050 2022-09-24 10:48:01.157401528 +1000 AEST m=+4183.192140329 [152 252 209 67 63 239 108 176 33 4 38 208 219 149 139 25 207 133 198 174 123 38 20 149 124 225 85 163 119 46 244 199 12 208 233 152 246 183 243 149 216 15 188 28 10 45 183 3 16 193 175 92 72 160 130 37 243 91 0 140 145 36 236 173 205 142 181 103 35 30 102 73 93 73 32 99 106 194 158 9 100 183 62 94 159 192 55 101 32 246 74 43 235 149 12 114] []}"
+time="2022-09-24T10:48:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:48:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:48:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:48:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T10:49:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T10:49:01+10:00" level=info msg="timing out prevote" Height=1 Round=1
+time="2022-09-24T10:49:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc009b68960 2022-09-24 10:49:01.166788501 +1000 AEST m=+4243.201527261 [165 204 217 187 104 68 159 243 168 89 6 211 103 215 178 51 107 219 60 0 173 187 4 13 141 231 134 196 52 43 88 70 141 150 209 171 104 66 77 160 118 190 12 220 183 84 66 156 0 98 7 176 128 116 251 185 36 235 220 115 188 201 242 139 133 212 161 14 165 70 138 155 49 94 205 224 137 169 45 244 199 1 16 200 89 235 81 248 192 69 26 13 98 59 194 10] []}"
+time="2022-09-24T10:49:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:49:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:49:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:49:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T10:50:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T10:50:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T10:50:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:50:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:50:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:50:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T10:51:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T10:51:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T10:51:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00fb923c0 2022-09-24 10:51:01.172389391 +1000 AEST m=+4363.207128196 [135 165 148 173 233 68 69 223 250 160 39 217 108 175 134 42 132 94 228 97 153 16 211 17 82 130 211 168 157 207 189 91 244 33 117 232 211 3 144 43 224 58 210 35 129 57 42 91 14 155 78 194 21 133 33 18 36 225 27 18 190 14 5 82 236 84 227 115 13 48 84 70 191 127 167 118 8 240 196 1 79 67 23 204 247 96 13 213 74 67 136 183 76 169 10 45] []}"
+time="2022-09-24T10:51:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:51:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:51:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:51:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T10:52:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T10:52:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T10:52:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:52:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:52:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:52:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T10:53:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T10:53:01+10:00" level=info msg="timing out proposal" Height=1 Round=1
+time="2022-09-24T10:53:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc0154b49c0 2022-09-24 10:53:01.161752187 +1000 AEST m=+4483.196490975 [169 27 150 56 71 5 92 240 137 107 18 60 100 108 142 52 240 248 136 17 220 169 44 168 53 40 136 202 209 248 30 135 120 139 212 54 201 83 98 9 90 140 78 206 14 24 173 16 3 209 131 37 143 168 164 127 69 115 45 50 131 51 150 244 92 72 190 214 202 82 255 132 127 163 97 217 228 25 186 216 25 120 144 83 113 197 133 7 229 246 45 126 10 241 175 25] []}"
+time="2022-09-24T10:53:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:53:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:53:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:53:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T10:54:01+10:00" level=info msg="timing out prevote" Height=1 Round=1
+time="2022-09-24T10:54:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc002d75980 2022-09-24 10:54:01.168986258 +1000 AEST m=+4543.203725059 [145 179 155 227 153 183 18 205 2 42 187 49 202 218 81 116 166 21 183 183 210 244 165 18 250 141 42 199 59 216 214 78 188 186 215 167 191 147 173 59 66 177 214 107 118 255 167 242 4 249 142 51 18 199 13 131 242 124 182 122 114 13 62 251 239 65 180 204 235 244 129 239 45 178 204 102 106 77 158 202 236 47 89 200 183 164 24 48 91 187 241 67 122 190 0 73] []}"
+time="2022-09-24T10:54:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T10:54:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:54:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:54:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:54:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T10:55:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T10:55:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T10:55:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:55:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:55:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:55:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T10:56:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T10:56:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T10:56:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00b4c01e0 2022-09-24 10:56:01.183774871 +1000 AEST m=+4663.218513689 [137 109 118 205 149 171 67 4 65 241 230 229 226 74 204 211 74 209 227 151 180 194 201 107 250 201 169 47 43 59 7 32 114 229 35 247 214 61 68 231 247 155 63 81 166 197 241 142 18 126 225 47 144 146 50 66 221 2 41 241 62 165 251 153 226 80 211 1 14 211 33 160 65 212 2 138 161 108 250 22 114 154 171 209 101 52 53 204 220 44 78 60 69 42 148 204] []}"
+time="2022-09-24T10:56:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:56:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:56:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:56:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T10:57:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T10:57:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T10:57:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:57:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:57:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:57:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T10:58:01+10:00" level=info msg="timing out proposal" Height=1 Round=1
+time="2022-09-24T10:58:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc009f95200 2022-09-24 10:58:01.122235621 +1000 AEST m=+4783.156974441 [160 45 246 44 210 104 139 131 34 241 132 12 233 85 237 15 8 169 207 48 77 52 188 140 99 252 149 40 178 221 83 17 177 210 47 141 34 20 249 164 94 10 126 106 170 242 165 253 12 31 223 172 33 42 155 10 199 200 95 139 146 21 144 188 8 117 85 52 222 112 51 208 201 47 28 170 80 148 232 180 207 1 199 62 57 83 3 48 92 0 65 121 240 23 245 175] []}"
+time="2022-09-24T10:58:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T10:58:08+10:00" level=info msg="updated reachability" action=added addr=/ip4/192.168.1.226/udp/8712/quic
+time="2022-09-24T10:58:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:58:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:58:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:58:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T10:59:01+10:00" level=info msg="timing out prevote" Height=1 Round=1
+time="2022-09-24T10:59:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc0118baf90 2022-09-24 10:59:01.131581983 +1000 AEST m=+4843.166320786 [165 222 176 57 240 80 239 167 222 34 221 100 195 150 121 32 247 135 155 118 93 48 138 20 199 124 138 166 69 156 146 152 225 76 7 65 163 174 164 9 97 19 201 27 168 22 241 107 25 156 36 182 67 180 145 217 89 206 251 36 123 166 212 166 153 165 115 195 0 112 44 19 44 135 116 172 41 108 64 255 18 143 109 158 168 2 35 210 209 24 223 61 139 76 230 232] []}"
+time="2022-09-24T10:59:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T10:59:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T10:59:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T10:59:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T10:59:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T10:59:43+10:00" level=info msg="updated reachability" action=added addr=/ip4/192.168.1.101/udp/8712/quic
+time="2022-09-24T11:00:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T11:00:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T11:00:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T11:00:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T11:00:18+10:00" level=info msg="updated reachability" action=added addr=/ip4/192.168.1.226/udp/8712/quic
+time="2022-09-24T11:00:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T11:00:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T11:01:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T11:01:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc0007954d0 2022-09-24 11:01:01.1411457 +1000 AEST m=+4963.175884488 [153 108 146 148 110 126 224 242 76 133 226 152 231 242 189 130 211 210 32 230 27 32 172 17 152 13 205 236 8 50 155 14 154 196 100 80 29 6 46 174 17 247 158 215 29 130 111 234 24 57 164 182 159 194 192 224 32 159 7 243 55 126 20 177 93 237 78 194 153 212 87 204 147 18 174 107 56 113 64 126 54 124 100 103 94 157 149 194 223 59 84 186 212 172 191 188] []}"
+time="2022-09-24T11:01:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T11:01:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T11:01:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T11:01:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T11:01:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T11:01:53+10:00" level=info msg="updated reachability" action=added addr=/ip4/192.168.1.101/udp/8712/quic
+time="2022-09-24T11:02:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T11:02:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T11:02:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T11:02:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T11:02:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T11:02:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T11:02:33+10:00" level=info msg="updated reachability" action=added addr=/ip4/192.168.1.226/udp/8712/quic
+time="2022-09-24T11:03:01+10:00" level=info msg="timing out proposal" Height=1 Round=1
+time="2022-09-24T11:03:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc012d4ed50 2022-09-24 11:03:01.131861184 +1000 AEST m=+5083.166600000 [169 213 11 222 91 140 84 87 109 71 21 136 72 7 168 48 117 1 182 241 244 186 254 159 107 212 151 120 169 247 225 170 194 154 10 158 116 228 132 207 99 114 10 105 160 90 46 139 6 32 242 172 176 133 184 159 165 223 84 136 220 126 126 217 64 77 158 171 119 0 51 66 69 67 44 236 197 157 156 46 107 224 155 78 49 111 40 137 198 91 44 219 99 155 241 54] []}"
+time="2022-09-24T11:03:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T11:03:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T11:03:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T11:03:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T11:03:23+10:00" level=info msg="updated reachability" action=added addr=/ip4/192.168.1.101/udp/8712/quic
+time="2022-09-24T11:03:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T11:03:43+10:00" level=info msg="updated reachability" action=added addr=/ip4/192.168.1.226/udp/8712/quic
+time="2022-09-24T11:03:53+10:00" level=info msg="updated reachability" action=added addr=/ip4/192.168.1.101/udp/8712/quic
+time="2022-09-24T11:04:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T11:04:01+10:00" level=info msg="timing out prevote" Height=1 Round=1
+time="2022-09-24T11:04:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00a457da0 2022-09-24 11:04:01.140676838 +1000 AEST m=+5143.175415642 [139 122 216 215 53 22 35 240 155 205 211 102 110 65 34 90 30 172 230 125 3 60 200 63 143 50 32 244 140 28 75 173 164 203 78 224 49 179 68 212 96 125 111 34 229 9 210 233 4 155 55 129 219 82 166 16 19 75 62 214 106 41 173 201 129 234 248 246 145 21 67 227 89 144 209 198 162 237 218 172 88 96 93 76 76 128 238 24 79 145 189 55 234 78 137 60] []}"
+time="2022-09-24T11:04:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T11:04:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T11:04:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T11:04:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T11:05:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T11:05:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T11:05:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T11:05:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T11:05:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T11:05:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T11:06:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T11:06:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T11:06:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc003ef8d20 2022-09-24 11:06:01.15108764 +1000 AEST m=+5263.185826444 [181 228 205 55 207 46 182 25 92 202 28 155 202 14 190 230 62 180 24 64 199 97 88 23 250 153 38 141 209 185 144 241 62 20 78 236 227 134 156 79 118 68 252 166 98 180 21 115 17 180 28 202 217 107 225 130 17 188 14 251 209 109 126 89 195 185 144 62 239 174 218 67 58 68 153 45 160 194 228 112 253 232 21 25 123 88 227 112 250 60 59 143 174 143 35 191] []}"
+time="2022-09-24T11:06:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T11:06:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T11:06:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T11:06:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T11:07:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T11:07:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T11:07:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T11:07:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T11:07:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T11:07:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T11:08:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T11:08:01+10:00" level=info msg="timing out proposal" Height=1 Round=1
+time="2022-09-24T11:08:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc011c459e0 2022-09-24 11:08:01.131352685 +1000 AEST m=+5383.166091460 [142 126 74 235 104 220 71 145 115 78 169 65 124 144 88 70 232 156 207 235 99 12 183 247 83 178 129 126 61 114 190 179 103 4 102 112 117 69 197 254 93 157 69 128 39 153 210 182 18 183 119 8 151 115 119 23 27 42 253 228 21 0 163 59 55 17 5 24 8 183 96 182 9 212 73 183 217 65 117 77 68 129 123 78 225 174 171 33 168 191 233 29 55 185 197 167] []}"
+time="2022-09-24T11:08:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T11:08:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T11:08:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T11:08:31+10:00" level=debug msg="got beacon, but is not tick" t=7
+time="2022-09-24T11:09:01+10:00" level=info msg="timing out prevote" Height=1 Round=1
+time="2022-09-24T11:09:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc0071a1d10 2022-09-24 11:09:01.138434267 +1000 AEST m=+5443.173173064 [168 116 107 9 3 125 209 174 68 72 91 89 132 56 66 44 14 61 112 58 121 169 155 156 153 119 110 239 232 226 31 6 172 109 186 253 117 54 158 158 242 238 234 78 69 215 139 214 2 59 87 33 13 68 252 168 224 205 130 176 251 223 23 20 138 239 193 227 133 121 98 28 24 231 108 234 157 137 218 200 60 71 164 78 218 74 116 221 29 234 67 152 81 205 28 39] []}"
+time="2022-09-24T11:09:01+10:00" level=debug msg="got beacon, but is not tick" t=6
+time="2022-09-24T11:09:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T11:09:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T11:09:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T11:09:31+10:00" level=debug msg="got beacon, but is not tick" t=5
+time="2022-09-24T11:10:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T11:10:01+10:00" level=debug msg="got beacon, but is not tick" t=4
+time="2022-09-24T11:10:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T11:10:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T11:10:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T11:10:31+10:00" level=debug msg="got beacon, but is not tick" t=3
+time="2022-09-24T11:11:01+10:00" level=info msg="timing out proposal" Height=1 Round=2
+time="2022-09-24T11:11:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00d900f00 2022-09-24 11:11:01.15424041 +1000 AEST m=+5563.188979207 [174 218 225 29 114 172 153 40 82 142 22 34 254 106 164 96 237 247 211 178 189 118 243 141 159 203 26 127 11 236 205 62 82 43 129 162 111 151 210 119 75 5 243 252 93 39 1 214 6 246 77 185 158 135 52 196 244 134 134 173 59 121 218 159 130 197 96 74 235 132 225 215 27 163 78 23 43 254 58 55 99 147 116 235 245 42 35 116 47 60 96 3 110 192 8 228] []}"
+time="2022-09-24T11:11:01+10:00" level=debug msg="got beacon, but is not tick" t=2
+time="2022-09-24T11:11:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T11:11:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T11:11:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T11:11:31+10:00" level=debug msg="got beacon, but is not tick" t=1
+time="2022-09-24T11:12:01+10:00" level=info msg="timing out prevote" Height=1 Round=2
+time="2022-09-24T11:12:01+10:00" level=info msg="sending msg" fields.msg="&{3 12D3KooWHovX9xtxzV9SkRJUrHZbYHUMCfpiHJgCR2QzULtfywf3 [116 101 115 116 110 101 116] <nil> <nil> 0xc00b05bc50 2022-09-24 11:12:01.163838217 +1000 AEST m=+5623.198577012 [152 109 118 58 174 141 221 222 140 120 162 156 21 31 152 183 112 107 28 232 141 22 210 248 5 110 247 156 128 243 23 107 116 11 26 66 154 126 184 54 75 91 24 26 80 243 2 199 14 182 234 5 110 216 203 202 206 192 82 142 60 196 59 146 202 32 93 225 158 233 0 108 255 237 87 244 238 247 68 209 102 11 166 130 78 91 71 202 193 21 157 231 93 40 132 105] []}"
+time="2022-09-24T11:12:01+10:00" level=debug msg="beacon consumed"
+time="2022-09-24T11:12:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=1
+time="2022-09-24T11:12:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T11:12:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T11:12:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T11:12:31+10:00" level=debug msg="got beacon, but is not tick" t=9
+time="2022-09-24T11:13:01+10:00" level=debug msg="got beacon, but is not tick" t=8
+time="2022-09-24T11:13:01+10:00" level=info msg="starting new round" Height=1 Proposer=false Round=2
+time="2022-09-24T11:13:18+10:00" level=debug msg="advertising identities started"
+time="2022-09-24T11:13:18+10:00" level=debug msg="advertising identity" id=G9FCn24MvKdT7R2Ss5VFoF43fqsLAinB4P2DU79Qesqgw3KGi9cZaWJTYp2uvpvpis5s
+time="2022-09-24T11:13:18+10:00" level=debug msg="advertisement finished"
+time="2022-09-24T11:13:31+10:00" level=debug msg="got beacon, but is not tick" t=7

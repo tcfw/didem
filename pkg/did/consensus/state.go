@@ -5,6 +5,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/tcfw/didem/internal/utils/resync"
 )
 
 type Step uint8
@@ -37,13 +38,13 @@ type State struct {
 	lockedValue cid.Cid
 	lockedRound uint32
 
-	pvOnce sync.Once
-	pcOnce sync.Once
-	sbOnce sync.Once
+	pvOnce resync.Once
+	pcOnce resync.Once
+	sbOnce resync.Once
 }
 
 func (s *State) resetOnces() {
-	s.pvOnce = sync.Once{}
-	s.pcOnce = sync.Once{}
-	s.sbOnce = sync.Once{}
+	s.pvOnce = resync.Once{}
+	s.pcOnce = resync.Once{}
+	s.sbOnce = resync.Once{}
 }
