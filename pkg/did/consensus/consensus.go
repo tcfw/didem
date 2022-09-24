@@ -373,9 +373,9 @@ func (c *Consensus) OnMsg(msg *Msg) {
 
 	switch msg.Type {
 	case MsgTypeConsensus:
-		c.onConsensusMsg(msg, msg.From)
+		c.onConsensusMsg(msg, peer.ID(msg.From.String()))
 	case MsgTypeTx:
-		go c.onTx(msg.Tx, msg.From)
+		go c.onTx(msg.Tx, peer.ID(msg.From.String()))
 	case MsgTypeBlock:
 	}
 }
