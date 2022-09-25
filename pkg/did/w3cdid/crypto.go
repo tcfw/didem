@@ -12,8 +12,9 @@ var (
 	ErrNoValidSignatures = errors.New("no valid signatures")
 
 	validators = map[cryptography.VerificationMethodType]SignatureValidator{
-		cryptography.Ed25519VerificationKey2018: cryptography.ValidateEd25519,
-		cryptography.Bls12381G2Key2020:          cryptography.ValidateBls12381,
+		cryptography.Ed25519VerificationKey2018:        cryptography.ValidateEd25519,
+		cryptography.Bls12381G2Key2020:                 cryptography.ValidateBls12381,
+		cryptography.EcdsaSecp256k1VerificationKey2019: cryptography.ValidateEcdsaSecp256k1,
 	}
 )
 

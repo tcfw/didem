@@ -11,7 +11,7 @@ var (
 	defaults = map[string]interface{}{
 		"verbose":         false,
 		"identityStore":   "~/.didem/identities.yaml",
-		"rawRandomSource": true,
+		"rawRandomSource": false,
 	}
 )
 
