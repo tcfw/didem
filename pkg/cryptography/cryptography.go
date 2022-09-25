@@ -28,6 +28,6 @@ type VerificationMethod struct {
 	ID                 string                 `json:"id"`
 	Type               VerificationMethodType `json:"type"`
 	Controller         string                 `json:"controller"`
-	PublicKeyJwk       []interface{}          `json:"publicKeyJwk,omitempty"`
+	PublicKeyJwk       *JWK                   `json:"publicKeyJwk,omitempty"`
 	PublicKeyMultibase string                 `json:"publicKeyMultibase,omitempty"`
 }
