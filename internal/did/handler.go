@@ -81,7 +81,7 @@ func NewHandler(n node.Node) *Handler {
 		logging.Entry().Fatal(err)
 	}
 
-	return &Handler{n: n, consensus: c}
+	return &Handler{n: n, consensus: c, validator: validator}
 }
 
 func (h *Handler) Start() error {
@@ -130,7 +130,7 @@ func (h *Handler) Start() error {
 
 	logging.Entry().Debug("got enough peers to check tip")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
 	tips, err := h.askForTip(ctx, vPeers)
@@ -167,7 +167,9 @@ func (h *Handler) Start() error {
 		return err
 	}
 
-	if err := h.validator.ApplyFromTip(context.Background(), storage.BlockID(bcid)); err != nil {
+	logging.Entry().Debug("Applying from tip", tip)
+
+	if err := h.validator.ApplyFromTip(ctx, storage.BlockID(bcid)); err != nil {
 		logging.WithError(err).Error("applying updated tip")
 		return err
 	}

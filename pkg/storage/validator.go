@@ -29,6 +29,7 @@ func (v *TxValidator) ApplyFromTip(ctx context.Context, id BlockID) error {
 		return errors.Wrap(err, "getting last applied block")
 	}
 
+	logging.Entry().Debug("Fetching tip block")
 	currentTip, err := v.s.GetBlock(ctx, id)
 	if err != nil {
 		return errors.Wrap(err, "getting tip block")
@@ -40,6 +41,7 @@ func (v *TxValidator) ApplyFromTip(ctx context.Context, id BlockID) error {
 	queue := []*Block{currentTip}
 
 	for currentTip.ID != lastApplied.ID && currentTip.ID != BlockID(cid.Undef) {
+		logging.Entry().WithField("block", currentTip.Parent).Debug("Fetching block")
 		currentTip, err = v.s.GetBlock(ctx, currentTip.Parent)
 		if err != nil {
 			return errors.Wrap(err, "getting block")

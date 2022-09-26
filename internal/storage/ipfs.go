@@ -129,7 +129,7 @@ func ipfsStore(ctx context.Context, id config.Identity, repo string) (coreIface.
 
 	go func() {
 		if err := connectToPeers(ctx, iface, bootstrapNodes); err != nil {
-			logging.WithError(err).Error("connecting bootstrap peers")
+			logging.WithError(err).Error("connecting IPFS bootstrap peers")
 		}
 	}()
 
@@ -147,8 +147,9 @@ func metadataStore(ctx context.Context, repo string) (*pebble.DB, error) {
 
 func newIpfsCfg(path string) (*ipfsCore.BuildCfg, error) {
 	c := &ipfsCore.BuildCfg{
-		Online:  true,
-		Routing: libp2p.DHTServerOption,
+		Online:    true,
+		Routing:   libp2p.DHTServerOption,
+		ExtraOpts: map[string]bool{},
 	}
 
 	repo, err := fsrepo.Open(path)
@@ -257,6 +258,8 @@ func (s *IPFSStorage) putRaw(ctx context.Context, d []byte) (cid.Cid, error) {
 }
 
 func (s *IPFSStorage) getRaw(ctx context.Context, id cid.Cid) ([]byte, error) {
+	logging.Entry().WithField("path", path.IpfsPath(id)).Debug("fetching IPFS content")
+
 	n, err := s.ipfsNode.Block().Get(ctx, path.IpfsPath(id))
 	if err != nil {
 		return nil, err
@@ -834,6 +837,8 @@ func createRepo(identity config.Identity, path string) error {
 	if err != nil {
 		return errors.Wrap(err, "creating default config")
 	}
+
+	defaultConfig.AutoNAT.ServiceMode = config.AutoNATServiceEnabled
 
 	err = fsrepo.Init(path, defaultConfig)
 	if err != nil {
