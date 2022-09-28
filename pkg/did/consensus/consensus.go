@@ -148,13 +148,13 @@ func (c *Consensus) proposer() <-chan peer.ID {
 
 			p := nodes[mn]
 
-			id, err := peer.IDFromString(p)
-			if err != nil {
-				logging.WithError(err).Error("casting proposer id")
-				continue
-			}
+			// id, err := peer.ID(p)
+			// if err != nil {
+			// 	logging.WithError(err).Error("casting proposer id")
+			// 	continue
+			// }
 
-			bCh <- id
+			bCh <- peer.ID(p)
 		}
 	}()
 
