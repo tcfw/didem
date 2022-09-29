@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/ipfs/go-cid"
-	peer "github.com/libp2p/go-libp2p-core/peer"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/tcfw/didem/pkg/did/w3cdid"
@@ -15,12 +14,12 @@ import (
 )
 
 func TestProposerFromBeacon(t *testing.T) {
-	beacon := make(chan int64)
+	beacon := make(chan uint64)
 
-	peers := []peer.ID{
-		peer.ID("peer_1"),
-		peer.ID("peer_2"),
-		peer.ID("peer_3"),
+	peers := []string{
+		"peer_1",
+		"peer_2",
+		"peer_3",
 	}
 
 	blockStore := storage.NewMemStore()
@@ -86,7 +85,7 @@ func TestProposerFromBeacon(t *testing.T) {
 
 	go func() {
 		for _, k := range tests {
-			beacon <- int64(k.k)
+			beacon <- uint64(k.k)
 		}
 	}()
 

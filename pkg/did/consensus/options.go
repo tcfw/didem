@@ -21,7 +21,7 @@ func WithBlockStore(s storage.Store) Option {
 	}
 }
 
-func WithBeaconSource(s <-chan int64) Option {
+func WithBeaconSource(s <-chan uint64) Option {
 	return func(c *Consensus) error {
 		c.beacon = s
 		return nil

@@ -20,7 +20,7 @@ type Node interface {
 	ID() did.IdentityStore
 	Cfg() *config.Config
 	Storage() storage.Store
-	RandomSource() <-chan int64
+	RandomSource() <-chan uint64
 }
 
 type P2P interface {

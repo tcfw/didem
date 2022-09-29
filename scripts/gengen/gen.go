@@ -13,7 +13,6 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/ipfs/kubo/config"
-	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multibase"
 	istorage "github.com/tcfw/didem/internal/storage"
 	"github.com/tcfw/didem/pkg/cryptography"
@@ -31,7 +30,7 @@ var (
 type identity struct {
 	blsSk   *cryptography.Bls12381PrivateKey
 	blsPKMB string
-	pID     peer.ID
+	pID     string
 }
 
 func main() {
@@ -68,12 +67,10 @@ func main() {
 			panic(err)
 		}
 
-		pid := peer.ID(i)
-
 		identities = append(identities, identity{
 			blsSk:   sk.PrivateKey().(*cryptography.Bls12381PrivateKey),
 			blsPKMB: pkmb,
-			pID:     pid,
+			pID:     i,
 		})
 	}
 
@@ -84,15 +81,15 @@ func main() {
 			&tx.Tx{
 				Version: tx.Version1,
 				Ts:      time.Now().Unix(),
-				From:    i.pID.Pretty(),
+				From:    i.pID,
 				Type:    tx.TxType_DID,
 				Action:  tx.TxActionAdd,
 				Data: &tx.DID{
 					Document: &w3cdid.Document{
-						ID: "did:didem:" + i.pID.String(),
+						ID: "did:didem:" + i.pID,
 						Authentication: []cryptography.VerificationMethod{
 							{
-								ID:                 "did:didem:" + i.pID.String(),
+								ID:                 "did:didem:" + i.pID,
 								Type:               cryptography.Bls12381G2Key2020,
 								PublicKeyMultibase: i.blsPKMB,
 							},
@@ -103,12 +100,12 @@ func main() {
 			&tx.Tx{
 				Version: tx.Version1,
 				Ts:      time.Now().Unix(),
-				From:    i.pID.String(),
+				From:    i.pID,
 				Type:    tx.TxType_Node,
 				Action:  tx.TxActionAdd,
 				Data: &tx.Node{
-					Id:  i.pID.String(),
-					Did: "did:didem:" + i.pID.String(),
+					Id:  i.pID,
+					Did: "did:didem:" + i.pID,
 					Key: []byte(i.blsPKMB),
 				},
 			},
@@ -182,7 +179,7 @@ func main() {
 			panic(err)
 		}
 
-		fmt.Printf("Identity %d\n\tSK: %s\n\tID: %s\n\tPeer: %s\n\n", i, skbmb, id.pID.Pretty(), idents[i])
+		fmt.Printf("Identity %d\n\tSK: %s\n\tID: %s\n\tPeer: %s\n\n", i, skbmb, id.pID, idents[i])
 	}
 
 }

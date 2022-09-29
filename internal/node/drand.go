@@ -110,8 +110,8 @@ func newDrandClient(h *p2pHost, raw bool) (client.Client, error) {
 	return c, nil
 }
 
-func (n *Node) RandomSource() <-chan int64 {
-	dstCh := make(chan int64)
+func (n *Node) RandomSource() <-chan uint64 {
+	dstCh := make(chan uint64)
 	srcCh := make(chan client.Result)
 
 	if n.drand != nil {
@@ -174,11 +174,10 @@ func (n *Node) RandomSource() <-chan int64 {
 			}
 
 			randomness := tick.Randomness()
-			var v uint64
-			binary.BigEndian.PutUint64(randomness, v)
+			v := binary.BigEndian.Uint64(randomness)
 
 			select {
-			case dstCh <- int64(v):
+			case dstCh <- v:
 				logging.Entry().Debug("beacon consumed")
 			default:
 			}

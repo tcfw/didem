@@ -226,7 +226,7 @@ func connectAll(t *testing.T, hosts []host.Host) {
 
 func setProposer(t *testing.T, instances []*Consensus, id peer.ID) {
 	for _, instance := range instances {
-		instance.propsalState.Proposer = id
+		instance.propsalState.Proposer = id.String()
 	}
 }
 

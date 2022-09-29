@@ -19,7 +19,7 @@ const (
 
 type State struct {
 	AmProposer  bool
-	Proposer    peer.ID
+	Proposer    string
 	Height      uint64
 	Round       uint32
 	Step        Step
