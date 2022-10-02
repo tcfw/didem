@@ -259,8 +259,8 @@ func (c *Consensus) StartRound(inc bool) error {
 	c.propsalState.Height = c.state.Height + 1
 	c.propsalState.PreVotes = make(map[peer.ID]*Msg)
 	c.propsalState.PreCommits = make(map[peer.ID]*Msg)
-	c.propsalState.PreVotesEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
-	c.propsalState.PreCommitsEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
+	c.propsalState.PreVotesEvidence = make(map[string]*ConsensusMsgEvidence)
+	c.propsalState.PreCommitsEvidence = make(map[string]*ConsensusMsgEvidence)
 	c.propsalState.resetOnces()
 
 	if inc {
@@ -384,14 +384,14 @@ func (c *Consensus) OnMsg(msg *Msg) {
 
 	switch msg.Type {
 	case MsgTypeConsensus:
-		c.onConsensusMsg(msg, peer.ID(msg.From.String()))
+		c.onConsensusMsg(msg, msg.From.String())
 	case MsgTypeTx:
-		go c.onTx(msg.Tx, peer.ID(msg.From.String()))
+		go c.onTx(msg.Tx, msg.From.String())
 	case MsgTypeBlock:
 	}
 }
 
-func (c *Consensus) onConsensusMsg(msg *Msg, from peer.ID) {
+func (c *Consensus) onConsensusMsg(msg *Msg, from string) {
 	switch msg.Consensus.Type {
 	case ConsensusMsgTypeNewRound:
 		c.onNewRound(msg.Consensus.NewRound, from)
@@ -406,7 +406,7 @@ func (c *Consensus) onConsensusMsg(msg *Msg, from peer.ID) {
 	}
 }
 
-func (c *Consensus) onTx(msg *TxMsg, from peer.ID) {
+func (c *Consensus) onTx(msg *TxMsg, from string) {
 	if err := c.memPool.AddTx(msg.Tx, msg.TTL); err != nil {
 		logging.WithError(err).Error("adding tx to mempool")
 	}
@@ -415,10 +415,10 @@ func (c *Consensus) onTx(msg *TxMsg, from peer.ID) {
 // onVote handles any new vote from another node, filtering out if the
 // current node is not the current propser. If the propser is the current
 // node, the propser sends back evidence of acceptance of the nodes vote
-func (c *Consensus) onVote(msg *Msg, from peer.ID) {
+func (c *Consensus) onVote(msg *Msg, from string) {
 	vote := msg.Consensus.Vote
 
-	if from.String() == c.state.Proposer {
+	if from == c.state.Proposer {
 		logging.Error("ignoring vote from proposer")
 		return
 	} else if vote.Height != c.propsalState.Height ||
@@ -447,8 +447,8 @@ func (c *Consensus) onVote(msg *Msg, from peer.ID) {
 
 // onNewRound picks up on the propser starting a new round of consensus and populates
 // the propsal state based of the proposers future round values
-func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
-	if from.String() != c.state.Proposer {
+func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from string) {
+	if from != c.state.Proposer {
 		logging.Error("ignorining new round not from current proposer")
 		return
 	}
@@ -465,8 +465,8 @@ func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
 	c.propsalState.Round = msg.Round
 	c.propsalState.PreVotes = make(map[peer.ID]*Msg)
 	c.propsalState.PreCommits = make(map[peer.ID]*Msg)
-	c.propsalState.PreVotesEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
-	c.propsalState.PreCommitsEvidence = make(map[peer.ID]*ConsensusMsgEvidence)
+	c.propsalState.PreVotesEvidence = make(map[string]*ConsensusMsgEvidence)
+	c.propsalState.PreCommitsEvidence = make(map[string]*ConsensusMsgEvidence)
 	c.propsalState.resetOnces()
 
 	restartTimer(c.timerPropose, timeoutPropose)
@@ -480,8 +480,8 @@ func (c *Consensus) onNewRound(msg *ConsensusMsgNewRound, from peer.ID) {
 // onProposal takes in the block proposal from the current proposer and
 // validates the propsed block. If the block is found to be valid, a vote
 // is sent
-func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from peer.ID) {
-	if from.String() != c.state.Proposer {
+func (c *Consensus) onProposal(msg *ConsensusMsgProposal, from string) {
+	if from != c.state.Proposer {
 		logging.Error("ignorining proposal not from current proposer")
 		return
 	} else if c.propsalState.Step != propose {
@@ -610,7 +610,7 @@ func (c *Consensus) OnPreCommit(msg *Msg) {
 						return
 					}
 
-					c.onBlock(msg, c.id)
+					c.onBlock(msg, c.id.String())
 				})
 			} else {
 				restartTimer(c.timerBlock, timeoutBlock)
@@ -620,8 +620,8 @@ func (c *Consensus) OnPreCommit(msg *Msg) {
 }
 
 // onEvidence collects evidence from the proposer node
-func (c *Consensus) onEvidence(msg *ConsensusMsgEvidence, from peer.ID) {
-	if from.String() != c.state.Proposer {
+func (c *Consensus) onEvidence(msg *ConsensusMsgEvidence, from string) {
+	if from != c.state.Proposer {
 		return
 	}
 
@@ -638,8 +638,8 @@ func (c *Consensus) onEvidence(msg *ConsensusMsgEvidence, from peer.ID) {
 
 // onBlock collects block completion messages sent by the propser and
 // updates the final current consensus state
-func (c *Consensus) onBlock(msg *ConsensusMsgBlock, from peer.ID) {
-	if from.String() != c.state.Proposer ||
+func (c *Consensus) onBlock(msg *ConsensusMsgBlock, from string) {
+	if from != c.state.Proposer ||
 		c.propsalState.Step != block ||
 		msg.CID != c.propsalState.lockedValue.String() ||
 		c.propsalState.lockedRound != msg.Round {
@@ -744,9 +744,9 @@ func (c *Consensus) sendEvidence(m *ConsensusMsgVote) error {
 
 	switch m.Type {
 	case VoteTypePreVote:
-		c.propsalState.PreVotesEvidence[peer.ID(m.Validator)] = msg
+		c.propsalState.PreVotesEvidence[m.Validator] = msg
 	case VoteTypePreCommit:
-		c.propsalState.PreCommitsEvidence[peer.ID(m.Validator)] = msg
+		c.propsalState.PreCommitsEvidence[m.Validator] = msg
 	}
 
 	return c.sendMsg(msg)
