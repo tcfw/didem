@@ -285,7 +285,7 @@ func (c *Consensus) StartRound(inc bool) error {
 		restartTimer(c.timerPropose, timeoutPropose)
 		return nil
 	} else {
-		time.Sleep(1 * time.Second)
+		time.Sleep(5 * time.Second)
 	}
 
 	restartTimer(c.timerPrevote, timeoutPrevote)
