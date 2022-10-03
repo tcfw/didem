@@ -26,5 +26,9 @@ enabled = true
 enabled = true
 
 [[testcases]]
-name = "tipset"
+name = "consensus"
 instances = { min = 1, max = 5, default = 1 }
+
+	[testcases.params]
+	signingKeys = { type = "stringArray" }
+	genesis = { type = "string" }

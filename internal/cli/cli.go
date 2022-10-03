@@ -7,6 +7,8 @@ import (
 )
 
 var (
+	GitVersion = "not set"
+
 	rootCmd = &cobra.Command{
 		Use:   "didem",
 		Short: "Distributed identity and messaging",
@@ -23,6 +25,8 @@ func Execute() error {
 	if err := viper.BindPFlag("daemon_addr", rootCmd.PersistentFlags().Lookup("addr")); err != nil {
 		return errors.Wrap(err, "binding pflag")
 	}
+
+	rootCmd.Version = GitVersion
 
 	regCommands()
 

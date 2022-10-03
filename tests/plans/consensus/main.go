@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/spf13/viper"
 	"github.com/testground/sdk-go/network"
 	"github.com/testground/sdk-go/run"
@@ -27,12 +28,19 @@ func main() {
 
 func runTipset(runenv *runtime.RunEnv) error {
 	var (
+		signingKeys = runenv.StringArrayParam("signingKeys")
+		genesis     = runenv.StringParam("genesis")
+
 		enrolledState = sync.State("enrolled")
 		readyState    = sync.State("ready")
-		releasedState = sync.State("released")
 
-		bootstrapperAddr = sync.NewTopic("bootstrap", reflect.TypeOf(""))
+		addrs = sync.NewTopic("addrs", reflect.TypeOf(""))
 	)
+
+	//check availablility of keys
+	if len(signingKeys) != runenv.TestGroupInstanceCount {
+		panic("not enough signing keys")
+	}
 
 	rand.Seed(time.Now().UnixNano())
 
@@ -60,6 +68,8 @@ func runTipset(runenv *runtime.RunEnv) error {
 
 	viper.Set("p2p.listeningAddrs", fmt.Sprintf("/ip4/%s/udp/%d/quic", ip.String(), port))
 	viper.Set("p2p.bootstartPeers", []string{})
+	viper.Set("chain.genesis", genesis)
+	viper.Set("chain.key", signingKeys[seq])
 
 	usr, _ := user.Current()
 	dir := usr.HomeDir
@@ -79,69 +89,49 @@ func runTipset(runenv *runtime.RunEnv) error {
 
 	var node *iNode.Node
 
-	// if we're the first instance to signal, we'll become the LEADER.
-	if seq == 1 {
-		runenv.RecordMessage("i'm the leader.")
-		numFollowers := runenv.TestInstanceCount - 1
-
-		node, err = iNode.NewNode(ctx)
-		if err != nil {
-			return err
-		}
-
-		go node.ListenAndServe()
-		defer node.Stop()
-
-		h := node.P2P().Host()
-
-		bootAddr := fmt.Sprintf("%s/p2p/%s", h.Addrs()[0].String(), h.ID().String())
-
-		client.Publish(ctx, bootstrapperAddr, bootAddr)
-
-		runenv.RecordMessage("bootstrap addr %s", bootAddr)
-
-		// let's wait for the followers to signal.
-		runenv.RecordMessage("waiting for %d instances to become ready", numFollowers)
-		err := <-client.MustBarrier(ctx, readyState, numFollowers).C
-		if err != nil {
-			return err
-		}
-
-		runenv.RecordMessage("the followers are all ready")
-		runenv.RecordMessage("ready...")
-		time.Sleep(1 * time.Second)
-		runenv.RecordMessage("set...")
-		time.Sleep(5 * time.Second)
-		runenv.RecordMessage("go, release followers!")
-
-		// signal on the 'released' state.
-		client.MustSignalEntry(ctx, releasedState)
-		return nil
-	} else {
-		ch := make(chan string)
-		client.MustSubscribe(ctx, bootstrapperAddr, ch)
-		peer := <-ch
-
-		runenv.RecordMessage("got bootstrap peer addr %s", peer)
-
-		viper.Set("p2p.bootstartPeers", []string{peer})
-
-		node, err = iNode.NewNode(ctx)
-		if err != nil {
-			return err
-		}
-
-		go node.ListenAndServe()
-		defer node.Stop()
-	}
-
-	client.MustSignalEntry(ctx, readyState)
-
-	// wait until the leader releases us.
-	err = <-client.MustBarrier(ctx, releasedState, 1).C
+	node, err = iNode.NewNode(ctx)
 	if err != nil {
 		return err
 	}
+
+	go node.ListenAndServe()
+	defer node.Stop()
+
+	h := node.P2P().Host()
+
+	bootAddr := fmt.Sprintf("%s/p2p/%s", h.Addrs()[0].String(), h.ID().String())
+
+	client.Publish(ctx, addrs, bootAddr)
+
+	runenv.RecordMessage("addr %d %s", seq, bootAddr)
+
+	node, err = iNode.NewNode(ctx)
+	if err != nil {
+		return err
+	}
+
+	go node.ListenAndServe()
+	defer node.Stop()
+
+	ch := make(chan string)
+	client.MustSubscribe(ctx, addrs, ch)
+
+	for i := 0; i < runenv.TestInstanceCount-1; i++ {
+		addr := <-ch
+
+		addrInfo, err := peer.AddrInfoFromString(addr)
+		if err != nil {
+			runenv.RecordMessage("err parsing peer addr", err)
+			continue
+		}
+
+		if err := node.P2P().Connect(ctx, *addrInfo); err != nil {
+			runenv.RecordMessage("err connecting to peer %s: ", addrInfo.String(), err)
+			continue
+		}
+	}
+
+	client.MustSignalAndWait(ctx, readyState, runenv.TestGroupInstanceCount)
 
 	return nil
 }

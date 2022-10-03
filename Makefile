@@ -1,6 +1,7 @@
 GOBIN?=go
 DOCKERBIN?=docker
-GOFLAGS?=-ldflags="-w -s" -trimpath
+VERSION?=$$(git rev-parse --short HEAD)
+GOFLAGS?=-ldflags="-w -s -X 'github.com/tcfw/didem/internal/cli.GitVersion=${VERSION}'" -trimpath
 BUILD_DST?=./build
 BIN?=didem
 
@@ -13,6 +14,10 @@ IMGTAG?=$(IMGREPO)$(IMG):$(IMGVER)
 build:
 	@mkdir -p ${BUILD_DST}
 	${GOBIN} build ${GOFLAGS} -o ${BUILD_DST}/${BIN} ./cmd/
+
+.PHONY: install
+install:
+	${GOBIN} install ${GOFLAGS} .
 
 .PHONY: compress
 compress:
