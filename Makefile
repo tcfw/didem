@@ -17,7 +17,7 @@ build:
 
 .PHONY: install
 install:
-	${GOBIN} install ${GOFLAGS} .
+	${GOBIN} install ${GOFLAGS} ./cmd/
 
 .PHONY: compress
 compress:

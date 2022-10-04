@@ -84,6 +84,10 @@ func NewHandler(n node.Node) *Handler {
 	return &Handler{n: n, consensus: c, validator: validator}
 }
 
+func (h *Handler) Consensus() *consensus.Consensus {
+	return h.consensus
+}
+
 func (h *Handler) Start() error {
 	var peers []peer.ID
 	bo := &backoff.Backoff{

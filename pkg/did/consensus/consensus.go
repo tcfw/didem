@@ -51,6 +51,8 @@ type Consensus struct {
 	timerPrecommit *time.Timer
 	timerBlock     *time.Timer
 	stopTimerLoop  chan struct{}
+
+	tracer Tracer
 }
 
 // NewConsensus initiates a new consensus engine by checking if the genesis has been
@@ -119,6 +121,10 @@ func (c *Consensus) Start() error {
 	logging.Entry().Info("successfully started consensus")
 
 	return nil
+}
+
+func (c *Consensus) SetTracer(t Tracer) {
+	c.tracer = t
 }
 
 func (c *Consensus) State() *State {
@@ -206,7 +212,7 @@ func (c *Consensus) subscribeMsgs() error {
 
 	go func() {
 		for msg := range sub {
-			c.OnMsg(msg)
+			c.onMsg(msg)
 		}
 	}()
 
@@ -221,7 +227,7 @@ func (c *Consensus) subscribeTx() error {
 
 	go func() {
 		for tx := range sub {
-			go c.OnMsg(tx)
+			go c.onMsg(tx)
 		}
 	}()
 
@@ -239,19 +245,19 @@ func (c *Consensus) watchProposer() {
 			"prop": id,
 		}).Debug("got prop")
 
-		if err := c.StartRound(false); err != nil {
+		if err := c.startRound(false); err != nil {
 			logging.WithError(err).Error("starting round")
 		}
 	}
 }
 
-// StartRound begins a new round of consensus from other nodes, assuming a new height
+// startRound begins a new round of consensus from other nodes, assuming a new height
 // and clearing out all current votes and evidence. Start round also sets the required
 // number of votes required from the round by inspecting the current number of nodes
 // still active in the metadata store. If the current proposer is the current node
 // the node will attempt to create a new proposal/block and distribute to all other
 // nodes
-func (c *Consensus) StartRound(inc bool) error {
+func (c *Consensus) startRound(inc bool) error {
 	c.propsalState.AmProposer = c.state.Proposer == c.id.String()
 	c.propsalState.lockedRound = 0
 	c.propsalState.lockedValue = cid.Undef
@@ -332,9 +338,9 @@ func (c *Consensus) StartRound(inc bool) error {
 	return nil
 }
 
-// OnMsg takes in a new message from another node, validates it's signature, and
+// onMsg takes in a new message from another node, validates it's signature, and
 // forwards the message onto the specific message type handlers
-func (c *Consensus) OnMsg(msg *Msg) {
+func (c *Consensus) onMsg(msg *Msg) {
 	if !bytes.Equal(msg.Chain, c.chain) {
 		logging.Error("received msg from different chain")
 		return
@@ -380,6 +386,10 @@ func (c *Consensus) OnMsg(msg *Msg) {
 	if ok, err := pk.Verify(msg.Signature, sd); !ok || err != nil {
 		logging.Error("invalid signature")
 		return
+	}
+
+	if c.tracer != nil {
+		go c.tracer.OnMsg(msg)
 	}
 
 	switch msg.Type {
@@ -435,7 +445,7 @@ func (c *Consensus) onVote(msg *Msg, from string) {
 	case VoteTypePreVote:
 		c.onPreVote(msg)
 	case VoteTypePreCommit:
-		c.OnPreCommit(msg)
+		c.onPreCommit(msg)
 	}
 
 	if c.propsalState.AmProposer {
@@ -581,10 +591,10 @@ func (c *Consensus) onPreVote(msg *Msg) {
 	}
 }
 
-// OnPreCommit collects precommit votes from other nodes. If the number of precommit
+// onPreCommit collects precommit votes from other nodes. If the number of precommit
 // votes collected is above the required threshold, the consensus state is progressed
 // to the block state
-func (c *Consensus) OnPreCommit(msg *Msg) {
+func (c *Consensus) onPreCommit(msg *Msg) {
 	if c.propsalState.Step != precommit {
 		return
 	}
@@ -715,7 +725,7 @@ func (c *Consensus) onTimeoutPrevote() {
 // onTimeoutPrecommit assumes a new round is to be started when the
 // propser does not send precommit evidence for the current round
 func (c *Consensus) onTimeoutPrecommit() {
-	if err := c.StartRound(true); err != nil {
+	if err := c.startRound(true); err != nil {
 		logging.WithError(err).Error("starting new round after timeout")
 	}
 }
@@ -886,6 +896,10 @@ func (c *Consensus) sendMsg(msg interface{}) error {
 	hl.Signature = sig
 
 	logging.Entry().WithField("msg", hl).Info("sending msg")
+
+	if c.tracer != nil {
+		go c.tracer.OnSendMsg(hl)
+	}
 
 	return c.p2p.PublishContext(context.Background(), pubsubMsgsChanName, hl)
 }

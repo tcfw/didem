@@ -110,7 +110,7 @@ func TestReceiveNewRound(t *testing.T) {
 
 	go func() {
 		instances[0].Start()
-		if err := instances[0].StartRound(false); err != nil {
+		if err := instances[0].startRound(false); err != nil {
 			panic(err)
 		}
 	}()
@@ -160,7 +160,7 @@ func TestReceivePrevote(t *testing.T) {
 	startAll(t, instances[1:])
 
 	for _, instance := range instances {
-		if err := instance.StartRound(false); err != nil {
+		if err := instance.startRound(false); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -193,7 +193,7 @@ func TestSuccessfulRound(t *testing.T) {
 	startAll(t, instances[1:])
 
 	for _, instance := range instances {
-		if err := instance.StartRound(false); err != nil {
+		if err := instance.startRound(false); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -258,7 +258,7 @@ func TestNewRound(t *testing.T) {
 	startAll(t, instances[1:])
 
 	for _, instance := range instances {
-		if err := instance.StartRound(false); err != nil {
+		if err := instance.startRound(false); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -288,7 +288,7 @@ func TestNewRound(t *testing.T) {
 	prop.onVote(msg, msg.From.String())
 
 	for i := uint32(2); i < 5; i++ {
-		if err := prop.StartRound(true); err != nil {
+		if err := prop.startRound(true); err != nil {
 			t.Fatal(err)
 		}
 
@@ -347,7 +347,7 @@ func TestTimeoutProposal(t *testing.T) {
 
 	//fail to start proposer
 	for _, instance := range instances[1:] {
-		if err := instance.StartRound(false); err != nil {
+		if err := instance.startRound(false); err != nil {
 			t.Fatal(err)
 		}
 	}

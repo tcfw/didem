@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/user"
 	"reflect"
+	"sync"
 	"time"
 
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -18,15 +19,16 @@ import (
 	"github.com/testground/sdk-go/sync"
 
 	iNode "github.com/tcfw/didem/internal/node"
+	"github.com/tcfw/didem/pkg/did/consensus"
 )
 
 func main() {
 	run.InvokeMap(map[string]interface{}{
-		"tipset": runTipset,
+		"round": runRound,
 	})
 }
 
-func runTipset(runenv *runtime.RunEnv) error {
+func runRound(runenv *runtime.RunEnv) error {
 	var (
 		signingKeys = runenv.StringArrayParam("signingKeys")
 		genesis     = runenv.StringParam("genesis")
@@ -133,5 +135,39 @@ func runTipset(runenv *runtime.RunEnv) error {
 
 	client.MustSignalAndWait(ctx, readyState, runenv.TestGroupInstanceCount)
 
+	tracer := &tracer{}
+	tracer.Reset()
+
+	node.Did().Consensus().SetTracer(tracer)
+
 	return nil
+}
+
+type tracer struct {
+	received []*consensus.Msg
+	sent     []*consensus.Msg
+
+	mu sync.Mutex
+}
+
+func (t *tracer) Reset() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	t.sent = []*consensus.Msg{}
+	t.received = []*consensus.Msg{}
+}
+
+func (t *tracer) OnMsg(msg *consensus.Msg) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	t.received = append(t.received, msg)
+}
+
+func (t *tracer) OnSendMsg(msg *consensus.Msg) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	t.sent = append(t.sent, msg)
 }
